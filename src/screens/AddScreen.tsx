@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Image, Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NavigationAction, RouteProp } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import HeaderActionButton from '../components/HeaderActionButton';
 import SegmentedButton, { type FitMode } from '../components/SegmentedButton';
 import FilledFabButton from '../components/FilledFabButton';
 import GalleryModal from '../components/GalleryModal';
+import PhotoSection from '../components/PhotoSection';
 import LeaveModal from '../components/LeaveModal';
 import RichTextEditor from '../components/RichTextEditor';
 import type { ActiveFormats, EditorCommand, RichTextEditorHandle } from '../components/RichTextEditor';
@@ -23,8 +24,8 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * Figma flow "Flow 2.1 이미지 삽입하기" (section 3196:14539):
  *   Add-Default  (3184:5508) — empty state, "Add Today's Photo" button
  *   Add-Image-1  (3184:7323) — Modal/Gallery sheet over the empty state
- *   Add-Image-2  (3184:5903) — photo chosen, "Fit"    (image letterboxed)
- *   Add-Image-3  (3192:12212) — photo chosen, "Filled" (image fills 358x358)
+ *   Add-Image-2  (3184:5903) — photo chosen, "Fit"    (whole photo)
+ *   Add-Image-3  (3192:12212) — photo chosen, "Filled" (cropped to a square)
  *
  * A post holds up to three things: text, one image, and one voice recording.
  * Any single one of them is enough to publish, which is what drives the Done
@@ -291,19 +292,14 @@ export default function AddScreen() {
         </View>
 
         {photoUri ? (
-          <View style={styles.photoPreview}>
-            <Image
-              source={{ uri: photoUri }}
-              style={styles.photoImage}
-              resizeMode={fitMode === 'fit' ? 'contain' : 'cover'}
-            />
+          <PhotoSection uri={photoUri} fitMode={fitMode}>
             <View style={styles.photoOverlayTop} pointerEvents="box-none">
               <SegmentedButton value={fitMode} onChange={setFitMode} />
             </View>
             <View style={styles.photoOverlayBottom} pointerEvents="box-none">
               <FilledFabButton label="Delete" onPress={() => setPhotoUri(null)} />
             </View>
-          </View>
+          </PhotoSection>
         ) : (
           <Pressable onPress={() => setGalleryOpen(true)} style={styles.photoButton}>
             <IcImage size={24} color={colors.accent} />
@@ -418,15 +414,6 @@ const styles = StyleSheet.create({
   },
   photoButtonLabel: {
     color: colors.accent,
-  },
-  photoPreview: {
-    width: '100%',
-    aspectRatio: 1,
-    overflow: 'hidden',
-  },
-  photoImage: {
-    width: '100%',
-    height: '100%',
   },
   photoOverlayTop: {
     position: 'absolute',

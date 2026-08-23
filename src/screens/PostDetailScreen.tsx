@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,6 +10,7 @@ import IconButton from '../components/IconButton';
 import GhostButton from '../components/GhostButton';
 import { IcArrowLeft } from '../components/icons/AddIcons';
 import RichTextEditor from '../components/RichTextEditor';
+import PhotoSection from '../components/PhotoSection';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
@@ -26,9 +27,8 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * conditionally rather than branching into eight layouts.
  *
  * Fit vs Filled is the post's stored `fitMode`, set with the Add screen's
- * toggle: Fit letterboxes the whole photo inside the square (Figma bakes the
- * result as a 291pt-wide column for its sample portrait), Filled crops it to
- * fill.
+ * toggle. Both go through `PhotoSection`, shared with the Add screen's
+ * preview so the two frame a photo the same way.
  *
  * The story renders through the same `RichTextEditor` the Add screen writes
  * with, in read-only mode, so a post's bold / colour / list formatting shows
@@ -85,15 +85,7 @@ export default function PostDetailScreen() {
           <Text style={[typography.overline, styles.dayLabel]}>{dayLabel}</Text>
         </View>
 
-        {post?.photoUri ? (
-          <View style={styles.imageSection}>
-            <Image
-              source={{ uri: post.photoUri }}
-              style={styles.image}
-              resizeMode={post.fitMode === 'fit' ? 'contain' : 'cover'}
-            />
-          </View>
-        ) : null}
+        {post?.photoUri ? <PhotoSection uri={post.photoUri} fitMode={post.fitMode} /> : null}
 
         {post && post.text.length > 0 ? (
           <View style={styles.textSection}>
@@ -147,17 +139,6 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     color: colors.textTertiary,
-  },
-  imageSection: {
-    width: '100%',
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
   },
   textSection: {
     flex: 1,
