@@ -301,10 +301,9 @@ const styles = StyleSheet.create({
   },
   navItem: {
     width: 45,
+    height: 45,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing[1],
-    paddingVertical: spacing[1],
   },
   navSelectedDot: {
     width: 3,
