@@ -28,6 +28,15 @@ import Svg, { Path } from 'react-native-svg';
  * exported fill for each (kept as-is in the raw assets/*.svg files) happens
  * to equal a `palette.g*` step already aliased in `colors` — see the call
  * sites in HomeScreen.tsx.
+ *
+ * TODO: the master `Navigation` component (node 3184:3668, the
+ * component-set on the Design System page, not this screen's instance)
+ * shows that `IcCalendar` and `IcPulse` each swap to a *different* glyph
+ * (not just a recolor) when their tab is selected vs. not — `IcCalendar`
+ * here is the Home-selected variant, `IcPulse` here is the Report-
+ * unselected variant. Port the other two (Home-unselected calendar,
+ * Report-selected pulse) from that same node when the Report screen or
+ * real tab switching is built — don't reuse these as-is for both states.
  */
 
 type IconProps = {

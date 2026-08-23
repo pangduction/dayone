@@ -89,6 +89,19 @@ When implementing a component not in this table, pull its real spec with
 `get_design_context` on its node in the Design System page — don't
 extrapolate from a similar-looking row above.
 
+**Prefer the master component over a screen instance.** A component placed
+inside a specific screen frame (e.g. a `Navigation` instance on
+`Home-Calendar-Default`) only shows *that screen's* variant. The Design
+System page also has the master component/component-set definition (search
+for its bare name) — fetch that node too before implementing, since it
+reveals every variant (e.g. `Navigation`'s `selected="Home"` vs
+`selected="Report"`) including ones the current screen doesn't use yet.
+Concretely: `Navigation`'s Home/Report icons aren't just recolored when
+active — they swap to an entirely different glyph (filled vs outline). Port
+the variant(s) you actually need now; note in a comment which ones from the
+master component are still missing so a later screen doesn't silently reuse
+the wrong glyph.
+
 ## 5. Icons and images
 
 - Reuse `@expo/vector-icons` (`Ionicons`, etc.) when a matching glyph
