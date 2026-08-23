@@ -7,9 +7,7 @@ type Props = {
   isToday: boolean;
   /** The day's post, if one exists. */
   post?: { photoUri: string | null } | null;
-  /** Marks a day with no post as the one the user just tapped. */
-  isSelected?: boolean;
-  /** Opens the day's post, or selects it when there isn't one. */
+  /** Opens the day's post, or starts one when the day is empty. */
   onPress?: () => void;
 };
 
@@ -30,16 +28,8 @@ type Props = {
  *
  * The photo variants are why HomeScreen passes the whole post down rather
  * than just a "has a post" boolean.
- *
- * `isSelected` is a seventh state that is **not in Figma** — the Date
- * component (node 9:5941) has no selected variant. It was specified by the
- * product owner for tapping a day that has no post yet: a 1px `colors.accent`
- * ring over a transparent fill, with an Accent label. A ring rather than a
- * filled Accent circle deliberately, because a filled one would be
- * indistinguishable from the existing today + text-only-post state. Treat
- * this as the app's own addition, not something to look up in the file.
  */
-export default function CalendarDateCell({ day, isToday, post, isSelected, onPress }: Props) {
+export default function CalendarDateCell({ day, isToday, post, onPress }: Props) {
   if (day === null) return <View style={styles.cell} />;
 
   const hasPost = post != null;
@@ -47,8 +37,7 @@ export default function CalendarDateCell({ day, isToday, post, isSelected, onPre
   const hasPhoto = hasPost && photoUri !== null;
   const isTextOnly = hasPost && photoUri === null;
 
-  // A day with a post opens it; one without is selected instead.
-  const showSelectedRing = isSelected && !hasPost;
+  // A day with a post opens it; an empty one starts a post for that date.
   const Container = onPress ? Pressable : View;
 
   return (
@@ -56,14 +45,13 @@ export default function CalendarDateCell({ day, isToday, post, isSelected, onPre
       onPress={onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={
-        onPress ? (hasPost ? `Open the post for day ${day}` : `Select day ${day}`) : undefined
+        onPress ? (hasPost ? `Open the post for day ${day}` : `Write a post for day ${day}`) : undefined
       }
-      accessibilityState={onPress && !hasPost ? { selected: isSelected } : undefined}
       style={[
         styles.cell,
         isToday && !hasPost && styles.cellTodayEmpty,
         isTextOnly && (isToday ? styles.cellTextOnlyToday : styles.cellTextOnly),
-        (hasPhoto && isToday) || showSelectedRing ? styles.cellAccentRing : null,
+        hasPhoto && isToday && styles.cellPhotoToday,
       ]}
     >
       {hasPhoto ? (
@@ -76,7 +64,7 @@ export default function CalendarDateCell({ day, isToday, post, isSelected, onPre
         style={[
           typography.calendarDate,
           styles.label,
-          !hasPost && (isToday || isSelected) && styles.labelAccent,
+          isToday && !hasPost && styles.labelToday,
           hasPost && styles.labelOnFill,
         ]}
       >
@@ -104,8 +92,7 @@ const styles = StyleSheet.create({
   cellTextOnlyToday: {
     backgroundColor: colors.accent,
   },
-  /** Today's photo cell, and the not-in-Figma selected state, share this ring. */
-  cellAccentRing: {
+  cellPhotoToday: {
     borderWidth: 1,
     borderColor: colors.accent,
   },
@@ -134,7 +121,7 @@ const styles = StyleSheet.create({
   label: {
     color: colors.textSecondary, // Figma G600
   },
-  labelAccent: {
+  labelToday: {
     color: colors.accent,
   },
   labelOnFill: {

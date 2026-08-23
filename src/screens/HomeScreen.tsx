@@ -36,19 +36,13 @@ export default function HomeScreen() {
   // Keyed by date ('YYYY-MM-DD'). The whole post is kept, not just the date,
   // because a cell renders the post's photo when it has one.
   const [postsByDate, setPostsByDate] = useState<Record<string, Post>>({});
-  // The day the user last tapped that has no post yet. Tapping it again
-  // clears it, since selecting is the only thing an empty day does.
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       getPostsForMonth(year, month).then((posts) => {
         if (cancelled) return;
-        const byDate = Object.fromEntries(posts.map((post) => [post.date, post]));
-        setPostsByDate(byDate);
-        // A day that gained a post while we were away is no longer selectable.
-        setSelectedDate((current) => (current !== null && byDate[current] ? null : current));
+        setPostsByDate(Object.fromEntries(posts.map((post) => [post.date, post])));
       });
       return () => {
         cancelled = true;
@@ -56,13 +50,12 @@ export default function HomeScreen() {
     }, [year, month]),
   );
 
+  // A day that already has a post opens it; an empty one starts a post for
+  // that date, which is what the Add screen's `date` param is for.
   const handleDayPress = useCallback(
     (key: string) => {
-      if (postsByDate[key]) {
-        navigation.navigate('PostDetail', { date: key });
-        return;
-      }
-      setSelectedDate((current) => (current === key ? null : key));
+      if (postsByDate[key]) navigation.navigate('PostDetail', { date: key });
+      else navigation.navigate('Add', { date: key });
     },
     [postsByDate, navigation],
   );
@@ -115,7 +108,6 @@ export default function HomeScreen() {
                       day={day}
                       isToday={key === todayKey}
                       post={key === null ? null : postsByDate[key]}
-                      isSelected={key !== null && key === selectedDate}
                       onPress={key === null ? undefined : () => handleDayPress(key)}
                     />
                   );

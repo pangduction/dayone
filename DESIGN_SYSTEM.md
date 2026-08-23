@@ -97,7 +97,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | SegmentedButton (Fit/Filled toggle)  | 2 (container)     | —    | 17 (off-scale) outer, 16 (`radius.lg`) active segment | overlaid top-center on a selected photo; container bg `colors.overlayContainer`, active segment bg `colors.overlaySolid` + white icon/label, inactive = transparent + `colors.textPlaceholder`. Node `3192:12065`. See `SegmentedButton.tsx`. |
 | Button / S / Filled / FAB (e.g. "Delete") | 12 / 3 (left) · 8 / 3 (right) | 3 | 20 (off-scale) | `colors.overlaySolid` bg, white `typography.overline` label, trailing 16×16 `ic/cross`. Node `3192:11841`. See `FilledFabButton.tsx`. |
 | Button / L / Filled / Primary        | 16 / 8            | —    | 16 (`radius.lg`) | height 48, `colors.buttonDark` bg, centered white `typography.body` label. Node `3192:9208`. See `PrimaryButton.tsx`. |
-| Date (calendar day cell)             | —                 | —    | 500 (`radius.full`) | square, `typography.calendarDate`. Six states = {no post, photo post, text-only post} x {another day, today}: no post → transparent/G600 text, or `colors.accentSubtle`/`colors.accent` on today; photo post → thumbnail under `colors.photoScrim`, or under `colors.overlayAccent` plus a 1px `colors.accent` border on today; text-only → solid `colors.textPrimary`, or solid `colors.accent` on today. White label on every filled state. Component `9:5857`, all variants in `assets/Date.svg`. Plus a seventh, **not-in-Figma** "selected" state — see the note below the table. See `CalendarDateCell.tsx`. |
+| Date (calendar day cell)             | —                 | —    | 500 (`radius.full`) | square, `typography.calendarDate`. Six states = {no post, photo post, text-only post} x {another day, today}: no post → transparent/G600 text, or `colors.accentSubtle`/`colors.accent` on today; photo post → thumbnail under `colors.photoScrim`, or under `colors.overlayAccent` plus a 1px `colors.accent` border on today; text-only → solid `colors.textPrimary`, or solid `colors.accent` on today. White label on every filled state. Component `9:5857`, all variants in `assets/Date.svg`. See `CalendarDateCell.tsx`. |
 | Header/Post                          | 5 (left) / 16 (right) · 16 vertical | — | — | `Button/Icon/Plain` + `ic/arrow-left` on the left, `Button / M / Ghost / Secondary` "Edit" on the right. Node `3192:11899`. Same shell as Header/Add. |
 | Post Detail (column)                 | 16                | 16   | —            | stacks Date Written, then whichever of Image Section / Record/View / Text Section the post has. Date Written: height 40, centered, `typography.subtext` in `colors.textPrimary` over `typography.caption` in `colors.textTertiary` (weekday spelled out in full). Image Section: square, Fit letterboxes / Filled crops. Text Section: min-height 240, gap 8, paddingHorizontal 12, a 1px `colors.borderSubtle` divider above `typography.body` content. Section `3192:11364`. See `PostDetailScreen.tsx`. |
 | Modal/Gallery (bottom sheet)         | 16 (content)      | 3 (tiles) | 24 (`radius.xl`) | white sheet, `shadows.xl`; title `typography.subtext` with paddingTop 20 + a 20px spacer row, close button absolute at right 8 / top 8.4; square tiles at `radius.sm`, first tile `colors.surfaceDark` + 32px `ic/camera`; actions block paddingTop 24 / paddingBottom 24. Backdrop = `colors.backdrop` over a blur, sheet bottom-aligned with paddingTop 16 / paddingBottom 40. Nodes `3198:4446` (sheet) and `3184:7350` (backdrop). See `GalleryModal.tsx`. |
@@ -105,17 +105,6 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 When implementing a component not in this table, pull its real spec with
 `get_design_context` on its node in the Design System page — don't
 extrapolate from a similar-looking row above.
-
-**States the app adds on top of Figma.** Keep these few, and mark each one
-here and in the component so nobody later goes hunting for a Figma node that
-doesn't exist:
-
-- *Date / selected* — tapping a day that has no post yet marks it with a 1px
-  `colors.accent` ring over a transparent fill and an Accent label. The Date
-  component has no selected variant; this was specified by the product owner.
-  It is a ring rather than a filled Accent circle on purpose, since a filled
-  one would be indistinguishable from the existing today + text-only-post
-  state.
 
 **Prefer the master component over a screen instance.** A component placed
 inside a specific screen frame (e.g. a `Navigation` instance on
