@@ -50,7 +50,8 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable style={styles.headerIconButton} hitSlop={8}>
-          <Ionicons name="list-outline" size={24} color={colors.textPrimary} />
+          {/* Ionicons stand-in for Figma's "ic/rows" — not an exact vector port, see DESIGN_SYSTEM.md §5 */}
+          <Ionicons name="menu-outline" size={24} color={colors.textPrimary} />
         </Pressable>
         <Pressable style={styles.shareButton} hitSlop={8}>
           <Ionicons name="share-outline" size={24} color={colors.textPrimary} />
