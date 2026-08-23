@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.textPrimary, // Figma: G900, verified via get_variable_defs on node 3184:3527 — not accent
   },
   navLabel: {
     color: colors.textPlaceholder,
