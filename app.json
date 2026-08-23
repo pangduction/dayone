@@ -20,6 +20,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "DayOne uses your photo library so you can add today's photo to your daily record."
+        }
+      ]
+    ]
   }
 }

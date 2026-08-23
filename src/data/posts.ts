@@ -1,0 +1,94 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+/**
+ * Local, on-device post store (no backend yet). One row per calendar day —
+ * DayOne only allows a single post per day (see DESIGN_SYSTEM.md and the
+ * Add-Default screen, Figma node 3184:5508), so `savePost` upserts by date
+ * rather than ever creating a second row for the same day.
+ */
+export type Post = {
+  id: string;
+  /** Local calendar date the post belongs to, 'YYYY-MM-DD'. */
+  date: string;
+  /** Local file URI of the post's single photo, or null if text-only. */
+  photoUri: string | null;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const STORAGE_KEY = 'dayone.posts.v1';
+
+function pad(n: number): string {
+  return n.toString().padStart(2, '0');
+}
+
+/** Local-time date key ('YYYY-MM-DD') for a Date — never UTC, so "today" matches the device's calendar day. */
+export function dateKey(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+async function readAll(): Promise<Post[]> {
+  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as Post[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function writeAll(posts: Post[]): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+}
+
+export async function getAllPosts(): Promise<Post[]> {
+  return readAll();
+}
+
+export async function getPostByDate(date: string): Promise<Post | null> {
+  const posts = await readAll();
+  return posts.find((post) => post.date === date) ?? null;
+}
+
+/**
+ * Creates the post for `input.date`, or updates it in place if one already
+ * exists — this is what enforces "one post per day" rather than a separate
+ * validation step.
+ */
+export async function savePost(input: { date: string; photoUri: string | null; text: string }): Promise<Post> {
+  const posts = await readAll();
+  const now = new Date().toISOString();
+  const existingIndex = posts.findIndex((post) => post.date === input.date);
+
+  if (existingIndex !== -1) {
+    const updated: Post = {
+      ...posts[existingIndex],
+      photoUri: input.photoUri,
+      text: input.text,
+      updatedAt: now,
+    };
+    posts[existingIndex] = updated;
+    await writeAll(posts);
+    return updated;
+  }
+
+  const created: Post = {
+    id: `${input.date}-${Math.random().toString(36).slice(2, 10)}`,
+    date: input.date,
+    photoUri: input.photoUri,
+    text: input.text,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await writeAll([...posts, created]);
+  return created;
+}
+
+/** Posts whose date falls in the given month. `month` is 0-indexed, matching `Date#getMonth()`. */
+export async function getPostsForMonth(year: number, month: number): Promise<Post[]> {
+  const posts = await readAll();
+  const prefix = `${year}-${pad(month + 1)}-`;
+  return posts.filter((post) => post.date.startsWith(prefix));
+}

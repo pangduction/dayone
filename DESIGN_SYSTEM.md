@@ -83,6 +83,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Input (text field)                   | 12 / 10           | —    | 8 (`radius.sm`)  | white bg, `border` 1px, `shadows.xs`, placeholder in `colors.textPlaceholder` |
 | Input with label                     | —                 | 8    | —            | label uses `typography.subtext` in `colors.textSecondary`, 8px above the input |
 | Search input field                   | 12 / 12           | 8    | 8 (`radius.sm`)  | `border` 1px, `colors.accent` text cursor |
+| Header action pill (e.g. "Done")     | 12 / 8            | —    | 16 (`radius.lg`) | height 40, off state = `colors.surface` bg / `colors.border` text; **on/enabled state wasn't in the fetched Figma node** — the accent-bg/white-text look in `AddScreen.tsx` is an inferred default, not a pixel-perfect port |
 
 When implementing a component not in this table, pull its real spec with
 `get_design_context` on its node in the Design System page — don't
@@ -113,6 +114,16 @@ extrapolate from a similar-looking row above.
 - `src/components/` — reusable components, one per recurring Figma
   component.
 - `src/screens/` — one file per Figma screen/frame.
+- `src/navigation/RootNavigator.tsx` — the single React Navigation native
+  stack (Login/Home/Add). `initialRouteName` is temporarily `"Home"` since
+  sign-in has no real auth yet; flip it back to `"Login"` once that's wired
+  up.
+- `src/data/` — local, on-device data stores (no backend yet). `posts.ts`
+  is an AsyncStorage-backed store for the one-post-per-day / one-photo-per-post
+  rule; screens should go through its functions rather than touching
+  AsyncStorage directly.
+- `src/utils/calendar.ts` — pure date-math helpers (days in month, weekday
+  grid) shared by any screen that renders a calendar.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.

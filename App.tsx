@@ -1,6 +1,6 @@
 import { useFonts } from 'expo-font';
 import { View } from 'react-native';
-import LoginScreen from './src/screens/LoginScreen';
+import RootNavigator from './src/navigation/RootNavigator';
 import { fontAssets } from './src/theme/tokens';
 
 export default function App() {
@@ -10,5 +10,5 @@ export default function App() {
     return <View style={{ flex: 1, backgroundColor: '#FFFFFF' }} />;
   }
 
-  return <LoginScreen />;
+  return <RootNavigator />;
 }

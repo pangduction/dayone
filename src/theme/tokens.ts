@@ -51,6 +51,8 @@ export const palette = {
   success: '#19AF66',
   kakaoYellow: '#FEE500',
   buttonLightFill: '#F5F5F5', // Figma: local fill on Button/Google (not a bound variable)
+  progressTrack: '#D1D5DB', // Figma: local fill on Home-Calendar's Progress Box background (not a bound variable)
+  accentSubtle: 'rgba(0, 132, 255, 0.08)', // Figma: Accent at 8% opacity — today's calendar cell highlight
 
   // iOS-style system color set (color picker / palette swatch components).
   systemRed: '#FF3B30',
@@ -75,6 +77,7 @@ export const colors = {
   textPrimary: palette.g900,
   textSecondary: palette.g600,
   textTertiary: palette.g500,
+  textStrong: palette.g800, // Figma G800 — calendar weekday labels, chip labels; darker than secondary, short of primary
   textPlaceholder: palette.g400,
   textOnDark: palette.white,
 
@@ -83,8 +86,10 @@ export const colors = {
   kakaoYellow: palette.kakaoYellow,
 
   accent: palette.accent,
+  accentSubtle: palette.accentSubtle,
   warning: palette.warning,
   success: palette.success,
+  progressTrack: palette.progressTrack,
 };
 
 // ---------------------------------------------------------------------------
