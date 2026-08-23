@@ -1,38 +1,26 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { ComponentProps } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import type { ComponentType } from 'react';
 import { radius, spacing, typography } from '../theme/tokens';
 
-type IoniconName = ComponentProps<typeof Ionicons>['name'];
+type LogoProps = { size?: number };
 
 type Props = {
   label: string;
   backgroundColor: string;
   textColor: string;
-  iconName: IoniconName;
-  iconColor: string;
+  Logo: ComponentType<LogoProps>;
   onPress?: () => void;
 };
 
 /**
  * Maps to Figma's `Button/Google`, `Button/Apple`, `Button/Kakao` instances
- * on the Login screen (node 3177:2619 "LoginButtons").
- *
- * NOTE: icons currently use @expo/vector-icons brand glyphs as a stand-in —
- * this sandbox's network policy blocks downloading the exact Figma-exported
- * logo assets (www.figma.com is not reachable, confirmed again via
- * get_design_context/download_assets on 2026-08-23). Swap `iconName` usage
- * below for the real exported assets once reachable — nodes:
- * Logo/Google 3182:2741, Logo/Apple 3182:2740, Logo/Kakao 3182:2739.
+ * on the Login screen (node 3177:2619 "LoginButtons"). The brand mark is one
+ * of the vector logos in `./icons/SocialLogos.tsx` (ported from Figma nodes
+ * Logo/Google 3182:2741, Logo/Apple 3182:2740, Logo/Kakao 3182:2739; raw
+ * sources saved at assets/logo-google.svg, assets/logo-apple.svg,
+ * assets/logo-kakao.svg).
  */
-export default function SocialLoginButton({
-  label,
-  backgroundColor,
-  textColor,
-  iconName,
-  iconColor,
-  onPress,
-}: Props) {
+export default function SocialLoginButton({ label, backgroundColor, textColor, Logo, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -41,7 +29,7 @@ export default function SocialLoginButton({
       accessibilityLabel={label}
     >
       <View style={styles.content}>
-        <Ionicons name={iconName} size={18} color={iconColor} />
+        <Logo size={18} />
         <Text style={[styles.label, { color: textColor }]}>{label}</Text>
       </View>
     </Pressable>

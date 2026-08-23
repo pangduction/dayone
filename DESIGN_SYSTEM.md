@@ -91,16 +91,19 @@ extrapolate from a similar-looking row above.
 ## 5. Icons and images
 
 - Reuse `@expo/vector-icons` (`Ionicons`, etc.) when a matching glyph
-  exists — that's already the project's convention (see
-  `SocialLoginButton.tsx`).
+  exists — that's already the project's convention.
 - Otherwise, use the exact asset exported by Figma for that node (via
   `get_design_context` / `download_assets`), not a hand-drawn approximation.
   Figma's exported asset URLs expire after ~7 days — save the file into
-  `assets/` rather than referencing the URL directly.
+  `assets/` rather than referencing the URL directly. See
+  `assets/logo-google.svg` / `logo-apple.svg` / `logo-kakao.svg` (raw
+  Figma vectors) plus `src/components/icons/SocialLogos.tsx` (their
+  `react-native-svg` rendering, since the project has no `.svg`-import
+  transformer configured) and `assets/splash-collage.png` for the pattern —
+  a plain PNG can be `require()`'d directly, a vector asset gets ported into
+  an `Svg`/`Path` component whose path data matches its `assets/*.svg` file.
 - If Figma asset hosts aren't reachable from the current sandbox, add a
-  `TODO` comment describing the real asset to swap in later — see the
-  existing notes in `SocialLoginButton.tsx` / `LoginScreen.tsx` for the
-  expected format.
+  `TODO` comment describing the real asset to swap in later.
 
 ## 6. Where things live
 
