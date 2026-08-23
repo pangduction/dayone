@@ -109,6 +109,7 @@ export const colors = {
   swatchDefault: palette.swatchDefault,
   buttonSecondary: palette.buttonSecondaryFill,
   buttonSecondaryRing: palette.buttonSecondaryRing,
+  yearLabel: palette.neutral900, // Figma "Neutral/900" — the month picker's year (node 3229:4220)
   surfaceDark: palette.g600, // Figma G600 — filled tile on a light sheet (Modal/Gallery's camera tile, node 3198:4434)
 };
 

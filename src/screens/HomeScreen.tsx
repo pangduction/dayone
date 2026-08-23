@@ -8,6 +8,7 @@ import { IcArrowDown, IcCalendar, IcPlus, IcPulse, IcRows, IcShare } from '../co
 import IconButton from '../components/IconButton';
 import IconButtonContained from '../components/IconButtonContained';
 import AlertBanner from '../components/AlertBanner';
+import MonthPickerModal from '../components/MonthPickerModal';
 import CalendarDateCell from '../components/CalendarDateCell';
 import { dateKey, getPostsForMonth } from '../data/posts';
 import type { Post } from '../data/posts';
@@ -25,16 +26,20 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * are the same screen with a different kind of post on today. See
  * CalendarDateCell.tsx for the per-day states.
  *
- * Still deferred, by plan rather than guessed at: month/year navigation
- * (tapping the title) isn't wired up — a picker screen is coming separately.
+ * Tapping the title opens Figma's Modal/Date-Default to move to another
+ * month; the calendar's month is state rather than always today's.
  */
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Home'>>();
   const today = useMemo(() => new Date(), []);
-  const year = today.getFullYear();
-  const month = today.getMonth();
   const todayKey = useMemo(() => dateKey(today), [today]);
+
+  // Which month the calendar is showing. Starts on today's, and the title
+  // opens a picker to move it (Figma's Modal/Date-Default, node 3229:4259).
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth());
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   // Keyed by date ('YYYY-MM-DD'). The whole post is kept, not just the date,
   // because a cell renders the post's photo when it has one.
@@ -98,16 +103,19 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.calendar}>
-        <View style={styles.titleRow}>
+        <Pressable
+          style={styles.titleRow}
+          onPress={() => setPickerOpen(true)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Change month"
+        >
           <Text style={[typography.calendarTitle, styles.titleText]}>
-            {today.toLocaleDateString('en-US', { month: 'long' })}
+            {new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' })}
           </Text>
           <Text style={[typography.calendarTitle, styles.titleText]}>{year}</Text>
-          {/* TODO: month/year picker is a separate screen, not wired up yet. */}
-          <Pressable hitSlop={8}>
-            <IcArrowDown size={20} color={colors.textPrimary} />
-          </Pressable>
-        </View>
+          <IcArrowDown size={20} color={colors.textPrimary} />
+        </Pressable>
 
         <View style={styles.calendarBody}>
           <View style={styles.weekdayRow}>
@@ -159,6 +167,18 @@ export default function HomeScreen() {
           <Text style={[typography.overline, styles.recordLabel]}>{postCount}</Text>
         </View>
       </View>
+
+      <MonthPickerModal
+        visible={pickerOpen}
+        year={year}
+        month={month}
+        onClose={() => setPickerOpen(false)}
+        onConfirm={(next) => {
+          setYear(next.year);
+          setMonth(next.month);
+          setPickerOpen(false);
+        }}
+      />
 
       {flash !== null ? (
         <View style={styles.flash} pointerEvents="none">

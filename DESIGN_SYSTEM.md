@@ -88,7 +88,8 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Component (Figma name)              | Padding (H / V)   | Gap  | Radius       | Notes |
 |--------------------------------------|-------------------|------|--------------|-------|
 | Button / M / Ghost / Secondary       | 16 / —            | —    | 12 (`radius.md`) | min-height 40, white bg, 1px **`colors.borderSubtle`** (G100 `#E9E9E9` — the component node `3192:9209` binds G100, not the G200 this row previously said), `shadows.xs`, centered `typography.subtext` label in `colors.textSecondary`. Used for the post detail header's "Edit". See `GhostButton.tsx`. |
-| Chip Button                          | 8 / 10            | —    | 8 (`radius.sm`)  | height 40, `shadows.xs`; active border = `colors.accent`, inactive = `colors.border` |
+| Chip Button                          | 8 / 10            | —    | 8 (`radius.sm`)  | 72.5×40 (four across a sheet's 326 content width), white bg, `shadows.xs`, `typography.body` label. Three states: enabled = `colors.border` border / `colors.textStrong` label; active = `colors.accent` border, same label; disabled = same border with a `colors.borderSubtle` label. Node `3198:4670`. See `ChipButton.tsx`. |
+| Button / M / Icon / Secondary        | 12 / —            | —    | 12 (`radius.md`) | the icon-only sibling of Ghost/Secondary: min-height 40, min-width 44, white bg, 1px `colors.borderSubtle`, `shadows.xs`. Used for the month picker's year stepper. Node `3198:4642`. See `GhostIconButton.tsx`. |
 | Alert                                | 20 / 8            | 8    | 8 (`radius.sm`)  | `colors.success` bg, 24pt white `ic/check`, then the message in `typography.alert` (white). The screen showing it does the positioning — Figma pins it at top 47 with 16 of horizontal padding, over the header (node `3233:5182`). Node `3233:5183`. See `AlertBanner.tsx`, named that way so it can't be confused with React Native's own `Alert`. |
 | Input (text field)                   | 12 / 10           | —    | 8 (`radius.sm`)  | white bg, `border` 1px, `shadows.xs`, placeholder in `colors.textPlaceholder` |
 | Input with label                     | —                 | 8    | —            | label uses `typography.subtext` in `colors.textSecondary`, 8px above the input |
@@ -112,6 +113,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Modal sheet (shell)                  | 16 (content)      | 8 (actions) | 24 (`radius.xl`) | white sheet, `shadows.xl`; title `typography.subtext` with paddingTop 20 + a 20px spacer row, close button absolute at right 8 / top 8.4; content paddingTop 20; actions block paddingTop 24 / paddingBottom 24. Backdrop = `colors.backdrop` over a blur, sheet bottom-aligned with paddingTop 16 / paddingBottom 40. Every Figma modal repeats this skeleton — build new ones on `ModalSheet.tsx` rather than restating it. |
 | Modal/Gallery                        | —                 | 3 (tiles) | —            | fills the shell above: square `radius.sm` tiles, first `colors.surfaceDark` + 32px `ic/camera`, rest recent photos with a `colors.borderSubtle` hairline; the row is drawn 404 wide inside a 326 content area, so it scrolls horizontally. Action = "Go to Gallery". Node `3198:4446`. See `GalleryModal.tsx`. |
 | Modal/Leave                          | —                 | 8    | —            | fills the shell above: body in `typography.body` / `colors.textSecondary`, then "Leave" (Primary, accent tone) over "Keep Editing" (White). Raised when leaving the Add screen with unsaved edits. Node `3233:4557`, in context `3233:4558`. See `LeaveModal.tsx`. |
+| Modal/Date-Default (month picker)    | 16 (content)      | 16   | —            | fills the shell above: a year stepper (two Button / M / Icon / Secondary either side of the year in `typography.titleMedium` / `colors.yearLabel`, gap 24), a 1px `colors.borderSubtle` divider, then twelve Chip Buttons wrapping four to a row at gap 8, and a "Done" primary. Node `3229:4259`, in context `3229:4271`. See `MonthPickerModal.tsx`. |
 | Modal/Delete-Post                    | —                 | 8    | —            | fills the shell above: two body lines in `typography.body` / `colors.textSecondary`, then "Delete" (Primary, **warning** tone) over "Cancel" (White). Raised by the post detail header's Delete. Node `3233:4928`, in context `3233:4929`. See `DeletePostModal.tsx`. |
 
 When implementing a component not in this table, pull its real spec with
@@ -218,7 +220,11 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   rather than markup.
 - **No writing ahead.** DayOne records the day you are living, so calendar
   days after today are inert: they don't open Add and don't open a post.
-  Today and past days both stay writable.
+  Today and past days both stay writable. The month picker follows the same
+  rule — months after the current one are disabled chips, and its forward
+  year arrow stops at the current year, since a later year would have nothing
+  selectable in it. (Figma greys the months; the arrow's stop follows from the
+  rule rather than being drawn.)
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.

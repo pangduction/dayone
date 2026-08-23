@@ -9,6 +9,8 @@ import Svg, { Path } from 'react-native-svg';
  *   - ic/check — the Alert banner's tick, assets/ic/check.svg
  *   - ic/play  — Button/Secondary/Default's glyph, assets/ic/play.svg
  *   - ic/pause — its recording-in-progress counterpart, assets/ic/pause.svg
+ *   - ic/arrow-left-l · ic/arrow-right-l — the month picker's year stepper,
+ *     assets/ic/arrow-left-l.svg / arrow-right-l.svg
  */
 
 type IconProps = {
@@ -49,6 +51,28 @@ export function IcPause({ size = 24, color }: IconProps) {
       />
       <Path
         d="M9.27568 5.46995C9.71088 5.63029 10 6.04492 10 6.50872L10 17.4912C10 17.955 9.71088 18.3696 9.27568 18.53C8.45228 18.8333 7.54772 18.8333 6.72432 18.53C6.28912 18.3696 6 17.955 6 17.4912L6 6.50872C6 6.04492 6.28912 5.63029 6.72432 5.46995C7.54772 5.16659 8.45228 5.16659 9.27568 5.46995Z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+export function IcArrowLeftL({ size = 20, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M14.4694 3.5498C14.7623 3.25701 15.2371 3.25699 15.5299 3.5498C15.8227 3.84267 15.8227 4.31747 15.5299 4.61035L9.00941 11.1309C8.533 11.608 8.53261 12.3932 9.00941 12.8701L15.5299 19.3896C15.8228 19.6825 15.8227 20.1573 15.5299 20.4502C15.237 20.7428 14.7622 20.743 14.4694 20.4502L7.94887 13.9307C6.88613 12.8678 6.88624 11.1322 7.94887 10.0693L14.4694 3.5498Z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+export function IcArrowRightL({ size = 20, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M8.37982 3.54975C8.67272 3.25685 9.14748 3.25685 9.44037 3.54975L15.9609 10.0693C17.0236 11.1322 17.0236 12.8678 15.9609 13.9306L9.44037 20.4501C9.14752 20.743 8.67272 20.7429 8.37982 20.4501C8.08701 20.1572 8.08696 19.6825 8.37982 19.3896L14.8994 12.8701C15.3764 12.393 15.3763 11.6079 14.8994 11.1308L8.37982 4.61029C8.08693 4.3174 8.08694 3.84264 8.37982 3.54975Z"
         fill={color}
       />
     </Svg>
