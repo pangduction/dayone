@@ -134,6 +134,14 @@ export async function savePost(input: {
   return created;
 }
 
+/** Removes the post for a date, if there is one. */
+export async function deletePost(date: string): Promise<void> {
+  const posts = await readAll();
+  const remaining = posts.filter((post) => post.date !== date);
+  if (remaining.length === posts.length) return;
+  await writeAll(remaining);
+}
+
 /** Posts whose date falls in the given month. `month` is 0-indexed, matching `Date#getMonth()`. */
 export async function getPostsForMonth(year: number, month: number): Promise<Post[]> {
   const posts = await readAll();

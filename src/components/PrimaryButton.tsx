@@ -8,10 +8,11 @@ type Props = {
   disabled?: boolean;
   /**
    * Which fill the instance uses. Figma's master (node 3192:9208) is
-   * `colors.buttonDark` — Modal/Gallery's "Go to Gallery" — but Modal/Leave's
-   * "Leave" (node 3233:4552) overrides the fill to Accent.
+   * `colors.buttonDark` — Modal/Gallery's "Go to Gallery" — while instances
+   * override it: Accent on Modal/Leave's "Leave" (node 3233:4552), Warning on
+   * Modal/Delete-Post's "Delete" (node 3233:4923).
    */
-  tone?: 'dark' | 'accent';
+  tone?: 'dark' | 'accent' | 'warning';
   style?: StyleProp<ViewStyle>;
 };
 
@@ -25,7 +26,13 @@ export default function PrimaryButton({ label, onPress, disabled, tone = 'dark',
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={[styles.button, tone === 'accent' && styles.buttonAccent, disabled && styles.buttonDisabled, style]}
+      style={[
+        styles.button,
+        tone === 'accent' && styles.buttonAccent,
+        tone === 'warning' && styles.buttonWarning,
+        disabled && styles.buttonDisabled,
+        style,
+      ]}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
@@ -49,6 +56,9 @@ const styles = StyleSheet.create({
   },
   buttonAccent: {
     backgroundColor: colors.accent,
+  },
+  buttonWarning: {
+    backgroundColor: colors.warning,
   },
   buttonDisabled: {
     opacity: 0.4,
