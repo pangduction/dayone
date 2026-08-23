@@ -127,16 +127,22 @@ the wrong glyph.
   Figma fill(s) straight into the component; a single-color DayOne icon
   (`HomeIcons.tsx`) instead takes a required `color` prop so call sites pass
   a `colors.*` token, per §1/§2, rather than a hardcoded fill.
+- **Exported assets ship as a full 24x24 canvas** with the glyph already
+  inset inside it (`assets/ic/*.svg`). Port them with
+  `viewBox="0 0 24 24"` and let `size` be the frame — that reproduces
+  Figma's inset on its own, so the call site needs no wrapper `View`.
+  Don't re-derive a tight glyph bounding box: doing that pushes the inset
+  into the caller's layout, and getting that wrapper wrong is what made
+  the bottom nav's icon/label spacing drift twice.
 - If Figma asset hosts aren't reachable from the current sandbox, add a
-  `TODO` comment describing the real asset to swap in later. This has come
-  up even though the Figma MCP tools themselves (`get_design_context`,
-  `download_assets`) work fine here: they confirm a node's exact frame
-  size, inset percentages, color, and node id, but every actual
-  `www.figma.com/api/mcp/asset/...` byte-fetch 403s from this sandbox's
-  outbound proxy. `src/components/icons/AddIcons.tsx` is the current
-  example — each export is an Ionicons stand-in sized to the real Figma
-  frame (so layout/gaps are already correct) with a `TODO` naming the exact
-  node to port from a session with unrestricted network access.
+  `TODO` comment describing the real asset to swap in later. Note that
+  this can happen even when the Figma MCP tools themselves
+  (`get_design_context`, `download_assets`) work: those confirm a node's
+  exact frame size, inset percentages, color, and node id, but the actual
+  `www.figma.com/api/mcp/asset/...` byte-fetch may be blocked by the
+  sandbox's outbound proxy. In that case the assets have to come in
+  through the repo instead (`assets/`), as they did for the Add screen's
+  icons.
 
 ## 6. Where things live
 

@@ -2,41 +2,40 @@ import Svg, { Path } from 'react-native-svg';
 
 /**
  * Vector icons for the Home / "Home-Calendar-Default" screen (Figma node
- * 3184:4117, fileKey Fv2MwZPH1NImXNF16W5cxw), ported 1:1 the same way as
- * `./SocialLogos.tsx`:
- *   - ic/rows       — header left,  instance I3184:5500;3183:2840
- *   - ic/share      — header right, instance I3184:5500;3183:2841;26:18522
- *   - ic/calendar   — nav "Home",   instance I3184:4123;3184:3525
- *   - ic/plus       — nav "Add",    instance I3184:4123;3184:3529
- *   - ic/pulse      — nav "Report", instance I3184:4123;3184:3533
- *   - ic/arrow-down — calendar title chevron, instance I3184:4121;3183:2858
- * Raw sources: assets/ic-rows.svg, ic-share.svg, ic-calendar.svg,
- * ic-plus.svg, ic-pulse.svg, ic-arrow-down.svg.
+ * 3184:4117, fileKey Fv2MwZPH1NImXNF16W5cxw), ported 1:1 from the exported
+ * assets the same way as `./AddIcons.tsx` / `./SocialLogos.tsx`:
+ *   - ic/rows       — header left,  assets/ic/rows.svg
+ *   - ic/share      — header right, assets/ic/share.svg
+ *   - ic/calendar   — nav "Home",   assets/ic/calendar.svg
+ *   - ic/plus       — nav "Add",    assets/ic/plus.svg
+ *   - ic/pulse      — nav "Report", assets/ic/pulse.svg
+ *   - ic/arrow-down — calendar title chevron, assets/ic/arrow-down.svg
  *
- * Each Figma icon component is a fixed-size square/tap-target frame (24×24,
- * or 20×20 for the chevron) with the visible glyph inset inside it — the
- * `viewBox` below is the glyph's own tight bounding box (matching the raw
- * .svg asset exactly), and `size` is that outer frame, so passing the same
- * `size` the Figma instance uses (24, or 20 for arrow-down) reproduces the
- * exact inset when the icon sits in a centered container, same as the
- * `Ionicons` calls these replace.
+ * Every asset ships as a full 24x24 canvas with the glyph already inset
+ * inside it, so `viewBox="0 0 24 24"` plus `size` reproduces Figma's exact
+ * inset on its own — no outer frame `View` needed at the call site. (These
+ * were previously ported at their tight glyph bounding box, which required
+ * call sites to wrap them in a 24x24 frame to recreate that inset; getting
+ * that wrapper wrong is what made the bottom nav's icon/label spacing drift
+ * twice. The full-canvas form removes that failure mode.)
+ *
+ * `size` is the frame: 24 everywhere except the calendar-title chevron,
+ * whose Figma instance is 20.
  *
  * Unlike the brand marks in SocialLogos.tsx, these are DayOne's own
  * single-color glyphs, so `color` is a required prop — callers pass a
  * `colors.*` token (e.g. `colors.textPrimary`, `colors.textPlaceholder`),
- * never a value baked into the component (DESIGN_SYSTEM.md §1/§2). Figma's
- * exported fill for each (kept as-is in the raw assets/*.svg files) happens
- * to equal a `palette.g*` step already aliased in `colors` — see the call
- * sites in HomeScreen.tsx.
+ * never the `#030303` fill baked into the raw asset (DESIGN_SYSTEM.md §1/§2).
  *
- * TODO: the master `Navigation` component (node 3184:3668, the
- * component-set on the Design System page, not this screen's instance)
- * shows that `IcCalendar` and `IcPulse` each swap to a *different* glyph
- * (not just a recolor) when their tab is selected vs. not — `IcCalendar`
- * here is the Home-selected variant, `IcPulse` here is the Report-
- * unselected variant. Port the other two (Home-unselected calendar,
- * Report-selected pulse) from that same node when the Report screen or
- * real tab switching is built — don't reuse these as-is for both states.
+ * Selected vs. unselected: `assets/Navigation.svg` (the exported master
+ * component-set, node 3184:3668) renders both variants, and their path data
+ * is identical apart from a 104px vertical offset between the two rows and
+ * the `fill` (G900 #030303 selected / G400 #9EA4AA not) — i.e. the calendar
+ * and pulse glyphs are *recolored*, not swapped for a different shape. So
+ * each icon here serves both states; the call site just passes
+ * `colors.textPrimary` or `colors.textPlaceholder`. (An earlier comment
+ * here claimed they swapped glyphs — that was an unverified guess,
+ * corrected once the real asset was available.)
  */
 
 type IconProps = {
@@ -45,19 +44,18 @@ type IconProps = {
 };
 
 export function IcRows({ size = 24, color }: IconProps) {
-  const scale = size / 24;
   return (
-    <Svg width={17.7029 * scale} height={17.2924 * scale} viewBox="0 0 17.7029 17.2924" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M1.80871 1.8386C1.3971 3.17269 1.3971 4.61973 1.80871 5.95382C6.49302 6.40528 11.2099 6.40528 15.8942 5.95382C16.3058 4.61973 16.3058 3.17269 15.8942 1.8386C11.2099 1.38713 6.49303 1.38713 1.80871 1.8386ZM1.56022 0.355672C6.40948 -0.118557 11.2934 -0.118557 16.1427 0.355672C16.6773 0.407948 17.1265 0.774239 17.2907 1.28001C17.8403 2.9731 17.8403 4.81931 17.2907 6.51241C17.1265 7.01818 16.6773 7.38447 16.1427 7.43675C11.2934 7.91097 6.40948 7.91097 1.56021 7.43675C1.02566 7.38447 0.576394 7.01818 0.41221 6.51241C-0.137403 4.81931 -0.137403 2.9731 0.41221 1.28001C0.576394 0.774239 1.02566 0.407948 1.56022 0.355672Z"
+        d="M4.95714 5.19236C4.54554 6.52645 4.54554 7.97349 4.95714 9.30758C9.64146 9.75904 14.3583 9.75904 19.0427 9.30758C19.4543 7.97349 19.4543 6.52645 19.0427 5.19236C14.3583 4.74089 9.64146 4.74089 4.95714 5.19236ZM4.70865 3.70943C9.55792 3.2352 14.4419 3.2352 19.2912 3.70943C19.8257 3.76171 20.275 4.128 20.4392 4.63377C20.9888 6.32686 20.9888 8.17307 20.4392 9.86617C20.275 10.3719 19.8257 10.7382 19.2912 10.7905C14.4419 11.2647 9.55792 11.2647 4.70865 10.7905C4.1741 10.7382 3.72483 10.3719 3.56065 9.86617C3.01103 8.17307 3.01103 6.32686 3.56065 4.63377C3.72483 4.128 4.1741 3.76171 4.70865 3.70943Z"
         fill={color}
       />
       <Path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M1.80871 11.3386C1.3971 12.6727 1.3971 14.1197 1.80871 15.4538C6.49302 15.9053 11.2099 15.9053 15.8942 15.4538C16.3058 14.1197 16.3058 12.6727 15.8942 11.3386C11.2099 10.8871 6.49303 10.8871 1.80871 11.3386ZM1.56022 9.85567C6.40948 9.38144 11.2934 9.38144 16.1427 9.85567C16.6773 9.90795 17.1265 10.2742 17.2907 10.78C17.8403 12.4731 17.8403 14.3193 17.2907 16.0124C17.1265 16.5182 16.6773 16.8845 16.1427 16.9367C11.2934 17.411 6.40948 17.411 1.56021 16.9367C1.02566 16.8845 0.576394 16.5182 0.41221 16.0124C-0.137403 14.3193 -0.137403 12.4731 0.41221 10.78C0.576394 10.2742 1.02566 9.90795 1.56022 9.85567Z"
+        d="M4.95714 14.6924C4.54554 16.0265 4.54554 17.4735 4.95714 18.8076C9.64146 19.259 14.3583 19.259 19.0427 18.8076C19.4543 17.4735 19.4543 16.0265 19.0427 14.6924C14.3583 14.2409 9.64146 14.2409 4.95714 14.6924ZM4.70865 13.2094C9.55792 12.7352 14.4419 12.7352 19.2912 13.2094C19.8257 13.2617 20.275 13.628 20.4392 14.1338C20.9888 15.8269 20.9888 17.6731 20.4392 19.3662C20.275 19.8719 19.8257 20.2382 19.2912 20.2905C14.4419 20.7647 9.55792 20.7647 4.70865 20.2905C4.1741 20.2382 3.72483 19.8719 3.56065 19.3662C3.01103 17.6731 3.01103 15.8269 3.56065 14.1338C3.72483 13.628 4.1741 13.2617 4.70865 13.2094Z"
         fill={color}
       />
     </Svg>
@@ -65,15 +63,14 @@ export function IcRows({ size = 24, color }: IconProps) {
 }
 
 export function IcShare({ size = 24, color }: IconProps) {
-  const scale = size / 24;
   return (
-    <Svg width={15 * scale} height={14.207 * scale} viewBox="0 0 15 14.207" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M14.5 8.20703C14.7761 8.20703 15 8.43089 15 8.70703V14.207H0V8.70703C0 8.43089 0.223858 8.20703 0.5 8.20703C0.776142 8.20703 1 8.43089 1 8.70703V13.207H14V8.70703C14 8.43089 14.2239 8.20703 14.5 8.20703Z"
+        d="M19 12.5C19.2761 12.5 19.5 12.7239 19.5 13V18.5H4.5V13C4.5 12.7239 4.72386 12.5 5 12.5C5.27614 12.5 5.5 12.7239 5.5 13V17.5H18.5V13C18.5 12.7239 18.7239 12.5 19 12.5Z"
         fill={color}
       />
       <Path
-        d="M10.8535 3.35352C11.0488 3.54878 11.0488 3.86528 10.8535 4.06055C10.6583 4.2558 10.3417 4.25581 10.1465 4.06055L8 1.91406V9.70703C8 9.98317 7.77614 10.207 7.5 10.207C7.22386 10.207 7 9.98317 7 9.70703V1.91406L4.85352 4.06055C4.65825 4.2558 4.34174 4.25581 4.14648 4.06055C3.95124 3.86529 3.95124 3.54877 4.14648 3.35352L7.5 0L10.8535 3.35352Z"
+        d="M15.3535 7.64648C15.5488 7.84175 15.5488 8.15825 15.3535 8.35352C15.1583 8.54877 14.8417 8.54878 14.6465 8.35352L12.5 6.20703V14C12.5 14.2761 12.2761 14.5 12 14.5C11.7239 14.5 11.5 14.2761 11.5 14V6.20703L9.35352 8.35352C9.15825 8.54877 8.84174 8.54878 8.64648 8.35352C8.45124 8.15825 8.45124 7.84174 8.64648 7.64648L12 4.29297L15.3535 7.64648Z"
         fill={color}
       />
     </Svg>
@@ -81,13 +78,12 @@ export function IcShare({ size = 24, color }: IconProps) {
 }
 
 export function IcCalendar({ size = 24, color }: IconProps) {
-  const scale = size / 24;
   return (
-    <Svg width={17.9205 * scale} height={17.2691 * scale} viewBox="0 0 17.9205 17.2691" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M3.96027 0C4.37448 0 4.71027 0.335786 4.71027 0.75V2.41763C7.538 2.1658 10.3825 2.1658 13.2103 2.41763V0.75C13.2103 0.335786 13.5461 0 13.9603 0C14.3745 0 14.7103 0.335786 14.7103 0.75V2.56644C16.2033 2.77754 17.3828 3.95847 17.5825 5.46484L17.6691 6.11779C18.0331 8.86412 18.0017 11.6484 17.5757 14.3859C17.3647 15.7419 16.263 16.7835 14.8973 16.9181L13.7043 17.0358C10.5492 17.3469 7.37124 17.3469 4.21619 17.0358L3.02319 16.9181C1.65745 16.7835 0.555787 15.7419 0.344778 14.3859C-0.0811805 11.6484 -0.112621 8.86412 0.251414 6.11779L0.337966 5.46484C0.537643 3.95845 1.71719 2.77751 3.21027 2.56643V0.75C3.21027 0.335786 3.54605 0 3.96027 0ZM4.40543 3.9528C7.43462 3.65408 10.4859 3.65408 13.515 3.9528L14.4205 4.0421C15.2872 4.12757 15.9811 4.79854 16.0955 5.66194L16.1821 6.31489C16.2123 6.543 16.2397 6.77139 16.2641 7H1.65633C1.68081 6.77139 1.70817 6.54301 1.73841 6.3149L1.82496 5.66194C1.93941 4.79854 2.63323 4.12757 3.49998 4.0421L4.40543 3.9528ZM1.5371 8.5C1.43892 10.3881 1.53565 12.2832 1.82694 14.1552C1.93278 14.8354 2.48536 15.3578 3.1704 15.4254L4.3634 15.543C7.42054 15.8445 10.4999 15.8445 13.5571 15.543L14.7501 15.4254C15.4351 15.3578 15.9877 14.8354 16.0935 14.1552C16.3848 12.2832 16.4816 10.3881 16.3834 8.5H1.5371Z"
+        d="M6.99982 3.25C7.41403 3.25 7.74982 3.58579 7.74982 4V5.66763C10.5776 5.4158 13.4221 5.4158 16.2498 5.66763V4C16.2498 3.58579 16.5856 3.25 16.9998 3.25C17.414 3.25 17.7498 3.58579 17.7498 4V5.81644C19.2429 6.02754 20.4224 7.20847 20.6221 8.71484L20.7086 9.36779C21.0726 12.1141 21.0412 14.8984 20.6152 17.6359C20.4042 18.9919 19.3026 20.0335 17.9368 20.1681L16.7438 20.2858C13.5888 20.5969 10.4108 20.5969 7.25574 20.2858L6.06274 20.1681C4.697 20.0335 3.59534 18.9919 3.38433 17.6359C2.95837 14.8984 2.92693 12.1141 3.29097 9.36779L3.37752 8.71484C3.57719 7.20845 4.75674 6.02751 6.24982 5.81643V4C6.24982 3.58579 6.5856 3.25 6.99982 3.25ZM7.44498 7.2028C10.4742 6.90408 13.5254 6.90408 16.5546 7.2028L17.46 7.2921C18.3268 7.37757 19.0206 8.04854 19.1351 8.91194L19.2216 9.56489C19.2519 9.793 19.2792 10.0214 19.3037 10.25H4.69588C4.72036 10.0214 4.74772 9.79301 4.77796 9.5649L4.86451 8.91194C4.97896 8.04854 5.67278 7.37757 6.53953 7.2921L7.44498 7.2028ZM4.57665 11.75C4.47847 13.6381 4.5752 15.5332 4.86649 17.4052C4.97233 18.0854 5.52491 18.6078 6.20995 18.6754L7.40295 18.793C10.4601 19.0945 13.5395 19.0945 16.5966 18.793L17.7896 18.6754C18.4747 18.6078 19.0272 18.0854 19.1331 17.4052C19.4244 15.5332 19.5211 13.6381 19.4229 11.75H4.57665Z"
         fill={color}
       />
     </Svg>
@@ -95,11 +91,10 @@ export function IcCalendar({ size = 24, color }: IconProps) {
 }
 
 export function IcPlus({ size = 24, color }: IconProps) {
-  const scale = size / 24;
   return (
-    <Svg width={11.5 * scale} height={11.5 * scale} viewBox="0 0 11.5 11.5" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M5.75 0C6.16421 0 6.5 0.335786 6.5 0.75V5H10.75C11.1642 5 11.5 5.33579 11.5 5.75C11.5 6.16421 11.1642 6.5 10.75 6.5H6.5V10.75C6.5 11.1642 6.16421 11.5 5.75 11.5C5.33579 11.5 5 11.1642 5 10.75V6.5H0.75C0.335787 6.5 2.53566e-07 6.16421 0 5.75C1.81059e-08 5.33579 0.335787 5 0.75 5H5V0.75C5 0.335786 5.33579 0 5.75 0Z"
+        d="M12 6.25C12.4142 6.25 12.75 6.58579 12.75 7V11.25H17C17.4142 11.25 17.75 11.5858 17.75 12C17.75 12.4142 17.4142 12.75 17 12.75H12.75V17C12.75 17.4142 12.4142 17.75 12 17.75C11.5858 17.75 11.25 17.4142 11.25 17V12.75H7C6.58579 12.75 6.25 12.4142 6.25 12C6.25 11.5858 6.58579 11.25 7 11.25H11.25V7C11.25 6.58579 11.5858 6.25 12 6.25Z"
         fill={color}
       />
     </Svg>
@@ -107,13 +102,12 @@ export function IcPlus({ size = 24, color }: IconProps) {
 }
 
 export function IcPulse({ size = 24, color }: IconProps) {
-  const scale = size / 24;
   return (
-    <Svg width={22.5 * scale} height={15.5 * scale} viewBox="0 0 22.5 15.5" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M6.98967 0.625939C6.93246 0.284905 6.6495 0.0271905 6.30462 0.00200799C5.95974 -0.0231744 5.64234 0.190704 5.5362 0.51981L3.44627 7.00002H0.75C0.335786 7.00002 0 7.3358 0 7.75002C0 8.16423 0.335786 8.50002 0.75 8.50002H3.99242C4.31795 8.50002 4.6063 8.29003 4.70622 7.98022L6.01937 3.90859L7.85882 14.8741C7.91679 15.2197 8.20634 15.4791 8.5562 15.4988C8.90606 15.5186 9.22297 15.2934 9.31948 14.9566L11.749 6.47659L13.0289 10.9561C13.1113 11.2447 13.358 11.4564 13.6559 11.4941C13.9537 11.5318 14.2454 11.3882 14.3971 11.1291L15.9374 8.50002H17.1035C17.43 9.65427 18.4912 10.5 19.75 10.5C21.2688 10.5 22.5 9.2688 22.5 7.75002C22.5 6.23123 21.2688 5.00002 19.75 5.00002C18.4912 5.00002 17.43 5.84576 17.1035 7.00002H15.5076C15.2413 7.00002 14.995 7.14117 14.8605 7.37089L13.9894 8.85775L12.4711 3.54398C12.3792 3.2221 12.085 3.00014 11.7503 3.00002C11.4155 2.99989 11.1212 3.22164 11.029 3.54345L8.79002 11.3584L6.98967 0.625939ZM18.5 7.75002C18.5 7.05966 19.0596 6.50002 19.75 6.50002C20.4404 6.50002 21 7.05966 21 7.75002C21 8.44037 20.4404 9.00002 19.75 9.00002C19.0596 9.00002 18.5 8.44037 18.5 7.75002Z"
+        d="M8.23967 4.87594C8.18246 4.53491 7.8995 4.27719 7.55462 4.25201C7.20974 4.22683 6.89234 4.4407 6.7862 4.76981L4.69627 11.25H2C1.58579 11.25 1.25 11.5858 1.25 12C1.25 12.4142 1.58579 12.75 2 12.75H5.24242C5.56795 12.75 5.8563 12.54 5.95622 12.2302L7.26937 8.15859L9.10882 19.1241C9.16679 19.4697 9.45634 19.7291 9.8062 19.7488C10.1561 19.7686 10.473 19.5434 10.5695 19.2066L12.999 10.7266L14.2789 15.2061C14.3613 15.4947 14.608 15.7064 14.9059 15.7441C15.2037 15.7818 15.4954 15.6382 15.6471 15.3791L17.1874 12.75H18.3535C18.68 13.9043 19.7412 14.75 21 14.75C22.5188 14.75 23.75 13.5188 23.75 12C23.75 10.4812 22.5188 9.25002 21 9.25002C19.7412 9.25002 18.68 10.0958 18.3535 11.25H16.7576C16.4913 11.25 16.245 11.3912 16.1105 11.6209L15.2394 13.1078L13.7211 7.79398C13.6292 7.4721 13.335 7.25014 13.0003 7.25002C12.6655 7.24989 12.3712 7.47164 12.279 7.79345L10.04 15.6084L8.23967 4.87594ZM19.75 12C19.75 11.3097 20.3096 10.75 21 10.75C21.6904 10.75 22.25 11.3097 22.25 12C22.25 12.6904 21.6904 13.25 21 13.25C20.3096 13.25 19.75 12.6904 19.75 12Z"
         fill={color}
       />
     </Svg>
@@ -121,11 +115,10 @@ export function IcPulse({ size = 24, color }: IconProps) {
 }
 
 export function IcArrowDown({ size = 20, color }: IconProps) {
-  const scale = size / 20;
   return (
-    <Svg width={11.6672 * scale} height={6.36875 * scale} viewBox="0 0 11.6672 6.36875" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M10.7656 0H5.57398H0.898976C0.0989765 0 -0.301023 0.966667 0.265643 1.53333L4.58231 5.85C5.27398 6.54167 6.39898 6.54167 7.09064 5.85L8.73231 4.20833L11.4073 1.53333C11.9656 0.966667 11.5656 0 10.7656 0Z"
+        d="M17.9202 8.18005H11.6902H6.08024C5.12024 8.18005 4.64024 9.34005 5.32024 10.0201L10.5002 15.2001C11.3302 16.0301 12.6802 16.0301 13.5102 15.2001L15.4802 13.2301L18.6902 10.0201C19.3602 9.34005 18.8802 8.18005 17.9202 8.18005Z"
         fill={color}
       />
     </Svg>

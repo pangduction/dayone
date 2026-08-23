@@ -132,26 +132,20 @@ export default function HomeScreen() {
 
       <View style={styles.navigation}>
         <View style={styles.navItem}>
-          <View style={styles.navIconFrame}>
-            <IcCalendar size={24} color={colors.textPrimary} />
-          </View>
+          <IcCalendar size={24} color={colors.textPrimary} />
           <View style={styles.navSecondRow}>
             <View style={styles.navSelectedDot} />
           </View>
         </View>
         <Pressable style={styles.navItem} onPress={() => navigation.navigate('Add')} hitSlop={8}>
-          <View style={styles.navIconFrame}>
-            <IcPlus size={24} color={colors.textPlaceholder} />
-          </View>
+          <IcPlus size={24} color={colors.textPlaceholder} />
           <View style={styles.navSecondRow}>
             <Text style={[typography.overline, styles.navLabel]}>Add</Text>
           </View>
         </Pressable>
         {/* TODO: Report screen not implemented yet. */}
         <Pressable style={styles.navItem} hitSlop={8}>
-          <View style={styles.navIconFrame}>
-            <IcPulse size={24} color={colors.textPlaceholder} />
-          </View>
+          <IcPulse size={24} color={colors.textPlaceholder} />
           <View style={styles.navSecondRow}>
             <Text style={[typography.overline, styles.navLabel]}>Report</Text>
           </View>
@@ -299,15 +293,6 @@ const styles = StyleSheet.create({
   navItem: {
     width: 45,
     height: 45,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navIconFrame: {
-    // Figma's ic/calendar, ic/plus, ic/pulse each sit inset inside an
-    // invisible 24x24 frame — that frame's own height (not the glyph's
-    // tighter bounding box) is what creates the gap before the dot/label.
-    width: 24,
-    height: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },

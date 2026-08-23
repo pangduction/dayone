@@ -1,23 +1,27 @@
-import { Ionicons } from '@expo/vector-icons';
-import { View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 /**
- * Icon stand-ins for the Add screen (Figma "Add-Default" 3184:5508 /
- * "Add-Image-2" 3184:5903, fileKey Fv2MwZPH1NImXNF16W5cxw).
+ * Vector icons for the Add screen (Figma "Add-Default" 3184:5508 /
+ * "Add-Image-2" 3184:5903, fileKey Fv2MwZPH1NImXNF16W5cxw), ported 1:1 from
+ * the real exported assets (assets/ic/arrow-left.svg, microphone.svg,
+ * cross.svg, Fit.svg, Filled.svg, Image.svg) the same way as
+ * `./HomeIcons.tsx` / `./SocialLogos.tsx`.
  *
- * Unlike HomeIcons.tsx, these are NOT ported from real Figma vector data.
- * This sandbox can reach the Figma MCP tools themselves — get_design_context
- * and download_assets both confirm each icon's exact frame size, inset,
- * color, and node id below — but cannot fetch the actual asset bytes:
- * every www.figma.com/api/mcp/asset/... URL returns a 403 from this
- * sandbox's outbound proxy (confirmed via curl; not something a retry
- * fixes). Per DESIGN_SYSTEM.md §5's documented fallback, each icon here is
- * an Ionicons stand-in wrapped in a frame `View` sized to the real Figma
- * frame, so *layout* (gaps, tap targets, inset centering) is already
- * pixel-accurate — only the glyph shape itself is an approximation. Swap
- * the Ionicons call for a real ported <Svg>/<Path> (see HomeIcons.tsx for
- * the pattern) once the vector bytes are available from a session with
- * unrestricted network access.
+ * Unlike HomeIcons.tsx (whose viewBox is the glyph's own tight bounding
+ * box, requiring a separate outer frame View to reproduce Figma's inset),
+ * these exported assets already ship as a full 24x24 canvas with the glyph
+ * pre-inset inside it — so `viewBox="0 0 24 24"` plus `size` alone
+ * reproduces the exact Figma inset with no extra frame wrapper needed.
+ *
+ *   - ic/arrow-left — Add header back button, node 3184:5668
+ *   - ic/microphone — Add "Today's Story" mic button, node 3184:5911
+ *   - ic/Image      — empty-state "Add Today's Photo" glyph
+ *   - ic/cross      — Delete pill's trailing X, node I3192:11838;13:16347
+ *   - ic/Fit        — SegmentedButton's "Fit" glyph, node 3192:12018
+ *   - ic/Filled     — SegmentedButton's "Filled" glyph, node 3192:12026
+ *
+ * All are DayOne's own single-color glyphs, so `color` is a required prop
+ * (DESIGN_SYSTEM.md §1/§2) — never bake in the asset's own `#030303` fill.
  */
 
 type IconProps = {
@@ -25,62 +29,81 @@ type IconProps = {
   color: string;
 };
 
-/** TODO: port ic/arrow-left from node 3184:5668 — 24x24 frame, glyph inset
- * 21.58% top/bottom, 11.46% left/right. Ionicons stand-in for now. */
 export function IcArrowLeft({ size = 24, color }: IconProps) {
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Ionicons name="arrow-back" size={size * 0.75} color={color} />
-    </View>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9.04004 5.39952C9.33294 5.10679 9.80775 5.10668 10.1006 5.39952C10.3933 5.69237 10.3933 6.16721 10.1006 6.46006L5.30957 11.2501H20.5C20.9142 11.2501 21.25 11.5859 21.25 12.0001C21.2498 12.4142 20.9141 12.7501 20.5 12.7501H5.31152L10.1006 17.5392C10.3934 17.8319 10.3931 18.3068 10.1006 18.5997C9.80769 18.8926 9.33293 18.8926 9.04004 18.5997L2.96973 12.5304C2.82915 12.3898 2.75008 12.1989 2.75 12.0001C2.75 11.8013 2.82917 11.6105 2.96973 11.4698L9.04004 5.39952Z"
+        fill={color}
+      />
+    </Svg>
   );
 }
 
-/** TODO: port ic/microphone from node 3184:5911 — 24x24 frame, glyph inset
- * 10.29%/3.13% vertical, 17.71% horizontal. Ionicons stand-in for now. */
 export function IcMicrophone({ size = 24, color }: IconProps) {
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Ionicons name="mic-outline" size={size * 0.75} color={color} />
-    </View>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M9.73374 2.6988C11.2291 2.39239 12.7711 2.39239 14.2664 2.6988C14.9133 2.83133 15.4113 3.34907 15.5187 4.00053L15.5729 4.32952C16.028 7.09121 16.028 9.90879 15.5729 12.6705L15.5187 12.9995C15.4113 13.6509 14.9133 14.1687 14.2665 14.3012C12.7711 14.6076 11.2291 14.6076 9.73374 14.3012C9.08693 14.1687 8.58888 13.6509 8.48151 12.9995L8.42729 12.6705C7.97215 9.90879 7.97215 7.09121 8.42729 4.32952L8.48151 4.00053C8.58888 3.34907 9.08693 2.83133 9.73374 2.6988ZM13.9654 4.16827C12.6686 3.90257 11.3315 3.90257 10.0348 4.16827C9.99698 4.17602 9.96783 4.20632 9.96155 4.24445L9.90733 4.57344C9.47881 7.17361 9.47881 9.82639 9.90733 12.4266L9.96155 12.7556C9.96783 12.7937 9.99698 12.824 10.0348 12.8317C11.3315 13.0974 12.6686 13.0974 13.9654 12.8317C14.0032 12.824 14.0324 12.7937 14.0386 12.7556L14.0929 12.4266C14.5214 9.82639 14.5214 7.17361 14.0929 4.57344L14.0386 4.24445C14.0324 4.20632 14.0032 4.17602 13.9654 4.16827Z"
+        fill={color}
+      />
+      <Path
+        d="M4.89487 11.2574C5.30499 11.1993 5.68456 11.4847 5.74268 11.8948L6.19318 15.0741C6.3149 15.9331 6.99582 16.6047 7.8564 16.7146C10.6077 17.0661 13.3925 17.0661 16.1438 16.7146C17.0044 16.6047 17.6853 15.9331 17.807 15.0741L18.2575 11.8948C18.3156 11.4847 18.6952 11.1993 19.1053 11.2574C19.5154 11.3155 19.8008 11.6951 19.7427 12.1052L19.2922 15.2845C19.0757 16.8124 17.8645 18.007 16.3338 18.2025C15.1436 18.3546 13.9474 18.4437 12.7501 18.47V22.5C12.7501 22.9142 12.4143 23.25 12.0001 23.25C11.5859 23.25 11.2501 22.9142 11.2501 22.5V18.47C10.0528 18.4437 8.8566 18.3546 7.66635 18.2025C6.13565 18.007 4.92452 16.8124 4.70802 15.2845L4.25751 12.1052C4.1994 11.6951 4.48475 11.3155 4.89487 11.2574Z"
+        fill={color}
+      />
+    </Svg>
   );
 }
 
-/** TODO: no Figma node fetched yet for the empty-photo-state glyph; this is
- * an unverified Ionicons placeholder, not a ported vector. */
 export function IcImage({ size = 24, color }: IconProps) {
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Ionicons name="image-outline" size={size * 0.85} color={color} />
-    </View>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3.20408 17.3127C3.13131 16.9958 3.08675 16.6627 3.05782 16.3086C3.02817 15.9458 3.01373 15.5393 3.00669 15.0833L5.34983 13.6345L5.42848 13.5857C5.75817 13.381 6.08976 13.1751 6.46333 13.079C6.78942 12.9951 7.1291 12.9779 7.46198 13.0286C7.84332 13.0866 8.19396 13.258 8.54259 13.4285L8.62575 13.4691L9.15411 13.7262C9.68349 13.9838 9.74664 14.001 9.78881 14.0065C9.86001 14.0159 9.93238 14.0099 10.001 13.9888C10.0417 13.9763 10.1011 13.9489 10.5802 13.6068L13.0859 11.8177L13.179 11.751C13.5633 11.4754 13.9489 11.1988 14.3938 11.08C14.7814 10.9766 15.1881 10.9679 15.5798 11.0548C16.0294 11.1545 16.4264 11.4145 16.822 11.6736L16.9179 11.7363L20.9992 14.3959C20.9966 15.1414 20.986 15.7727 20.9422 16.3086C20.9308 16.4484 20.9169 16.5849 20.8998 16.7184L15.8259 13.4119C15.2633 13.0452 15.1926 13.0175 15.1467 13.0073C15.0684 12.99 14.987 12.9917 14.9095 13.0124C14.864 13.0245 14.7946 13.0552 14.2481 13.4454L11.7424 15.2344L11.6612 15.2926C11.3225 15.5355 10.982 15.7796 10.5886 15.9005C10.2454 16.006 9.88347 16.0363 9.52751 15.9894C9.11943 15.9356 8.7431 15.7515 8.36868 15.5684L8.27892 15.5246L7.75057 15.2674C7.25896 15.0282 7.20094 15.0119 7.16131 15.0058C7.09473 14.9957 7.0268 14.9991 6.96158 15.0159C6.92276 15.0259 6.86668 15.048 6.40166 15.3355L3.20408 17.3127Z"
+        fill={color}
+      />
+      <Path d="M11 9C11 10.1046 10.1046 11 9 11C7.89543 11 7 10.1046 7 9C7 7.89543 7.89543 7 9 7C10.1046 7 11 7.89543 11 9Z" fill={color} />
+      <Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M10.3572 3H13.6428C14.7266 2.99999 15.6007 2.99998 16.3086 3.05782C17.0375 3.11737 17.6777 3.24318 18.27 3.54497C19.2108 4.02433 19.9757 4.78924 20.455 5.73005C20.7568 6.32234 20.8826 6.96253 20.9422 7.69138C21 8.39925 21 9.27339 21 10.3572V13.6428C21 14.7266 21 15.6008 20.9422 16.3086C20.8826 17.0375 20.7568 17.6777 20.455 18.27C19.9757 19.2108 19.2108 19.9757 18.27 20.455C17.6777 20.7568 17.0375 20.8826 16.3086 20.9422C15.6008 21 14.7266 21 13.6428 21H10.3572C9.27339 21 8.39925 21 7.69138 20.9422C6.96253 20.8826 6.32234 20.7568 5.73005 20.455C4.78924 19.9757 4.02433 19.2108 3.54497 18.27C3.24318 17.6777 3.11737 17.0375 3.05782 16.3086C2.99998 15.6007 2.99999 14.7266 3 13.6428V10.3572C2.99999 9.27341 2.99998 8.39926 3.05782 7.69138C3.11737 6.96253 3.24318 6.32234 3.54497 5.73005C4.02433 4.78924 4.78924 4.02433 5.73005 3.54497C6.32234 3.24318 6.96253 3.11737 7.69138 3.05782C8.39926 2.99998 9.27341 2.99999 10.3572 3ZM7.85424 5.05118C7.24907 5.10062 6.90138 5.19279 6.63803 5.32698C6.07354 5.6146 5.6146 6.07354 5.32698 6.63803C5.19279 6.90138 5.10062 7.24907 5.05118 7.85424C5.00078 8.47108 5 9.26339 5 10.4V13.6C5 14.7366 5.00078 15.5289 5.05118 16.1458C5.10062 16.7509 5.19279 17.0986 5.32698 17.362C5.6146 17.9265 6.07354 18.3854 6.63803 18.673C6.90138 18.8072 7.24907 18.8994 7.85424 18.9488C8.47108 18.9992 9.26339 19 10.4 19H13.6C14.7366 19 15.5289 18.9992 16.1458 18.9488C16.7509 18.8994 17.0986 18.8072 17.362 18.673C17.9265 18.3854 18.3854 17.9265 18.673 17.362C18.8072 17.0986 18.8994 16.7509 18.9488 16.1458C18.9992 15.5289 19 14.7366 19 13.6V10.4C19 9.26339 18.9992 8.47108 18.9488 7.85424C18.8994 7.24907 18.8072 6.90138 18.673 6.63803C18.3854 6.07354 17.9265 5.6146 17.362 5.32698C17.0986 5.19279 16.7509 5.10062 16.1458 5.05118C15.5289 5.00078 14.7366 5 13.6 5H10.4C9.26339 5 8.47108 5.00078 7.85424 5.05118Z"
+        fill={color}
+      />
+    </Svg>
   );
 }
 
-/** TODO: port ic/cross from node I3192:11838;13:16347 — 16x16 frame, glyph
- * inset ~10.23% all sides, rotated 45deg. Ionicons stand-in for now. */
 export function IcCross({ size = 16, color }: IconProps) {
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Ionicons name="close" size={size * 0.9} color={color} />
-    </View>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M16.773 7.22707C17.0659 7.51997 17.0659 7.99484 16.773 8.28773L13.0607 12L16.773 15.7124C17.0659 16.0052 17.0659 16.4801 16.773 16.773C16.4801 17.0659 16.0052 17.0659 15.7123 16.773L12 13.0607L8.28769 16.773C7.9948 17.0659 7.51992 17.0659 7.22703 16.773C6.93414 16.4801 6.93414 16.0052 7.22703 15.7124L10.9393 12L7.22703 8.28773C6.93414 7.99484 6.93414 7.51997 7.22703 7.22707C7.51992 6.93418 7.9948 6.93418 8.28769 7.22707L12 10.9394L15.7123 7.22707C16.0052 6.93418 16.4801 6.93418 16.773 7.22707Z"
+        fill={color}
+      />
+    </Svg>
   );
 }
 
-/** TODO: port ic/Fit from node 3192:12018 — 12x12 frame, glyph inset 7.29%
- * top/bottom, 5.21% left/right. Ionicons stand-in for now. */
 export function IcFit({ size = 12, color }: IconProps) {
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Ionicons name="scan-outline" size={size} color={color} />
-    </View>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M14 1.75C15.6974 1.75 17.0557 1.91838 18.0264 2.55762C19.0587 3.23753 19.4942 4.33138 19.6523 5.73438L19.7002 6.15039C19.7385 6.57552 19.75 7.02676 19.75 7.5V16.5C19.75 17.1215 19.729 17.7049 19.6543 18.2412L19.6553 18.2422C19.4993 19.6565 19.0644 20.7587 18.0264 21.4424C17.0557 22.0816 15.6974 22.25 14 22.25H10C8.30259 22.25 6.94433 22.0816 5.97363 21.4424C4.93559 20.7587 4.50067 19.6565 4.34473 18.2422L4.3457 18.2412C4.271 17.7049 4.25 17.1215 4.25 16.5V7.5C4.25 6.86911 4.27013 6.27731 4.34766 5.73438C4.50582 4.33138 4.94134 3.23753 5.97363 2.55762C6.94433 1.91838 8.30259 1.75 10 1.75H14ZM10 3.25C8.31741 3.25 7.36563 3.43729 6.79883 3.81055C6.29965 4.13934 5.97 4.7066 5.83594 5.92188C5.83506 5.92985 5.83317 5.93835 5.83203 5.94629C5.76964 6.38318 5.75 6.89118 5.75 7.5V16.5C5.75 17.1088 5.76964 17.6168 5.83203 18.0537C5.83317 18.0616 5.83506 18.0702 5.83594 18.0781C5.97 19.2934 6.29965 19.8607 6.79883 20.1895C7.36563 20.5627 8.31741 20.75 10 20.75H14C15.6826 20.75 16.6344 20.5627 17.2012 20.1895C17.7004 19.8607 18.03 19.2934 18.1641 18.0781L18.168 18.0537C18.2304 17.6168 18.25 17.1088 18.25 16.5V7.5C18.25 6.89118 18.2304 6.38318 18.168 5.94629C18.1668 5.93835 18.1649 5.92985 18.1641 5.92188C18.03 4.7066 17.7004 4.13934 17.2012 3.81055C16.6344 3.43729 15.6826 3.25 14 3.25H10ZM2 3.75C2.41421 3.75 2.75 4.08579 2.75 4.5V19.5C2.75 19.9142 2.41421 20.25 2 20.25C1.58579 20.25 1.25 19.9142 1.25 19.5V4.5C1.25 4.08579 1.58579 3.75 2 3.75ZM22 3.25C22.4142 3.25 22.75 3.58579 22.75 4V19C22.75 19.4142 22.4142 19.75 22 19.75C21.5858 19.75 21.25 19.4142 21.25 19V4C21.25 3.58579 21.5858 3.25 22 3.25Z"
+        fill={color}
+      />
+    </Svg>
   );
 }
 
-/** TODO: port ic/Filled from node 3192:12026 — 12x12 frame, glyph inset
- * 5.21% all sides. Ionicons stand-in for now. */
 export function IcFilled({ size = 12, color }: IconProps) {
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Ionicons name="square" size={size * 0.85} color={color} />
-    </View>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M5 1.25C5.41421 1.25 5.75 1.58579 5.75 2V4.25H14.0996C16.0481 4.25 17.5682 4.48225 18.543 5.45703C19.5177 6.43181 19.75 7.95186 19.75 9.90039V18.25H22C22.4142 18.25 22.75 18.5858 22.75 19C22.75 19.4142 22.4142 19.75 22 19.75H19.75V22C19.75 22.4142 19.4142 22.75 19 22.75C18.5858 22.75 18.25 22.4142 18.25 22V19.75H9.90039C7.95186 19.75 6.43181 19.5177 5.45703 18.543C4.48225 17.5682 4.25 16.0481 4.25 14.0996V5.75H2C1.58579 5.75 1.25 5.41421 1.25 5C1.25 4.58579 1.58579 4.25 2 4.25H4.25V2C4.25 1.58579 4.58579 1.25 5 1.25ZM5.75 14.0996C5.75 16.0511 6.01736 16.9822 6.51758 17.4824C7.0178 17.9826 7.94892 18.25 9.90039 18.25H18.25V9.90039C18.25 7.94892 17.9826 7.0178 17.4824 6.51758C16.9822 6.01736 16.0511 5.75 14.0996 5.75H5.75V14.0996Z"
+        fill={color}
+      />
+    </Svg>
   );
 }
