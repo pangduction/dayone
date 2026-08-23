@@ -60,6 +60,11 @@ export default function AddScreen() {
   const [text, setText] = useState('');
   const [html, setHtml] = useState<string | null>(null);
   const [initialHtml, setInitialHtml] = useState<string | null>(null);
+  // The editor builds its document once, on mount, so it must not mount until
+  // the stored post has arrived — otherwise it freezes as an empty document
+  // and the post's text is invisible (and the first keystroke would overwrite
+  // it with nothing).
+  const [loaded, setLoaded] = useState(false);
   const [editorFocused, setEditorFocused] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -95,19 +100,27 @@ export default function AddScreen() {
 
   useEffect(() => {
     let cancelled = false;
+    setLoaded(false);
     getPostByDate(targetKey).then((existing) => {
-      if (cancelled || !existing) return;
-      setPhotoUri(existing.photoUri);
-      setFitMode(existing.fitMode);
-      setText(existing.text);
-      setHtml(existing.html);
-      setInitialHtml(existing.html ?? escapeHtml(existing.text));
-      setBaseline({
-        photoUri: existing.photoUri,
-        fitMode: existing.fitMode,
-        text: existing.text,
-        html: existing.html,
-      });
+      if (cancelled) return;
+      if (existing) {
+        setPhotoUri(existing.photoUri);
+        setFitMode(existing.fitMode);
+        setText(existing.text);
+        setHtml(existing.html);
+        // A post written before the rich editor has no `html`; render its
+        // plain text as the document instead.
+        setInitialHtml(existing.html ?? escapeHtml(existing.text));
+        setBaseline({
+          photoUri: existing.photoUri,
+          fitMode: existing.fitMode,
+          text: existing.text,
+          html: existing.html,
+        });
+      } else {
+        setInitialHtml('');
+      }
+      setLoaded(true);
     });
     return () => {
       cancelled = true;
@@ -258,18 +271,20 @@ export default function AddScreen() {
         )}
 
         <View style={styles.textField}>
-          <RichTextEditor
-            ref={editorRef}
-            initialHtml={initialHtml ?? ''}
-            placeholder="Enter.."
-            onChange={({ html: nextHtml, text: nextText }) => {
-              setHtml(nextHtml);
-              setText(nextText);
-            }}
-            onActiveFormatsChange={setActiveFormats}
-            onFocus={() => setEditorFocused(true)}
-            onBlur={() => setEditorFocused(false)}
-          />
+          {loaded ? (
+            <RichTextEditor
+              ref={editorRef}
+              initialHtml={initialHtml ?? ''}
+              placeholder="Enter.."
+              onChange={({ html: nextHtml, text: nextText }) => {
+                setHtml(nextHtml);
+                setText(nextText);
+              }}
+              onActiveFormatsChange={setActiveFormats}
+              onFocus={() => setEditorFocused(true)}
+              onBlur={() => setEditorFocused(false)}
+            />
+          ) : null}
         </View>
       </View>
 

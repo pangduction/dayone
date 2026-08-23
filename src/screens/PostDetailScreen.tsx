@@ -80,7 +80,9 @@ export default function PostDetailScreen() {
       <View style={styles.detail}>
         <View style={styles.dateWritten}>
           <Text style={[typography.subtext, styles.dateLabel]}>{dateLabel}</Text>
-          <Text style={[typography.caption, styles.dayLabel]}>{dayLabel}</Text>
+          {/* Figma switched this line from Caption to Overline (node
+              3192:12409), matching the same change in Header/Add. */}
+          <Text style={[typography.overline, styles.dayLabel]}>{dayLabel}</Text>
         </View>
 
         {post?.photoUri ? (

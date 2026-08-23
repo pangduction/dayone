@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type { WebViewMessageEvent } from 'react-native-webview';
@@ -29,7 +29,12 @@ export type RichTextEditorHandle = {
 };
 
 type Props = {
-  /** Initial HTML. Only read on mount — the WebView owns the document after that. */
+  /**
+   * The document's starting HTML. The WebView owns the document from then on,
+   * so this is read on mount; if it later changes (a parent that loads its
+   * content asynchronously) it is pushed in, but only while the editor is
+   * unfocused, so it can never yank the caret mid-edit.
+   */
   initialHtml: string;
   /** Fires on every edit with the document's HTML and its plain-text equivalent. */
   onChange: (payload: { html: string; text: string }) => void;
@@ -77,6 +82,17 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+
+  // Because the document is built once, a parent that only knows its content
+  // after an async load would otherwise be stuck with whatever it passed on
+  // the first render — an empty editor over a post that does have text. Push
+  // late arrivals into the live document instead.
+  const documentHtml = useRef(initialHtml);
+  useEffect(() => {
+    if (initialHtml === documentHtml.current) return;
+    documentHtml.current = initialHtml;
+    webRef.current?.injectJavaScript(`window.__setHtml(${JSON.stringify(initialHtml)}); true;`);
+  }, [initialHtml]);
 
   const handleMessage = (event: WebViewMessageEvent) => {
     let message: any;
@@ -195,6 +211,12 @@ function buildDocument({
       emitFormats();
     };
     window.__focus = function () { editor.focus(); };
+    window.__setHtml = function (html) {
+      // Never while the user is typing in it.
+      if (document.activeElement === editor) return;
+      editor.innerHTML = html;
+      emitChange();
+    };
   })();
 </script>
 </body>
