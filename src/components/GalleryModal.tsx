@@ -53,6 +53,12 @@ type Props = {
  * most recent photos via expo-media-library, falling back to just the
  * camera tile + "Go to Gallery" when permission is denied.
  *
+ * On iOS `Asset.uri` is a `ph://<id>` PhotoKit identifier, which React
+ * Native's <Image> cannot load — it renders an empty tile. `getAssetInfoAsync`
+ * resolves each asset to a `file://` `localUri` that <Image> can display and
+ * that survives being handed to the Add screen and persisted. Android already
+ * hands back a `file://` uri, so the fallback below covers it.
+ *
  * The import is `expo-media-library/legacy`, not the package root: in SDK 57
  * the root entry point is the new query-object API (`Query`/`Asset` classes),
  * whose `Asset` has no plain `uri` field and whose `MediaType` has no
@@ -61,8 +67,10 @@ type Props = {
  * legacy API, so mixing the two entry points is what produces the type
  * mismatch between the two different `Asset` shapes.
  */
+type RecentPhoto = { id: string; uri: string };
+
 export default function GalleryModal({ visible, onClose, onPickRecent, onOpenCamera, onOpenGallery }: Props) {
-  const [recent, setRecent] = useState<MediaLibrary.Asset[]>([]);
+  const [recent, setRecent] = useState<RecentPhoto[]>([]);
 
   useEffect(() => {
     if (!visible) return;
@@ -75,7 +83,17 @@ export default function GalleryModal({ visible, onClose, onPickRecent, onOpenCam
         mediaType: [MediaLibrary.MediaType.photo],
         sortBy: [MediaLibrary.SortBy.creationTime],
       });
-      if (!cancelled) setRecent(page.assets);
+      const photos = await Promise.all(
+        page.assets.map(async (asset): Promise<RecentPhoto> => {
+          try {
+            const info = await MediaLibrary.getAssetInfoAsync(asset);
+            return { id: asset.id, uri: info.localUri ?? asset.uri };
+          } catch {
+            return { id: asset.id, uri: asset.uri };
+          }
+        }),
+      );
+      if (!cancelled) setRecent(photos);
     })();
     return () => {
       cancelled = true;
@@ -108,14 +126,14 @@ export default function GalleryModal({ visible, onClose, onPickRecent, onOpenCam
                 <Pressable style={[styles.tile, styles.cameraTile]} onPress={onOpenCamera} accessibilityLabel="Take a photo">
                   <IcCamera size={32} color={colors.textOnDark} />
                 </Pressable>
-                {recent.map((asset) => (
+                {recent.map((photo) => (
                   <Pressable
-                    key={asset.id}
+                    key={photo.id}
                     style={[styles.tile, styles.photoTile]}
-                    onPress={() => onPickRecent(asset.uri)}
+                    onPress={() => onPickRecent(photo.uri)}
                     accessibilityLabel="Use this photo"
                   >
-                    <Image source={{ uri: asset.uri }} style={styles.photo} resizeMode="cover" />
+                    <Image source={{ uri: photo.uri }} style={styles.photo} resizeMode="cover" />
                   </Pressable>
                 ))}
               </ScrollView>
