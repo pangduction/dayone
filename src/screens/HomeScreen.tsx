@@ -51,7 +51,8 @@ export default function HomeScreen() {
   );
 
   // A day that already has a post opens it; an empty one starts a post for
-  // that date, which is what the Add screen's `date` param is for.
+  // that date, which is what the Add screen's `date` param is for. Days after
+  // today never get here — see `isFuture` at the call site.
   const handleDayPress = useCallback(
     (key: string) => {
       if (postsByDate[key]) navigation.navigate('PostDetail', { date: key });
@@ -102,13 +103,18 @@ export default function HomeScreen() {
               <View key={weekIndex} style={styles.weekRow}>
                 {week.map((day, dayIndex) => {
                   const key = day === null ? null : dateKey(new Date(year, month, day));
+                  // DayOne records the day you are living, so a day after today
+                  // can't be written and is left inert. Both keys are
+                  // zero-padded 'YYYY-MM-DD', so a string compare is a date
+                  // compare.
+                  const isFuture = key !== null && key > todayKey;
                   return (
                     <CalendarDateCell
                       key={dayIndex}
                       day={day}
                       isToday={key === todayKey}
                       post={key === null ? null : postsByDate[key]}
-                      onPress={key === null ? undefined : () => handleDayPress(key)}
+                      onPress={key === null || isFuture ? undefined : () => handleDayPress(key)}
                     />
                   );
                 })}

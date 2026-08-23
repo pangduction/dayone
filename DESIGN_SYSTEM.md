@@ -183,5 +183,20 @@ the wrong glyph.
 - `src/utils/calendar.ts` — pure date-math helpers (days in month, weekday
   grid) shared by any screen that renders a calendar.
 
+## 7. Product rules that shape the UI
+
+Rules that aren't visible in any Figma node but decide what a screen does.
+Note them here so they don't get re-derived (or quietly dropped) later.
+
+- **One post per calendar day.** `savePost` upserts by date, so the rule is
+  the data shape rather than a validation step.
+- **One photo per post.** Every entry point into the photo picker replaces
+  the current photo instead of appending.
+- **A post needs any one of** text, a photo, or a voice recording to publish
+  — that's what the Add header's Done pill enables on.
+- **No writing ahead.** DayOne records the day you are living, so calendar
+  days after today are inert: they don't open Add and don't open a post.
+  Today and past days both stay writable.
+
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.
