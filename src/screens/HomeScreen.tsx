@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
+import { IcArrowDown, IcCalendar, IcPlus, IcPulse, IcRows, IcShare } from '../components/icons/HomeIcons';
 import { dateKey, getPostsForMonth } from '../data/posts';
 import { WEEKDAY_LABELS, daysInMonth, getCalendarWeeks } from '../utils/calendar';
 import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
@@ -50,11 +50,10 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable style={styles.headerIconButton} hitSlop={8}>
-          {/* Ionicons stand-in for Figma's "ic/rows" — not an exact vector port, see DESIGN_SYSTEM.md §5 */}
-          <Ionicons name="menu-outline" size={24} color={colors.textPrimary} />
+          <IcRows size={24} color={colors.textPrimary} />
         </Pressable>
         <Pressable style={styles.shareButton} hitSlop={8}>
-          <Ionicons name="share-outline" size={24} color={colors.textPrimary} />
+          <IcShare size={24} color={colors.textPrimary} />
         </Pressable>
       </View>
 
@@ -66,7 +65,7 @@ export default function HomeScreen() {
           <Text style={[typography.calendarTitle, styles.titleText]}>{year}</Text>
           {/* TODO: month/year picker is a separate screen, not wired up yet. */}
           <Pressable hitSlop={8}>
-            <Ionicons name="chevron-down" size={20} color={colors.textPrimary} />
+            <IcArrowDown size={20} color={colors.textPrimary} />
           </Pressable>
         </View>
 
@@ -131,16 +130,16 @@ export default function HomeScreen() {
 
       <View style={styles.navigation}>
         <View style={styles.navItem}>
-          <Ionicons name="calendar" size={24} color={colors.textPrimary} />
+          <IcCalendar size={24} color={colors.textPrimary} />
           <View style={styles.navSelectedDot} />
         </View>
         <Pressable style={styles.navItem} onPress={() => navigation.navigate('Add')} hitSlop={8}>
-          <Ionicons name="add" size={24} color={colors.textPlaceholder} />
+          <IcPlus size={24} color={colors.textPlaceholder} />
           <Text style={[typography.overline, styles.navLabel]}>Add</Text>
         </Pressable>
         {/* TODO: Report screen not implemented yet. */}
         <Pressable style={styles.navItem} hitSlop={8}>
-          <Ionicons name="pulse-outline" size={24} color={colors.textPlaceholder} />
+          <IcPulse size={24} color={colors.textPlaceholder} />
           <Text style={[typography.overline, styles.navLabel]}>Report</Text>
         </Pressable>
       </View>

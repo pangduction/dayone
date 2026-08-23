@@ -97,12 +97,16 @@ extrapolate from a similar-looking row above.
   `get_design_context` / `download_assets`), not a hand-drawn approximation.
   Figma's exported asset URLs expire after ~7 days — save the file into
   `assets/` rather than referencing the URL directly. See
-  `assets/logo-google.svg` / `logo-apple.svg` / `logo-kakao.svg` (raw
-  Figma vectors) plus `src/components/icons/SocialLogos.tsx` (their
-  `react-native-svg` rendering, since the project has no `.svg`-import
-  transformer configured) and `assets/splash-collage.png` for the pattern —
-  a plain PNG can be `require()`'d directly, a vector asset gets ported into
-  an `Svg`/`Path` component whose path data matches its `assets/*.svg` file.
+  `assets/logo-google.svg` / `logo-apple.svg` / `logo-kakao.svg` / `ic-*.svg`
+  (raw Figma vectors) plus `src/components/icons/SocialLogos.tsx` and
+  `HomeIcons.tsx` (their `react-native-svg` rendering, since the project has
+  no `.svg`-import transformer configured) and `assets/splash-collage.png`
+  for the pattern — a plain PNG can be `require()`'d directly, a vector
+  asset gets ported into an `Svg`/`Path` component whose path data matches
+  its `assets/*.svg` file. A fixed-color brand mark (social logos) bakes its
+  Figma fill(s) straight into the component; a single-color DayOne icon
+  (`HomeIcons.tsx`) instead takes a required `color` prop so call sites pass
+  a `colors.*` token, per §1/§2, rather than a hardcoded fill.
 - If Figma asset hosts aren't reachable from the current sandbox, add a
   `TODO` comment describing the real asset to swap in later.
 
