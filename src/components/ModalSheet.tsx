@@ -1,4 +1,6 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import type { LayoutChangeEvent } from 'react-native';
 import type { ReactNode } from 'react';
 import { BlurView } from 'expo-blur';
 import IconButton from './IconButton';
@@ -24,6 +26,13 @@ type Props = {
  *   backdrop — full screen, `colors.backdrop` (G900 @ 30%) over a blur
  *     (Figma effect "Background blur / md"), sheet bottom-aligned,
  *     paddingTop 16 / paddingBottom 40 / paddingHorizontal 16
+ *
+ * It opens the way a bottom sheet should: the sheet slides up from below
+ * while the scrim fades in, rather than both appearing at once. React
+ * Native's own `animationType="slide"` would drag the scrim up with the
+ * sheet, so the two are animated separately here and the Modal itself is
+ * told not to animate. The Modal stays mounted until the closing animation
+ * finishes, otherwise it would vanish instead of sliding away.
  *   sheet — white, radius.xl (24), `shadows.xl`
  *     Modal header — title in `typography.subtext`, paddingTop 20 / px 16,
  *       then a 20pt spacer row; close button absolute at right 8 / top 8.4
@@ -36,27 +45,70 @@ type Props = {
  * reuses `IconButton`.
  */
 export default function ModalSheet({ visible, title, onClose, children, actions }: Props) {
+  // Kept mounted across the closing animation so the sheet can slide out.
+  const [mounted, setMounted] = useState(visible);
+  const progress = useRef(new Animated.Value(0)).current;
+  // How far the sheet has to travel. State rather than a ref, because the
+  // interpolation below is built during render and has to be rebuilt once
+  // the real height is known; until then this generous fallback just starts
+  // the sheet further off-screen. Each sheet measures once and keeps that
+  // height, so this settles after the first layout pass.
+  const [sheetHeight, setSheetHeight] = useState(600);
+
+  useEffect(() => {
+    if (visible) setMounted(true);
+    const animation = Animated.timing(progress, {
+      toValue: visible ? 1 : 0,
+      duration: visible ? 260 : 200,
+      easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    });
+    animation.start(({ finished }) => {
+      if (finished && !visible) setMounted(false);
+    });
+    return () => animation.stop();
+  }, [visible, progress]);
+
+  // The sheet rests `spacing[10]` above the screen bottom (the backdrop's
+  // paddingBottom), so it has to travel its own height *plus* that gap to
+  // start fully off-screen.
+  const translateY = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [sheetHeight + spacing[10], 0],
+  });
+
+  const measureSheet = (event: LayoutChangeEvent) => {
+    const { height } = event.nativeEvent.layout;
+    setSheetHeight((current) => (Math.abs(current - height) < 1 ? current : height));
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose}>
       <View style={styles.root}>
-        <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint="dark" style={StyleSheet.absoluteFill} />
+        <Animated.View style={[StyleSheet.absoluteFill, { opacity: progress }]} pointerEvents="none">
+          <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint="dark" style={StyleSheet.absoluteFill} />
+          <View style={[StyleSheet.absoluteFill, styles.scrim]} />
+        </Animated.View>
+
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={`Close ${title}`}>
           {/* Taps inside the sheet must not fall through to the backdrop. */}
-          <Pressable style={styles.sheet} onPress={() => {}}>
-            <View style={styles.header}>
-              <View style={styles.headerTitle}>
-                <Text style={[typography.subtext, styles.title]}>{title}</Text>
+          <Animated.View style={[styles.sheetWrap, { transform: [{ translateY }] }]}>
+            <Pressable style={styles.sheet} onPress={() => {}} onLayout={measureSheet}>
+              <View style={styles.header}>
+                <View style={styles.headerTitle}>
+                  <Text style={[typography.subtext, styles.title]}>{title}</Text>
+                </View>
+                <View style={styles.headerSpacer} />
+                <IconButton accessibilityLabel="Close" onPress={onClose} style={styles.closeButton}>
+                  <IcCross size={24} color={colors.textPrimary} />
+                </IconButton>
               </View>
-              <View style={styles.headerSpacer} />
-              <IconButton accessibilityLabel="Close" onPress={onClose} style={styles.closeButton}>
-                <IcCross size={24} color={colors.textPrimary} />
-              </IconButton>
-            </View>
 
-            <View style={styles.content}>{children}</View>
+              <View style={styles.content}>{children}</View>
 
-            {actions ? <View style={styles.actions}>{actions}</View> : null}
-          </Pressable>
+              {actions ? <View style={styles.actions}>{actions}</View> : null}
+            </Pressable>
+          </Animated.View>
         </Pressable>
       </View>
     </Modal>
@@ -75,9 +127,14 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  scrim: {
+    backgroundColor: colors.backdrop,
+  },
+  sheetWrap: {
+    width: '100%',
+  },
   backdrop: {
     flex: 1,
-    backgroundColor: colors.backdrop,
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingTop: spacing.md,
