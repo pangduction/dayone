@@ -56,6 +56,9 @@ export const palette = {
   overlayContainer: 'rgba(38, 41, 45, 0.7)', // Figma: G800 at 70% opacity — SegmentedButton container bg (Add-Image-2, node 3192:12065)
   overlaySolid: 'rgba(3, 3, 3, 0.7)', // Figma: G900 at 70% opacity — SegmentedButton active segment + Button/S/Filled/FAB bg (nodes 3192:11941, 3192:11841)
   backdrop: 'rgba(3, 3, 3, 0.3)', // Figma: G900 at 30% opacity — modal scrim, and the tint over a photo calendar cell (nodes 3184:7350, 3184:3185)
+  editorBar: '#E8EAED', // Figma: editor toolbar background (node 13:15150) — a keyboard-accessory grey, outside the G_ scale
+  editorPaletteBar: '#F2F2F2', // Figma: the colour-palette row that opens under the toolbar, and the active Text Color button behind it
+  swatchDefault: '#282828', // Figma: the palette's first ("default" text colour) swatch — not G900
   overlayAccent: 'rgba(0, 132, 255, 0.3)', // Figma: Accent at 30% opacity — tint over today's photo calendar cell (node 3184:3185)
 
   // iOS-style system color set (color picker / palette swatch components).
@@ -99,6 +102,9 @@ export const colors = {
   backdrop: palette.backdrop,
   photoScrim: palette.backdrop, // same G900 @ 30% as `backdrop`, but darkening a photo thumbnail rather than the whole screen
   overlayAccent: palette.overlayAccent,
+  editorBar: palette.editorBar,
+  editorPaletteBar: palette.editorPaletteBar,
+  swatchDefault: palette.swatchDefault,
   surfaceDark: palette.g600, // Figma G600 — filled tile on a light sheet (Modal/Gallery's camera tile, node 3198:4434)
 };
 

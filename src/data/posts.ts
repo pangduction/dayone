@@ -22,7 +22,13 @@ export type Post = {
   /** Local file URI of the post's single photo, or null if text-only. */
   photoUri: string | null;
   fitMode: PhotoFit;
+  /**
+   * The story as plain text. Kept alongside `html` because emptiness checks,
+   * and later any list preview or search, want text rather than markup.
+   */
   text: string;
+  /** The story as rich HTML from the editor, or null for a plain-text post. */
+  html: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -56,7 +62,11 @@ async function readAll(): Promise<Post[]> {
     if (!Array.isArray(parsed)) return [];
     // `fitMode` was added after the first rows were written; default those to
     // 'fit' rather than letting the detail screen read undefined.
-    return parsed.map((post) => ({ ...post, fitMode: post.fitMode ?? 'fit' }) as Post);
+    // `fitMode` and `html` were both added after the first rows were written;
+    // default them rather than letting screens read undefined.
+    return parsed.map(
+      (post) => ({ ...post, fitMode: post.fitMode ?? 'fit', html: post.html ?? null }) as Post,
+    );
   } catch {
     return [];
   }
@@ -84,7 +94,13 @@ export async function savePost(input: {
   date: string;
   photoUri: string | null;
   fitMode: PhotoFit;
+  /**
+   * The story as plain text. Kept alongside `html` because emptiness checks,
+   * and later any list preview or search, want text rather than markup.
+   */
   text: string;
+  /** The story as rich HTML from the editor, or null for a plain-text post. */
+  html: string | null;
 }): Promise<Post> {
   const posts = await readAll();
   const now = new Date().toISOString();
@@ -96,6 +112,7 @@ export async function savePost(input: {
       photoUri: input.photoUri,
       fitMode: input.fitMode,
       text: input.text,
+      html: input.html,
       updatedAt: now,
     };
     posts[existingIndex] = updated;
@@ -109,6 +126,7 @@ export async function savePost(input: {
     photoUri: input.photoUri,
     fitMode: input.fitMode,
     text: input.text,
+    html: input.html,
     createdAt: now,
     updatedAt: now,
   };

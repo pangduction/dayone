@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NavigationAction, RouteProp } from '@react-navigation/native';
@@ -12,6 +12,10 @@ import SegmentedButton, { type FitMode } from '../components/SegmentedButton';
 import FilledFabButton from '../components/FilledFabButton';
 import GalleryModal from '../components/GalleryModal';
 import LeaveModal from '../components/LeaveModal';
+import RichTextEditor from '../components/RichTextEditor';
+import type { ActiveFormats, EditorCommand, RichTextEditorHandle } from '../components/RichTextEditor';
+import EditorToolbar from '../components/EditorToolbar';
+import { palette } from '../theme/tokens';
 import { IcArrowLeft, IcImage, IcMicrophone } from '../components/icons/AddIcons';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
@@ -34,6 +38,11 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * (the bottom nav's Add tab) and takes a `date` param when reached from a
  * post detail screen's Edit button or from tapping an empty calendar day.
  *
+ * The story field is a `RichTextEditor` rather than a `TextInput`, with the
+ * `EditorToolbar` docked above the keyboard while it has focus — Figma's
+ * "Flow 2.2 텍스트 입력하기" (section 3196:14541) shows the screen turning
+ * into a scroll area whose bottom is the toolbar plus the OS keyboard.
+ *
  * Leaving with unsaved edits raises Figma's Modal/Leave (see "Add-Leave",
  * node 3233:4558). The guard hangs off navigation's `beforeRemove` rather
  * than the header button's own handler so that the swipe-back gesture is
@@ -49,16 +58,31 @@ export default function AddScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [fitMode, setFitMode] = useState<FitMode>('fit');
   const [text, setText] = useState('');
+  const [html, setHtml] = useState<string | null>(null);
+  const [initialHtml, setInitialHtml] = useState<string | null>(null);
+  const [editorFocused, setEditorFocused] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string>(palette.swatchDefault);
+  const [activeFormats, setActiveFormats] = useState<ActiveFormats>({
+    bold: false,
+    italic: false,
+    underline: false,
+    unorderedList: false,
+    orderedList: false,
+  });
+  const editorRef = useRef<RichTextEditorHandle>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
 
   // What was loaded for this date, so "unsaved changes" is a real comparison
   // rather than "the user touched something".
-  const [baseline, setBaseline] = useState<{ photoUri: string | null; fitMode: FitMode; text: string }>({
-    photoUri: null,
-    fitMode: 'fit',
-    text: '',
-  });
+  const [baseline, setBaseline] = useState<{
+    photoUri: string | null;
+    fitMode: FitMode;
+    text: string;
+    html: string | null;
+  }>({ photoUri: null, fitMode: 'fit', text: '', html: null });
   // Set just before a navigation we mean to allow — saving, or confirming
   // Leave — so the guard below doesn't re-prompt on our own goBack.
   const bypassLeaveGuard = useRef(false);
@@ -76,7 +100,14 @@ export default function AddScreen() {
       setPhotoUri(existing.photoUri);
       setFitMode(existing.fitMode);
       setText(existing.text);
-      setBaseline({ photoUri: existing.photoUri, fitMode: existing.fitMode, text: existing.text });
+      setHtml(existing.html);
+      setInitialHtml(existing.html ?? escapeHtml(existing.text));
+      setBaseline({
+        photoUri: existing.photoUri,
+        fitMode: existing.fitMode,
+        text: existing.text,
+        html: existing.html,
+      });
     });
     return () => {
       cancelled = true;
@@ -84,7 +115,33 @@ export default function AddScreen() {
   }, [targetKey]);
 
   const canSave = photoUri !== null || text.trim().length > 0 || hasVoice;
-  const isDirty = photoUri !== baseline.photoUri || fitMode !== baseline.fitMode || text !== baseline.text;
+  const isDirty =
+    photoUri !== baseline.photoUri ||
+    fitMode !== baseline.fitMode ||
+    text !== baseline.text ||
+    html !== baseline.html;
+
+  // The toolbar docks directly on top of the keyboard, so it needs the
+  // keyboard's height. `Will` fires before the animation, which keeps the two
+  // moving together instead of the bar jumping up afterwards.
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardWillShow', (event) =>
+      setKeyboardHeight(event.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener('keyboardWillHide', () => {
+      setKeyboardHeight(0);
+      setPaletteOpen(false);
+    });
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
+  const handleCommand = (command: EditorCommand) => {
+    if (command.type === 'foreColor') setSelectedColor(command.color);
+    editorRef.current?.apply(command);
+  };
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
@@ -145,7 +202,7 @@ export default function AddScreen() {
 
   const handleDone = async () => {
     if (!canSave) return;
-    await savePost({ date: targetKey, photoUri, fitMode, text: text.trim() });
+    await savePost({ date: targetKey, photoUri, fitMode, text: text.trim(), html });
     bypassLeaveGuard.current = true;
     navigation.goBack();
   };
@@ -198,16 +255,33 @@ export default function AddScreen() {
           </Pressable>
         )}
 
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder="Enter.."
-          placeholderTextColor={colors.textPlaceholder}
-          multiline
-          textAlignVertical="top"
-          style={[typography.body, styles.textInput]}
-        />
+        <View style={styles.textField}>
+          <RichTextEditor
+            ref={editorRef}
+            initialHtml={initialHtml ?? ''}
+            placeholder="Enter.."
+            onChange={({ html: nextHtml, text: nextText }) => {
+              setHtml(nextHtml);
+              setText(nextText);
+            }}
+            onActiveFormatsChange={setActiveFormats}
+            onFocus={() => setEditorFocused(true)}
+            onBlur={() => setEditorFocused(false)}
+          />
+        </View>
       </View>
+
+      {editorFocused ? (
+        <View style={[styles.editorDock, { bottom: keyboardHeight }]}>
+          <EditorToolbar
+            onCommand={handleCommand}
+            activeFormats={activeFormats}
+            paletteOpen={paletteOpen}
+            onTogglePalette={() => setPaletteOpen((open) => !open)}
+            selectedColor={selectedColor}
+          />
+        </View>
+      ) : null}
 
       <LeaveModal visible={leaveOpen} onLeave={handleLeave} onKeepEditing={() => setLeaveOpen(false)} />
 
@@ -303,7 +377,7 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
   },
-  textInput: {
+  textField: {
     flex: 1,
     minHeight: 240,
     width: '100%',
@@ -311,8 +385,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSubtle,
     borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing[5],
     paddingVertical: spacing.sm,
-    color: colors.textPrimary,
+    overflow: 'hidden',
+  },
+  editorDock: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
   },
 });
+
+/** Renders a legacy plain-text post as the editor's initial HTML. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br />');
+}

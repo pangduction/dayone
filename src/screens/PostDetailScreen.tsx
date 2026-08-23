@@ -9,6 +9,7 @@ import type { Post } from '../data/posts';
 import IconButton from '../components/IconButton';
 import GhostButton from '../components/GhostButton';
 import { IcArrowLeft } from '../components/icons/AddIcons';
+import RichTextEditor from '../components/RichTextEditor';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
@@ -27,6 +28,11 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * toggle: Fit letterboxes the whole photo inside the square (Figma bakes the
  * result as a 291pt-wide column for its sample portrait), Filled crops it to
  * fill.
+ *
+ * The story renders through the same `RichTextEditor` the Add screen writes
+ * with, in read-only mode, so a post's bold / colour / list formatting shows
+ * here exactly as it was typed. Posts written before the rich editor have no
+ * `html`, so their plain `text` is rendered directly.
  *
  * TODO: Record/View (instance 3192:12641) is not rendered — voice recording
  * isn't implemented yet. It belongs between the image and the text.
@@ -84,7 +90,11 @@ export default function PostDetailScreen() {
         {post && post.text.length > 0 ? (
           <View style={styles.textSection}>
             <View style={styles.divider} />
-            <Text style={[typography.body, styles.content]}>{post.text}</Text>
+            {post.html ? (
+              <RichTextEditor initialHtml={post.html} editable={false} onChange={() => {}} />
+            ) : (
+              <Text style={[typography.body, styles.content]}>{post.text}</Text>
+            )}
           </View>
         ) : null}
       </View>
