@@ -26,6 +26,13 @@ export type ActiveFormats = {
 export type RichTextEditorHandle = {
   apply: (command: EditorCommand) => void;
   focus: () => void;
+  /**
+   * Drops focus inside the document. React Native's `Keyboard.dismiss()`
+   * hides the keyboard but leaves the contenteditable as `activeElement`, so
+   * the editor would still report itself focused; this is what actually ends
+   * the editing session.
+   */
+  blur: () => void;
 };
 
 type Props = {
@@ -72,6 +79,9 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
     },
     focus() {
       webRef.current?.injectJavaScript('window.__focus(); true;');
+    },
+    blur() {
+      webRef.current?.injectJavaScript('window.__blur(); true;');
     },
   }));
 
@@ -203,14 +213,52 @@ function buildDocument({
       if (document.activeElement === editor) emitFormats();
     });
 
+    // execCommand('insertHorizontalRule') drops the rule wherever the caret
+    // is, so inside a list it lands *within* the <li> and splits the item in
+    // half. A divider is a block-level break, so place it after whatever
+    // top-level block the caret is in — the whole list, not one item — and
+    // leave an empty line under it to carry on typing.
+    var insertDivider = function () {
+      var selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+
+      var node = selection.getRangeAt(0).startContainer;
+      var element = node.nodeType === 1 ? node : node.parentNode;
+      var topLevel = null;
+      while (element && element !== editor) {
+        topLevel = element;
+        element = element.parentNode;
+      }
+
+      var rule = document.createElement('hr');
+      var nextLine = document.createElement('div');
+      nextLine.appendChild(document.createElement('br'));
+
+      if (topLevel) {
+        editor.insertBefore(rule, topLevel.nextSibling);
+        editor.insertBefore(nextLine, rule.nextSibling);
+      } else {
+        editor.appendChild(rule);
+        editor.appendChild(nextLine);
+      }
+
+      var range = document.createRange();
+      range.setStart(nextLine, 0);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
+
     window.__apply = function (command) {
       editor.focus();
       if (command.type === 'foreColor') document.execCommand('foreColor', false, command.color);
+      else if (command.type === 'insertHorizontalRule') insertDivider();
       else document.execCommand(command.type, false, null);
       emitChange();
       emitFormats();
     };
     window.__focus = function () { editor.focus(); };
+    window.__blur = function () { editor.blur(); };
     window.__setHtml = function (html) {
       // Never while the user is typing in it.
       if (document.activeElement === editor) return;

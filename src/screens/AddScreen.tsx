@@ -172,6 +172,14 @@ export default function AddScreen() {
     return () => clearTimeout(timer);
   }, [editorFocused, keyboardHeight, dockHeight]);
 
+  // Tapping away from the field ends editing, the way an iOS text input
+  // behaves. Both halves are needed: `blur` releases the caret inside the
+  // WebView (which is what hides the toolbar), `dismiss` closes the keyboard.
+  const dismissEditor = () => {
+    editorRef.current?.blur();
+    Keyboard.dismiss();
+  };
+
   const handleCommand = (command: EditorCommand) => {
     if (command.type === 'foreColor') setSelectedColor(command.color);
     editorRef.current?.apply(command);
@@ -264,10 +272,16 @@ export default function AddScreen() {
       <ScrollView
         ref={scrollRef}
         style={[styles.body, editorFocused ? { marginBottom: keyboardHeight + dockHeight } : null]}
-        contentContainerStyle={styles.bodyContent}
+        contentContainerStyle={styles.bodyScroll}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
+        {/* Wrapping the body rather than the screen keeps the tap-to-dismiss
+            target off the header, and `flexGrow` stretches it over the empty
+            space under the story field so tapping there counts too. Child
+            buttons still win the touch. */}
+        <Pressable style={styles.bodyContent} onPress={dismissEditor} accessible={false}>
         <View style={styles.labelRow}>
           <Text style={[typography.subtext, styles.storyLabel]}>Today's Story</Text>
           {/* TODO: voice recording (one per post) isn't implemented yet. */}
@@ -313,6 +327,7 @@ export default function AddScreen() {
             />
           ) : null}
         </View>
+        </Pressable>
       </ScrollView>
 
       {editorFocused ? (
@@ -373,7 +388,11 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
   },
+  bodyScroll: {
+    flexGrow: 1,
+  },
   bodyContent: {
+    flexGrow: 1,
     gap: spacing.sm,
     padding: spacing.md,
   },
