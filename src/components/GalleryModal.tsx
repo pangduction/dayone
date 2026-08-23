@@ -8,7 +8,7 @@ import { IcCamera, IcCross } from './icons/AddIcons';
 import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
 
 /** How many recent photos the strip pulls from the device library. */
-const RECENT_COUNT = 12;
+const RECENT_COUNT = 10;
 
 type Props = {
   visible: boolean;
