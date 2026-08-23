@@ -17,7 +17,8 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * calendar day that has a post.
  *
  * Figma draws eight frames here, but they are one screen: a Header/Post
- * (3192:11899) above a Post Detail column (padding 16, gap 16) that stacks
+ * (3192:11899, whose right side now carries Delete alongside Edit) above a
+ * Post Detail column (padding 16, gap 16) that stacks
  * Date Written, then whichever of Image Section / Record/View / Text Section
  * the post actually has. The eight frames are just the combinations —
  * Post-Only Photo-Fit (3192:11908), Post-Photo and Text (3192:12419),
@@ -68,7 +69,12 @@ export default function PostDetailScreen() {
         <IconButton accessibilityLabel="Back" onPress={() => navigation.goBack()}>
           <IcArrowLeft size={24} color={colors.textPrimary} />
         </IconButton>
-        <GhostButton label="Edit" onPress={() => navigation.navigate('Add', { date })} />
+        <View style={styles.headerActions}>
+          <GhostButton label="Edit" onPress={() => navigation.navigate('Add', { date })} />
+          {/* TODO: not wired up yet — deleting needs Figma's Modal/Delete for
+              its copy plus a `deletePost` in the store. */}
+          <GhostButton label="Delete" />
+        </View>
       </View>
 
       <View style={styles.detail}>
@@ -116,6 +122,12 @@ const styles = StyleSheet.create({
     paddingLeft: 5,
     paddingRight: spacing.md,
     paddingVertical: spacing.md,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: spacing.sm, // Figma: the Edit/Delete row, node 3233:4663
   },
   detail: {
     flex: 1,

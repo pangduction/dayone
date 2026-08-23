@@ -219,7 +219,9 @@ export default function AddScreen() {
 
         <View style={styles.dateInfo} pointerEvents="none">
           <Text style={[typography.caption, styles.dateLabel]}>{dateLabel}</Text>
-          <Text style={[typography.caption, styles.weekdayLabel]}>{weekdayLabel}</Text>
+          {/* Figma switched this line from Caption to Overline (node 3184:5697);
+              the date above it is still Caption. */}
+          <Text style={[typography.overline, styles.weekdayLabel]}>{weekdayLabel}</Text>
         </View>
 
         <HeaderActionButton label="Done" active={canSave} disabled={!canSave} onPress={handleDone} />
