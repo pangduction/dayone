@@ -4,13 +4,14 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import { getPostByDate, parseDateKey } from '../data/posts';
+import { deletePost, getPostByDate, parseDateKey } from '../data/posts';
 import type { Post } from '../data/posts';
 import IconButton from '../components/IconButton';
 import GhostButton from '../components/GhostButton';
 import { IcArrowLeft } from '../components/icons/AddIcons';
 import RichTextEditor from '../components/RichTextEditor';
 import PhotoSection from '../components/PhotoSection';
+import DeletePostModal from '../components/DeletePostModal';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
@@ -35,6 +36,10 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * here exactly as it was typed. Posts written before the rich editor have no
  * `html`, so their plain `text` is rendered directly.
  *
+ * The header's Delete raises Figma's Modal/Delete-Post (node 3233:4928, in
+ * context as "Post-Common-Delete" 3233:4929) and, once confirmed, removes the
+ * post and returns to the calendar.
+ *
  * TODO: Record/View (instance 3192:12641) is not rendered — voice recording
  * isn't implemented yet. It belongs between the image and the text.
  */
@@ -44,6 +49,7 @@ export default function PostDetailScreen() {
   const { date } = params;
 
   const [post, setPost] = useState<Post | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -56,6 +62,14 @@ export default function PostDetailScreen() {
       };
     }, [date]),
   );
+
+  const handleDelete = async () => {
+    await deletePost(date);
+    setDeleteOpen(false);
+    // Back to the calendar, which reloads its posts on focus, so the day's
+    // cell drops straight back to its empty state.
+    navigation.goBack();
+  };
 
   const written = useMemo(() => parseDateKey(date), [date]);
   const dateLabel = written.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -71,9 +85,7 @@ export default function PostDetailScreen() {
         </IconButton>
         <View style={styles.headerActions}>
           <GhostButton label="Edit" onPress={() => navigation.navigate('Add', { date })} />
-          {/* TODO: not wired up yet — deleting needs Figma's Modal/Delete for
-              its copy plus a `deletePost` in the store. */}
-          <GhostButton label="Delete" />
+          <GhostButton label="Delete" onPress={() => setDeleteOpen(true)} />
         </View>
       </View>
 
@@ -98,6 +110,12 @@ export default function PostDetailScreen() {
           </View>
         ) : null}
       </View>
+
+      <DeletePostModal
+        visible={deleteOpen}
+        onDelete={handleDelete}
+        onCancel={() => setDeleteOpen(false)}
+      />
     </View>
   );
 }

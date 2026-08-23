@@ -19,17 +19,12 @@ type Props = {
  * Same shell as every other sheet, with the destructive action as a
  * Button / L / Filled / Primary in its Warning tone (node 3233:4923) over a
  * "Cancel" white button.
- *
- * The title reads "Leave Post?" because that is what the node says, even
- * though the body underneath is about deleting — it looks like a leftover
- * from Modal/Leave, which this sheet was built from. Kept verbatim rather
- * than silently reworded.
  */
 export default function DeletePostModal({ visible, onDelete, onCancel }: Props) {
   return (
     <ModalSheet
       visible={visible}
-      title="Leave Post?"
+      title="Delete Post?"
       onClose={onCancel}
       actions={
         <>
