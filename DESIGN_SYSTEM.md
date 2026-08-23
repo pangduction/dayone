@@ -40,8 +40,11 @@ whenever you write or edit a UI component.
   are for controls overlaid on top of photo content (the Add screen's
   Fit/Filled toggle and Delete pill) — not general chrome backgrounds.
 - `colors.backdrop` (G900 @ 30%) is the full-screen scrim behind a modal
-  sheet; `colors.surfaceDark` (G600) is a filled tile sitting *on* a light
-  sheet (Modal/Gallery's camera tile). Neither is a page background.
+  sheet; `colors.photoScrim` is that same value darkening a photo thumbnail
+  (a calendar day cell), and `colors.overlayAccent` (Accent @ 30%) is its
+  today counterpart; `colors.surfaceDark` (G600) is a filled tile sitting
+  *on* a light sheet (Modal/Gallery's camera tile). None is a page
+  background.
 
 ## 3. Typography usage
 
@@ -94,6 +97,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | SegmentedButton (Fit/Filled toggle)  | 2 (container)     | —    | 17 (off-scale) outer, 16 (`radius.lg`) active segment | overlaid top-center on a selected photo; container bg `colors.overlayContainer`, active segment bg `colors.overlaySolid` + white icon/label, inactive = transparent + `colors.textPlaceholder`. Node `3192:12065`. See `SegmentedButton.tsx`. |
 | Button / S / Filled / FAB (e.g. "Delete") | 12 / 3 (left) · 8 / 3 (right) | 3 | 20 (off-scale) | `colors.overlaySolid` bg, white `typography.overline` label, trailing 16×16 `ic/cross`. Node `3192:11841`. See `FilledFabButton.tsx`. |
 | Button / L / Filled / Primary        | 16 / 8            | —    | 16 (`radius.lg`) | height 48, `colors.buttonDark` bg, centered white `typography.body` label. Node `3192:9208`. See `PrimaryButton.tsx`. |
+| Date (calendar day cell)             | —                 | —    | 500 (`radius.full`) | square, `typography.calendarDate`. Six states = {no post, photo post, text-only post} x {another day, today}: no post → transparent/G600 text, or `colors.accentSubtle`/`colors.accent` on today; photo post → thumbnail under `colors.photoScrim`, or under `colors.overlayAccent` plus a 1px `colors.accent` border on today; text-only → solid `colors.textPrimary`, or solid `colors.accent` on today. White label on every filled state. Component `9:5857`, all variants in `assets/Date.svg`. See `CalendarDateCell.tsx`. |
 | Modal/Gallery (bottom sheet)         | 16 (content)      | 3 (tiles) | 24 (`radius.xl`) | white sheet, `shadows.xl`; title `typography.subtext` with paddingTop 20 + a 20px spacer row, close button absolute at right 8 / top 8.4; square tiles at `radius.sm`, first tile `colors.surfaceDark` + 32px `ic/camera`; actions block paddingTop 24 / paddingBottom 24. Backdrop = `colors.backdrop` over a blur, sheet bottom-aligned with paddingTop 16 / paddingBottom 40. Nodes `3198:4446` (sheet) and `3184:7350` (backdrop). See `GalleryModal.tsx`. |
 
 When implementing a component not in this table, pull its real spec with

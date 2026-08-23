@@ -55,7 +55,8 @@ export const palette = {
   accentSubtle: 'rgba(0, 132, 255, 0.08)', // Figma: Accent at 8% opacity — today's calendar cell highlight
   overlayContainer: 'rgba(38, 41, 45, 0.7)', // Figma: G800 at 70% opacity — SegmentedButton container bg (Add-Image-2, node 3192:12065)
   overlaySolid: 'rgba(3, 3, 3, 0.7)', // Figma: G900 at 70% opacity — SegmentedButton active segment + Button/S/Filled/FAB bg (nodes 3192:11941, 3192:11841)
-  backdrop: 'rgba(3, 3, 3, 0.3)', // Figma: G900 at 30% opacity — full-screen scrim behind a modal sheet (Add-Image-1, node 3184:7350)
+  backdrop: 'rgba(3, 3, 3, 0.3)', // Figma: G900 at 30% opacity — modal scrim, and the tint over a photo calendar cell (nodes 3184:7350, 3184:3185)
+  overlayAccent: 'rgba(0, 132, 255, 0.3)', // Figma: Accent at 30% opacity — tint over today's photo calendar cell (node 3184:3185)
 
   // iOS-style system color set (color picker / palette swatch components).
   systemRed: '#FF3B30',
@@ -96,6 +97,8 @@ export const colors = {
   overlayContainer: palette.overlayContainer,
   overlaySolid: palette.overlaySolid,
   backdrop: palette.backdrop,
+  photoScrim: palette.backdrop, // same G900 @ 30% as `backdrop`, but darkening a photo thumbnail rather than the whole screen
+  overlayAccent: palette.overlayAccent,
   surfaceDark: palette.g600, // Figma G600 — filled tile on a light sheet (Modal/Gallery's camera tile, node 3198:4434)
 };
 

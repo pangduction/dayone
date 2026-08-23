@@ -6,7 +6,9 @@ import type { RootStackParamList } from '../navigation/RootNavigator';
 import { IcArrowDown, IcCalendar, IcPlus, IcPulse, IcRows, IcShare } from '../components/icons/HomeIcons';
 import IconButton from '../components/IconButton';
 import IconButtonContained from '../components/IconButtonContained';
+import CalendarDateCell from '../components/CalendarDateCell';
 import { dateKey, getPostsForMonth } from '../data/posts';
+import type { Post } from '../data/posts';
 import { WEEKDAY_LABELS, daysInMonth, getCalendarWeeks } from '../utils/calendar';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
@@ -14,13 +16,15 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * Figma: "Home-Calendar-Default" (node 3184:4117) — the first screen after
  * login, showing the current month with today highlighted.
  *
- * Simplifications vs. the full Figma flow (both intentionally deferred, per
- * plan, rather than guessed at):
- * - Month/year navigation (tapping the title) isn't wired up yet — a picker
- *   screen is coming separately.
- * - Day cells only distinguish "today" / "has a post" / plain. Figma's
- *   Design System page has richer per-day states (photo thumbnail, text-only,
- *   etc.) that weren't fetched for this screen yet.
+ * This doubles as Figma's "포스트 생성 완료 후 화면" (section 3196:14544) —
+ * there is no separate post-created confirmation screen; publishing returns
+ * here and the day's cell changes to show the post. That section's two
+ * frames, Home-Calendar-Today-Photo (3192:8063) and -Today-Text (3192:8249),
+ * are the same screen with a different kind of post on today. See
+ * CalendarDateCell.tsx for the per-day states.
+ *
+ * Still deferred, by plan rather than guessed at: month/year navigation
+ * (tapping the title) isn't wired up — a picker screen is coming separately.
  */
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -29,13 +33,16 @@ export default function HomeScreen() {
   const month = today.getMonth();
   const todayKey = useMemo(() => dateKey(today), [today]);
 
-  const [postDates, setPostDates] = useState<Set<string>>(new Set());
+  // Keyed by date ('YYYY-MM-DD'). The whole post is kept, not just the date,
+  // because a cell renders the post's photo when it has one.
+  const [postsByDate, setPostsByDate] = useState<Record<string, Post>>({});
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       getPostsForMonth(year, month).then((posts) => {
-        if (!cancelled) setPostDates(new Set(posts.map((post) => post.date)));
+        if (cancelled) return;
+        setPostsByDate(Object.fromEntries(posts.map((post) => [post.date, post])));
       });
       return () => {
         cancelled = true;
@@ -45,7 +52,7 @@ export default function HomeScreen() {
 
   const weeks = useMemo(() => getCalendarWeeks(year, month), [year, month]);
   const totalDays = daysInMonth(year, month);
-  const postCount = postDates.size;
+  const postCount = Object.keys(postsByDate).length;
   const progressPercent = totalDays > 0 ? Math.min((postCount / totalDays) * 100, 100) : 0;
 
   return (
@@ -84,28 +91,14 @@ export default function HomeScreen() {
             {weeks.map((week, weekIndex) => (
               <View key={weekIndex} style={styles.weekRow}>
                 {week.map((day, dayIndex) => {
-                  if (day === null) {
-                    return <View key={dayIndex} style={styles.dayCell} />;
-                  }
-                  const key = dateKey(new Date(year, month, day));
-                  const isToday = key === todayKey;
-                  const hasPost = postDates.has(key);
+                  const key = day === null ? null : dateKey(new Date(year, month, day));
                   return (
-                    <View
+                    <CalendarDateCell
                       key={dayIndex}
-                      style={[styles.dayCell, isToday && styles.dayCellToday, hasPost && !isToday && styles.dayCellDone]}
-                    >
-                      <Text
-                        style={[
-                          typography.calendarDate,
-                          styles.dayLabel,
-                          isToday && styles.dayLabelToday,
-                          hasPost && !isToday && styles.dayLabelDone,
-                        ]}
-                      >
-                        {day}
-                      </Text>
-                    </View>
+                      day={day}
+                      isToday={key === todayKey}
+                      post={key === null ? null : postsByDate[key]}
+                    />
                   );
                 })}
               </View>
@@ -213,28 +206,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.sm,
     width: '100%',
-  },
-  dayCell: {
-    flex: 1,
-    aspectRatio: 1,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayCellToday: {
-    backgroundColor: colors.accentSubtle,
-  },
-  dayCellDone: {
-    backgroundColor: colors.buttonDark,
-  },
-  dayLabel: {
-    color: colors.textSecondary,
-  },
-  dayLabelToday: {
-    color: colors.accent,
-  },
-  dayLabelDone: {
-    color: colors.textOnDark,
   },
   processing: {
     width: '100%',
