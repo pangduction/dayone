@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'rea
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type { WebViewMessageEvent } from 'react-native-webview';
-import { colors, typography } from '../theme/tokens';
+import { colors, spacing, typography } from '../theme/tokens';
 
 /** The formatting actions the toolbar can apply. */
 export type EditorCommand =
@@ -178,7 +178,8 @@ function buildDocument({
     display: block;
   }
   #editor ul, #editor ol { padding-left: 22px; margin: 0; }
-  #editor hr { border: none; border-top: 1px solid ${colors.borderSubtle}; margin: 12px 0; }
+  /* Equal margins so the rule reads as centred in its gap. */
+  #editor hr { border: none; border-top: 1px solid ${colors.borderSubtle}; margin: ${spacing.md}px 0; }
 </style>
 </head>
 <body>
@@ -231,15 +232,25 @@ function buildDocument({
       }
 
       var rule = document.createElement('hr');
-      var nextLine = document.createElement('div');
-      nextLine.appendChild(document.createElement('br'));
+      var nextLine;
 
-      if (topLevel) {
-        editor.insertBefore(rule, topLevel.nextSibling);
-        editor.insertBefore(nextLine, rule.nextSibling);
+      // Reaching for the divider almost always means pressing Enter first, so
+      // the caret is usually already on an empty line. Reuse that line as the
+      // one below the rule instead of stranding it above, which would leave
+      // the rule sitting a whole line low in its own gap.
+      if (topLevel && topLevel.tagName === 'DIV' && topLevel.textContent === '') {
+        editor.insertBefore(rule, topLevel);
+        nextLine = topLevel;
       } else {
-        editor.appendChild(rule);
-        editor.appendChild(nextLine);
+        nextLine = document.createElement('div');
+        nextLine.appendChild(document.createElement('br'));
+        if (topLevel) {
+          editor.insertBefore(rule, topLevel.nextSibling);
+          editor.insertBefore(nextLine, rule.nextSibling);
+        } else {
+          editor.appendChild(rule);
+          editor.appendChild(nextLine);
+        }
       }
 
       var range = document.createRange();
