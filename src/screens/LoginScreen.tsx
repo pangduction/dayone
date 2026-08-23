@@ -1,53 +1,53 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import SocialLoginButton from '../components/SocialLoginButton';
-import { colors, spacing, typography } from '../theme/tokens';
+import { StyleSheet, View } from 'react-native';
+import Text from '../components/Text';
+import Button from '../components/Button';
+import Calendar, { CalendarCell } from '../components/Calendar';
+import { colors, spacing } from '../theme/tokens';
 
 /**
  * Figma: "Login - 1" (node 3177:2606)
- * https://www.figma.com/design/Fv2MwZPH1NImXNF16W5cxw/Daypic-기획-?node-id=3177-2606
+ * https://www.figma.com/design/Fv2MwZPH1NImXNF16W5cxw/DayOne?node-id=3177-2606
  *
- * The "splash thumbnail" (calendar photo collage, node 3182:2716) is a
- * placeholder for the same reason noted in SocialLoginButton — replace with
- * the real exported image once it can be fetched.
+ * The "splash thumbnail" layer (node 3182:2716) is a flattened image export
+ * in Figma with no child nodes — but it depicts the same UI as the real
+ * "Calendar" component (Design System page, node 3184:3400). Per project
+ * decision, this screen renders that real Calendar component tree instead
+ * of re-exporting the flattened image. `sampleWeeks` below is illustrative
+ * placeholder data, not tied to a live data source yet.
  */
 export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.body}>
         <View style={styles.titleBlock}>
-          <Text style={styles.title}>DayOne</Text>
-          <Text style={styles.subtitle}>Collect your daily moments in one page.</Text>
+          <Text variant="display">DayOne</Text>
+          <Text variant="overline" color={colors.textSecondary}>
+            Collect your daily moments in one page.
+          </Text>
         </View>
 
-        <View style={styles.splashPlaceholder}>
-          <Ionicons name="calendar-outline" size={48} color={colors.textSecondary} />
-          <Text style={styles.splashPlaceholderText}>splash thumbnail (TODO: real asset)</Text>
-        </View>
+        <Calendar weeks={sampleWeeks} />
       </View>
 
       <View style={styles.loginButtons}>
-        <SocialLoginButton
+        <Button
+          variant="social"
           label="Continue with Google"
           backgroundColor={colors.buttonLight}
           textColor={colors.buttonDark}
-          iconName="logo-google"
-          iconColor={colors.buttonDark}
         />
-        <SocialLoginButton
+        <Button
+          variant="social"
           label="Continue with Apple"
           backgroundColor={colors.buttonDark}
           textColor={colors.textOnDark}
-          iconName="logo-apple"
-          iconColor={colors.textOnDark}
         />
-        <SocialLoginButton
+        <Button
+          variant="social"
           label="Continue with Kakao"
           backgroundColor={colors.kakaoYellow}
           textColor={colors.buttonDark}
-          iconName="chatbubble"
-          iconColor={colors.buttonDark}
         />
       </View>
 
@@ -55,6 +55,49 @@ export default function LoginScreen() {
     </View>
   );
 }
+
+// Illustrative sample data for the Calendar preview — Sat-start month matching
+// the Figma reference screenshot's layout. Not wired to a real data source.
+const sampleWeeks: CalendarCell[][] = [
+  [null, null, null, null, null, null, { date: 1, status: 'record' }],
+  [
+    { date: 2 },
+    { date: 3, status: 'photo' },
+    { date: 4 },
+    { date: 5, status: 'record' },
+    { date: 6, status: 'photo' },
+    { date: 7, status: 'record' },
+    { date: 8 },
+  ],
+  [
+    { date: 9, status: 'photo' },
+    { date: 10 },
+    { date: 11, status: 'record' },
+    { date: 12, status: 'photo' },
+    { date: 13 },
+    { date: 14, status: 'photo' },
+    { date: 15, status: 'photo' },
+  ],
+  [
+    { date: 16, status: 'photo' },
+    { date: 17, status: 'record' },
+    { date: 18, status: 'photo' },
+    { date: 19 },
+    { date: 20, status: 'record' },
+    { date: 21 },
+    { date: 22, status: 'photo' },
+  ],
+  [
+    { date: 23, status: 'today' },
+    { date: 24, status: 'photo' },
+    { date: 25, status: 'photo' },
+    { date: 26, status: 'photo' },
+    { date: 27 },
+    { date: 28 },
+    { date: 29 },
+  ],
+  [{ date: 30 }, { date: 31, status: 'record' }, null, null, null, null, null],
+];
 
 const styles = StyleSheet.create({
   container: {
@@ -72,38 +115,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 40,
     paddingVertical: 80,
+    paddingHorizontal: spacing.lg,
   },
   titleBlock: {
     width: '100%',
     alignItems: 'center',
     gap: spacing.sm,
-  },
-  title: {
-    fontFamily: typography.display.fontFamily,
-    fontSize: typography.display.fontSize,
-    letterSpacing: typography.display.letterSpacing,
-    color: colors.textPrimary,
-  },
-  subtitle: {
-    fontFamily: typography.overline.fontFamily,
-    fontSize: typography.overline.fontSize,
-    letterSpacing: typography.overline.letterSpacing,
-    color: colors.textSecondary,
-  },
-  splashPlaceholder: {
-    flex: 1,
-    width: '100%',
-    aspectRatio: 844 / 855,
-    borderRadius: 24,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  splashPlaceholderText: {
-    fontFamily: typography.overline.fontFamily,
-    fontSize: typography.overline.fontSize,
-    color: colors.textSecondary,
   },
   loginButtons: {
     width: '100%',
