@@ -6,12 +6,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * Add-Default screen, Figma node 3184:5508), so `savePost` upserts by date
  * rather than ever creating a second row for the same day.
  */
+/**
+ * How the post's photo is framed. Figma draws these as two separate detail
+ * screens — Post-Only Photo-Fit (node 3192:11908) shows the whole photo
+ * letterboxed inside the square, Post-Only Photo-Filled (3192:12382) crops it
+ * to fill — so the choice made with the Add screen's Fit/Filled toggle has to
+ * be stored with the post, not just held in that screen's state.
+ */
+export type PhotoFit = 'fit' | 'filled';
+
 export type Post = {
   id: string;
   /** Local calendar date the post belongs to, 'YYYY-MM-DD'. */
   date: string;
   /** Local file URI of the post's single photo, or null if text-only. */
   photoUri: string | null;
+  fitMode: PhotoFit;
   text: string;
   createdAt: string;
   updatedAt: string;
@@ -28,12 +38,25 @@ export function dateKey(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+/**
+ * Inverse of `dateKey`. Built field by field rather than with `new Date(key)`,
+ * which parses a bare 'YYYY-MM-DD' as UTC midnight and so lands on the
+ * previous day for anyone west of Greenwich.
+ */
+export function parseDateKey(key: string): Date {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 async function readAll(): Promise<Post[]> {
   const raw = await AsyncStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as Post[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    // `fitMode` was added after the first rows were written; default those to
+    // 'fit' rather than letting the detail screen read undefined.
+    return parsed.map((post) => ({ ...post, fitMode: post.fitMode ?? 'fit' }) as Post);
   } catch {
     return [];
   }
@@ -57,7 +80,12 @@ export async function getPostByDate(date: string): Promise<Post | null> {
  * exists — this is what enforces "one post per day" rather than a separate
  * validation step.
  */
-export async function savePost(input: { date: string; photoUri: string | null; text: string }): Promise<Post> {
+export async function savePost(input: {
+  date: string;
+  photoUri: string | null;
+  fitMode: PhotoFit;
+  text: string;
+}): Promise<Post> {
   const posts = await readAll();
   const now = new Date().toISOString();
   const existingIndex = posts.findIndex((post) => post.date === input.date);
@@ -66,6 +94,7 @@ export async function savePost(input: { date: string; photoUri: string | null; t
     const updated: Post = {
       ...posts[existingIndex],
       photoUri: input.photoUri,
+      fitMode: input.fitMode,
       text: input.text,
       updatedAt: now,
     };
@@ -78,6 +107,7 @@ export async function savePost(input: { date: string; photoUri: string | null; t
     id: `${input.date}-${Math.random().toString(36).slice(2, 10)}`,
     date: input.date,
     photoUri: input.photoUri,
+    fitMode: input.fitMode,
     text: input.text,
     createdAt: now,
     updatedAt: now,

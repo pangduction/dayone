@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import { dateKey, getPostByDate, savePost } from '../data/posts';
+import { dateKey, getPostByDate, parseDateKey, savePost } from '../data/posts';
 import IconButton from '../components/IconButton';
 import HeaderActionButton from '../components/HeaderActionButton';
 import SegmentedButton, { type FitMode } from '../components/SegmentedButton';
@@ -26,15 +27,18 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * still a stub — so `hasVoice` is wired in as a constant to keep that rule in
  * one place rather than having to rediscover it later.
  *
- * DayOne allows exactly one post per calendar day. This screen always targets
- * *today* (no date picker here — the Home calendar's day cells are a separate,
- * not-yet-built way to view/edit past days), so opening it when today already
- * has a post loads that post for editing instead of starting a blank one.
+ * DayOne allows exactly one post per calendar day, so this screen targets one
+ * date and upserts it: opening it on a day that already has a post loads that
+ * post for editing rather than starting a blank one. It defaults to today
+ * (the bottom nav's Add tab) and takes a `date` param when reached from a
+ * post detail screen's Edit button.
  */
 export default function AddScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { params } = useRoute<RouteProp<RootStackParamList, 'Add'>>();
   const today = useMemo(() => new Date(), []);
-  const todayKey = useMemo(() => dateKey(today), [today]);
+  const targetKey = params?.date ?? dateKey(today);
+  const targetDate = useMemo(() => parseDateKey(targetKey), [targetKey]);
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [fitMode, setFitMode] = useState<FitMode>('fit');
@@ -48,15 +52,16 @@ export default function AddScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    getPostByDate(todayKey).then((existing) => {
+    getPostByDate(targetKey).then((existing) => {
       if (cancelled || !existing) return;
       setPhotoUri(existing.photoUri);
+      setFitMode(existing.fitMode);
       setText(existing.text);
     });
     return () => {
       cancelled = true;
     };
-  }, [todayKey]);
+  }, [targetKey]);
 
   const canSave = photoUri !== null || text.trim().length > 0 || hasVoice;
 
@@ -100,12 +105,12 @@ export default function AddScreen() {
 
   const handleDone = async () => {
     if (!canSave) return;
-    await savePost({ date: todayKey, photoUri, text: text.trim() });
+    await savePost({ date: targetKey, photoUri, fitMode, text: text.trim() });
     navigation.goBack();
   };
 
-  const dateLabel = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  const weekdayLabel = today.toLocaleDateString('en-US', { weekday: 'short' });
+  const dateLabel = targetDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const weekdayLabel = targetDate.toLocaleDateString('en-US', { weekday: 'short' });
 
   return (
     <View style={styles.container}>

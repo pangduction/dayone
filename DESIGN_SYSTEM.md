@@ -85,7 +85,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 
 | Component (Figma name)              | Padding (H / V)   | Gap  | Radius       | Notes |
 |--------------------------------------|-------------------|------|--------------|-------|
-| Button / M / Ghost / Secondary       | 16 / —            | —    | 12 (`radius.md`) | min-height 40, white bg, `border` 1px, `shadows.xs`, `typography.subtext` label |
+| Button / M / Ghost / Secondary       | 16 / —            | —    | 12 (`radius.md`) | min-height 40, white bg, 1px **`colors.borderSubtle`** (G100 `#E9E9E9` — the component node `3192:9209` binds G100, not the G200 this row previously said), `shadows.xs`, centered `typography.subtext` label in `colors.textSecondary`. Used for the post detail header's "Edit". See `GhostButton.tsx`. |
 | Chip Button                          | 8 / 10            | —    | 8 (`radius.sm`)  | height 40, `shadows.xs`; active border = `colors.accent`, inactive = `colors.border` |
 | Alert                                | 20 / 8            | 8    | 8 (`radius.sm`)  | `colors.success` bg, white `typography.body` text (13px) |
 | Input (text field)                   | 12 / 10           | —    | 8 (`radius.sm`)  | white bg, `border` 1px, `shadows.xs`, placeholder in `colors.textPlaceholder` |
@@ -98,6 +98,8 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Button / S / Filled / FAB (e.g. "Delete") | 12 / 3 (left) · 8 / 3 (right) | 3 | 20 (off-scale) | `colors.overlaySolid` bg, white `typography.overline` label, trailing 16×16 `ic/cross`. Node `3192:11841`. See `FilledFabButton.tsx`. |
 | Button / L / Filled / Primary        | 16 / 8            | —    | 16 (`radius.lg`) | height 48, `colors.buttonDark` bg, centered white `typography.body` label. Node `3192:9208`. See `PrimaryButton.tsx`. |
 | Date (calendar day cell)             | —                 | —    | 500 (`radius.full`) | square, `typography.calendarDate`. Six states = {no post, photo post, text-only post} x {another day, today}: no post → transparent/G600 text, or `colors.accentSubtle`/`colors.accent` on today; photo post → thumbnail under `colors.photoScrim`, or under `colors.overlayAccent` plus a 1px `colors.accent` border on today; text-only → solid `colors.textPrimary`, or solid `colors.accent` on today. White label on every filled state. Component `9:5857`, all variants in `assets/Date.svg`. See `CalendarDateCell.tsx`. |
+| Header/Post                          | 5 (left) / 16 (right) · 16 vertical | — | — | `Button/Icon/Plain` + `ic/arrow-left` on the left, `Button / M / Ghost / Secondary` "Edit" on the right. Node `3192:11899`. Same shell as Header/Add. |
+| Post Detail (column)                 | 16                | 16   | —            | stacks Date Written, then whichever of Image Section / Record/View / Text Section the post has. Date Written: height 40, centered, `typography.subtext` in `colors.textPrimary` over `typography.caption` in `colors.textTertiary` (weekday spelled out in full). Image Section: square, Fit letterboxes / Filled crops. Text Section: min-height 240, gap 8, paddingHorizontal 12, a 1px `colors.borderSubtle` divider above `typography.body` content. Section `3192:11364`. See `PostDetailScreen.tsx`. |
 | Modal/Gallery (bottom sheet)         | 16 (content)      | 3 (tiles) | 24 (`radius.xl`) | white sheet, `shadows.xl`; title `typography.subtext` with paddingTop 20 + a 20px spacer row, close button absolute at right 8 / top 8.4; square tiles at `radius.sm`, first tile `colors.surfaceDark` + 32px `ic/camera`; actions block paddingTop 24 / paddingBottom 24. Backdrop = `colors.backdrop` over a blur, sheet bottom-aligned with paddingTop 16 / paddingBottom 40. Nodes `3198:4446` (sheet) and `3184:7350` (backdrop). See `GalleryModal.tsx`. |
 
 When implementing a component not in this table, pull its real spec with
@@ -166,7 +168,7 @@ the wrong glyph.
   and `icons/AddIcons.tsx` for each screen's ported glyphs.
 - `src/screens/` — one file per Figma screen/frame.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
-  stack (Login/Home/Add). `initialRouteName` is temporarily `"Home"` since
+  stack (Login/Home/Add/PostDetail). `initialRouteName` is temporarily `"Home"` since
   sign-in has no real auth yet; flip it back to `"Login"` once that's wired
   up. Every route pushes as an ordinary page — Add is a full Figma frame
   with its own back button, not a modal sheet. The only modal in the app so

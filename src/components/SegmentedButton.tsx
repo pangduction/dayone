@@ -1,8 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, typography } from '../theme/tokens';
 import { IcFilled, IcFit } from './icons/AddIcons';
+import type { PhotoFit } from '../data/posts';
 
-export type FitMode = 'fit' | 'filled';
+/**
+ * Same union as the stored `PhotoFit` — aliased rather than redeclared so the
+ * toggle and the persisted post can never drift apart.
+ */
+export type FitMode = PhotoFit;
 
 type Props = {
   value: FitMode;

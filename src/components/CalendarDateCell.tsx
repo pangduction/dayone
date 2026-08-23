@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, typography } from '../theme/tokens';
 
 type Props = {
@@ -7,6 +7,8 @@ type Props = {
   isToday: boolean;
   /** The day's post, if one exists. */
   post?: { photoUri: string | null } | null;
+  /** Opens the day's post detail. Only wired up for days that have one. */
+  onPress?: () => void;
 };
 
 /**
@@ -27,7 +29,7 @@ type Props = {
  * The photo variants are why HomeScreen passes the whole post down rather
  * than just a "has a post" boolean.
  */
-export default function CalendarDateCell({ day, isToday, post }: Props) {
+export default function CalendarDateCell({ day, isToday, post, onPress }: Props) {
   if (day === null) return <View style={styles.cell} />;
 
   const hasPost = post != null;
@@ -35,8 +37,16 @@ export default function CalendarDateCell({ day, isToday, post }: Props) {
   const hasPhoto = hasPost && photoUri !== null;
   const isTextOnly = hasPost && photoUri === null;
 
+  // Figma's flow only shows a day opening its post (Home-Calendar-Today-Photo
+  // -> Post-Only Photo-Fit), so an empty day stays inert rather than being
+  // given invented behaviour.
+  const Container = hasPost && onPress ? Pressable : View;
+
   return (
-    <View
+    <Container
+      onPress={hasPost ? onPress : undefined}
+      accessibilityRole={hasPost && onPress ? 'button' : undefined}
+      accessibilityLabel={hasPost && onPress ? `Open the post for day ${day}` : undefined}
       style={[
         styles.cell,
         isToday && !hasPost && styles.cellTodayEmpty,
@@ -60,7 +70,7 @@ export default function CalendarDateCell({ day, isToday, post }: Props) {
       >
         {day}
       </Text>
-    </View>
+    </Container>
   );
 }
 

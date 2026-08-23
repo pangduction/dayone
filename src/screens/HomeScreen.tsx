@@ -98,6 +98,7 @@ export default function HomeScreen() {
                       day={day}
                       isToday={key === todayKey}
                       post={key === null ? null : postsByDate[key]}
+                      onPress={key === null ? undefined : () => navigation.navigate('PostDetail', { date: key })}
                     />
                   );
                 })}

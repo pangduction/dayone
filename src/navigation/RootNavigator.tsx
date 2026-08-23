@@ -3,11 +3,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import AddScreen from '../screens/AddScreen';
+import PostDetailScreen from '../screens/PostDetailScreen';
 
 export type RootStackParamList = {
   Login: undefined;
   Home: undefined;
-  Add: undefined;
+  /** Omit `date` to write today's post; pass one to edit that day's. */
+  Add: { date?: string } | undefined;
+  PostDetail: { date: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -33,6 +36,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Add" component={AddScreen} />
+        <Stack.Screen name="PostDetail" component={PostDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
