@@ -39,3 +39,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# local test fixtures — sample photos pushed into the iOS simulator with
+# `xcrun simctl addmedia`, not part of the app
+img-sample/
