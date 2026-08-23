@@ -4,9 +4,11 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { IcArrowDown, IcCalendar, IcPlus, IcPulse, IcRows, IcShare } from '../components/icons/HomeIcons';
+import IconButton from '../components/IconButton';
+import IconButtonContained from '../components/IconButtonContained';
 import { dateKey, getPostsForMonth } from '../data/posts';
 import { WEEKDAY_LABELS, daysInMonth, getCalendarWeeks } from '../utils/calendar';
-import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
  * Figma: "Home-Calendar-Default" (node 3184:4117) — the first screen after
@@ -49,12 +51,12 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable style={styles.headerIconButton} hitSlop={8}>
+        <IconButton accessibilityLabel="Menu">
           <IcRows size={24} color={colors.textPrimary} />
-        </Pressable>
-        <Pressable style={styles.shareButton} hitSlop={8}>
+        </IconButton>
+        <IconButtonContained accessibilityLabel="Share">
           <IcShare size={24} color={colors.textPrimary} />
-        </Pressable>
+        </IconButtonContained>
       </View>
 
       <View style={styles.calendar}>
@@ -133,20 +135,26 @@ export default function HomeScreen() {
           <View style={styles.navIconFrame}>
             <IcCalendar size={24} color={colors.textPrimary} />
           </View>
-          <View style={styles.navSelectedDot} />
+          <View style={styles.navSecondRow}>
+            <View style={styles.navSelectedDot} />
+          </View>
         </View>
         <Pressable style={styles.navItem} onPress={() => navigation.navigate('Add')} hitSlop={8}>
           <View style={styles.navIconFrame}>
             <IcPlus size={24} color={colors.textPlaceholder} />
           </View>
-          <Text style={[typography.overline, styles.navLabel]}>Add</Text>
+          <View style={styles.navSecondRow}>
+            <Text style={[typography.overline, styles.navLabel]}>Add</Text>
+          </View>
         </Pressable>
         {/* TODO: Report screen not implemented yet. */}
         <Pressable style={styles.navItem} hitSlop={8}>
           <View style={styles.navIconFrame}>
             <IcPulse size={24} color={colors.textPlaceholder} />
           </View>
-          <Text style={[typography.overline, styles.navLabel]}>Report</Text>
+          <View style={styles.navSecondRow}>
+            <Text style={[typography.overline, styles.navLabel]}>Report</Text>
+          </View>
         </Pressable>
       </View>
     </View>
@@ -170,23 +178,6 @@ const styles = StyleSheet.create({
     paddingLeft: 5,
     paddingRight: spacing.md,
     paddingVertical: spacing.md,
-  },
-  headerIconButton: {
-    width: 40,
-    height: 40,
-    padding: spacing.sm,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shareButton: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 5,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.xs,
   },
   calendar: {
     width: '100%',
@@ -317,6 +308,18 @@ const styles = StyleSheet.create({
     // tighter bounding box) is what creates the gap before the dot/label.
     width: 24,
     height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navSecondRow: {
+    // Figma "Menu Title" row (nodes 3184:3526/3531/3535): a fixed 45x13
+    // box sitting directly under the icon frame with no gap — verified via
+    // get_metadata's absolute coords (icon y:4 h:24, row y:28 h:13 on all
+    // three tabs). Every tab's label/dot must be centered in this same
+    // 13px row, not placed bare, or the dot (3px) ends up shorter than the
+    // label text and throws off the icon's vertical centering.
+    width: '100%',
+    height: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },

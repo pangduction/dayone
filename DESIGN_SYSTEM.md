@@ -36,6 +36,9 @@ whenever you write or edit a UI component.
 - `palette.system*` (systemRed/Blue/Green/…) is an iOS-style swatch set used
   by picker/palette components, not general UI chrome — don't reach for it
   for buttons, text, or backgrounds.
+- `colors.overlayContainer` (G800 @ 70%) / `colors.overlaySolid` (G900 @ 70%)
+  are for controls overlaid on top of photo content (the Add screen's
+  Fit/Filled toggle and Delete pill) — not general chrome backgrounds.
 
 ## 3. Typography usage
 
@@ -83,7 +86,11 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Input (text field)                   | 12 / 10           | —    | 8 (`radius.sm`)  | white bg, `border` 1px, `shadows.xs`, placeholder in `colors.textPlaceholder` |
 | Input with label                     | —                 | 8    | —            | label uses `typography.subtext` in `colors.textSecondary`, 8px above the input |
 | Search input field                   | 12 / 12           | 8    | 8 (`radius.sm`)  | `border` 1px, `colors.accent` text cursor |
-| Header action pill (e.g. "Done")     | 12 / 8            | —    | 16 (`radius.lg`) | height 40, off state = `colors.surface` bg / `colors.border` text; **on/enabled state wasn't in the fetched Figma node** — the accent-bg/white-text look in `AddScreen.tsx` is an inferred default, not a pixel-perfect port |
+| Button / M / Header Action (e.g. "Done") | 12 / 8        | —    | 16 (`radius.lg`) | height 40; off = `colors.surface` bg / `colors.border` text (node `3184:5701`), on = `colors.accent` bg / `colors.textOnDark` text (node `3184:5903`) — both states verified via `get_design_context`. See `HeaderActionButton.tsx`. |
+| Button/Icon/Plain                    | 8 (all)           | —    | 16 (`radius.lg`) | bare 40×40 tap target, transparent bg. See `IconButton.tsx`. |
+| Button/Icon/Contained                | 8 / 5             | —    | 8 (`radius.sm`)  | white/`colors.surface` bg, `shadows.xs`; the "5" vertical padding is a Figma-exact value, not on the spacing scale. See `IconButtonContained.tsx`. |
+| SegmentedButton (Fit/Filled toggle)  | 2 (container)     | —    | 17 (off-scale) outer, 16 (`radius.lg`) active segment | overlaid top-center on a selected photo; container bg `colors.overlayContainer`, active segment bg `colors.overlaySolid` + white icon/label, inactive = transparent + `colors.textPlaceholder`. Node `3192:12065`. See `SegmentedButton.tsx`. |
+| Button / S / Filled / FAB (e.g. "Delete") | 12 / 3 (left) · 8 / 3 (right) | 3 | 20 (off-scale) | `colors.overlaySolid` bg, white `typography.overline` label, trailing 16×16 `ic/cross`. Node `3192:11841`. See `FilledFabButton.tsx`. |
 
 When implementing a component not in this table, pull its real spec with
 `get_design_context` on its node in the Design System page — don't
@@ -121,7 +128,15 @@ the wrong glyph.
   (`HomeIcons.tsx`) instead takes a required `color` prop so call sites pass
   a `colors.*` token, per §1/§2, rather than a hardcoded fill.
 - If Figma asset hosts aren't reachable from the current sandbox, add a
-  `TODO` comment describing the real asset to swap in later.
+  `TODO` comment describing the real asset to swap in later. This has come
+  up even though the Figma MCP tools themselves (`get_design_context`,
+  `download_assets`) work fine here: they confirm a node's exact frame
+  size, inset percentages, color, and node id, but every actual
+  `www.figma.com/api/mcp/asset/...` byte-fetch 403s from this sandbox's
+  outbound proxy. `src/components/icons/AddIcons.tsx` is the current
+  example — each export is an Ionicons stand-in sized to the real Figma
+  frame (so layout/gaps are already correct) with a `TODO` naming the exact
+  node to port from a session with unrestricted network access.
 
 ## 6. Where things live
 
@@ -129,7 +144,11 @@ the wrong glyph.
   `radius`, `typography`, `shadows`, `fontAssets`). Single source of truth;
   extend it, don't duplicate it.
 - `src/components/` — reusable components, one per recurring Figma
-  component.
+  component: `IconButton.tsx` (Button/Icon/Plain), `IconButtonContained.tsx`
+  (Button/Icon/Contained), `HeaderActionButton.tsx` (Button / M / Header
+  Action), `SegmentedButton.tsx` (Fit/Filled toggle), `FilledFabButton.tsx`
+  (Button / S / Filled / FAB), plus `icons/HomeIcons.tsx` and
+  `icons/AddIcons.tsx` for each screen's ported/stand-in glyphs.
 - `src/screens/` — one file per Figma screen/frame.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
   stack (Login/Home/Add). `initialRouteName` is temporarily `"Home"` since

@@ -53,6 +53,8 @@ export const palette = {
   buttonLightFill: '#F5F5F5', // Figma: local fill on Button/Google (not a bound variable)
   progressTrack: '#D1D5DB', // Figma: local fill on Home-Calendar's Progress Box background (not a bound variable)
   accentSubtle: 'rgba(0, 132, 255, 0.08)', // Figma: Accent at 8% opacity — today's calendar cell highlight
+  overlayContainer: 'rgba(38, 41, 45, 0.7)', // Figma: G800 at 70% opacity — SegmentedButton container bg (Add-Image-2, node 3192:12065)
+  overlaySolid: 'rgba(3, 3, 3, 0.7)', // Figma: G900 at 70% opacity — SegmentedButton active segment + Button/S/Filled/FAB bg (nodes 3192:11941, 3192:11841)
 
   // iOS-style system color set (color picker / palette swatch components).
   systemRed: '#FF3B30',
@@ -90,6 +92,8 @@ export const colors = {
   warning: palette.warning,
   success: palette.success,
   progressTrack: palette.progressTrack,
+  overlayContainer: palette.overlayContainer,
+  overlaySolid: palette.overlaySolid,
 };
 
 // ---------------------------------------------------------------------------
