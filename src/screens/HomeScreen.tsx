@@ -36,18 +36,35 @@ export default function HomeScreen() {
   // Keyed by date ('YYYY-MM-DD'). The whole post is kept, not just the date,
   // because a cell renders the post's photo when it has one.
   const [postsByDate, setPostsByDate] = useState<Record<string, Post>>({});
+  // The day the user last tapped that has no post yet. Tapping it again
+  // clears it, since selecting is the only thing an empty day does.
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       getPostsForMonth(year, month).then((posts) => {
         if (cancelled) return;
-        setPostsByDate(Object.fromEntries(posts.map((post) => [post.date, post])));
+        const byDate = Object.fromEntries(posts.map((post) => [post.date, post]));
+        setPostsByDate(byDate);
+        // A day that gained a post while we were away is no longer selectable.
+        setSelectedDate((current) => (current !== null && byDate[current] ? null : current));
       });
       return () => {
         cancelled = true;
       };
     }, [year, month]),
+  );
+
+  const handleDayPress = useCallback(
+    (key: string) => {
+      if (postsByDate[key]) {
+        navigation.navigate('PostDetail', { date: key });
+        return;
+      }
+      setSelectedDate((current) => (current === key ? null : key));
+    },
+    [postsByDate, navigation],
   );
 
   const weeks = useMemo(() => getCalendarWeeks(year, month), [year, month]);
@@ -98,7 +115,8 @@ export default function HomeScreen() {
                       day={day}
                       isToday={key === todayKey}
                       post={key === null ? null : postsByDate[key]}
-                      onPress={key === null ? undefined : () => navigation.navigate('PostDetail', { date: key })}
+                      isSelected={key !== null && key === selectedDate}
+                      onPress={key === null ? undefined : () => handleDayPress(key)}
                     />
                   );
                 })}
