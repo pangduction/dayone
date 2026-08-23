@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import type { RouteProp } from '@react-navigation/native';
+import type { NavigationAction, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { dateKey, getPostByDate, parseDateKey, savePost } from '../data/posts';
@@ -11,6 +11,7 @@ import HeaderActionButton from '../components/HeaderActionButton';
 import SegmentedButton, { type FitMode } from '../components/SegmentedButton';
 import FilledFabButton from '../components/FilledFabButton';
 import GalleryModal from '../components/GalleryModal';
+import LeaveModal from '../components/LeaveModal';
 import { IcArrowLeft, IcImage, IcMicrophone } from '../components/icons/AddIcons';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
@@ -31,7 +32,12 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * date and upserts it: opening it on a day that already has a post loads that
  * post for editing rather than starting a blank one. It defaults to today
  * (the bottom nav's Add tab) and takes a `date` param when reached from a
- * post detail screen's Edit button.
+ * post detail screen's Edit button or from tapping an empty calendar day.
+ *
+ * Leaving with unsaved edits raises Figma's Modal/Leave (see "Add-Leave",
+ * node 3233:4558). The guard hangs off navigation's `beforeRemove` rather
+ * than the header button's own handler so that the swipe-back gesture is
+ * covered by the same check.
  */
 export default function AddScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -44,6 +50,19 @@ export default function AddScreen() {
   const [fitMode, setFitMode] = useState<FitMode>('fit');
   const [text, setText] = useState('');
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+
+  // What was loaded for this date, so "unsaved changes" is a real comparison
+  // rather than "the user touched something".
+  const [baseline, setBaseline] = useState<{ photoUri: string | null; fitMode: FitMode; text: string }>({
+    photoUri: null,
+    fitMode: 'fit',
+    text: '',
+  });
+  // Set just before a navigation we mean to allow — saving, or confirming
+  // Leave — so the guard below doesn't re-prompt on our own goBack.
+  const bypassLeaveGuard = useRef(false);
+  const pendingNavigation = useRef<NavigationAction | null>(null);
 
   // TODO: voice recording (one per post) isn't implemented yet — see the mic
   // button below. Publishing already accounts for it so the Done rule doesn't
@@ -57,6 +76,7 @@ export default function AddScreen() {
       setPhotoUri(existing.photoUri);
       setFitMode(existing.fitMode);
       setText(existing.text);
+      setBaseline({ photoUri: existing.photoUri, fitMode: existing.fitMode, text: existing.text });
     });
     return () => {
       cancelled = true;
@@ -64,6 +84,26 @@ export default function AddScreen() {
   }, [targetKey]);
 
   const canSave = photoUri !== null || text.trim().length > 0 || hasVoice;
+  const isDirty = photoUri !== baseline.photoUri || fitMode !== baseline.fitMode || text !== baseline.text;
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (event) => {
+      if (bypassLeaveGuard.current || !isDirty) return;
+      event.preventDefault();
+      pendingNavigation.current = event.data.action;
+      setLeaveOpen(true);
+    });
+    return unsubscribe;
+  }, [navigation, isDirty]);
+
+  const handleLeave = () => {
+    bypassLeaveGuard.current = true;
+    setLeaveOpen(false);
+    const action = pendingNavigation.current;
+    pendingNavigation.current = null;
+    if (action) navigation.dispatch(action);
+    else navigation.goBack();
+  };
 
   const handleOpenCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -106,6 +146,7 @@ export default function AddScreen() {
   const handleDone = async () => {
     if (!canSave) return;
     await savePost({ date: targetKey, photoUri, fitMode, text: text.trim() });
+    bypassLeaveGuard.current = true;
     navigation.goBack();
   };
 
@@ -167,6 +208,8 @@ export default function AddScreen() {
           style={[typography.body, styles.textInput]}
         />
       </View>
+
+      <LeaveModal visible={leaveOpen} onLeave={handleLeave} onKeepEditing={() => setLeaveOpen(false)} />
 
       <GalleryModal
         visible={galleryOpen}

@@ -6,21 +6,26 @@ type Props = {
   label: string;
   onPress?: () => void;
   disabled?: boolean;
+  /**
+   * Which fill the instance uses. Figma's master (node 3192:9208) is
+   * `colors.buttonDark` — Modal/Gallery's "Go to Gallery" — but Modal/Leave's
+   * "Leave" (node 3233:4552) overrides the fill to Accent.
+   */
+  tone?: 'dark' | 'accent';
   style?: StyleProp<ViewStyle>;
 };
 
 /**
- * Figma "Button / L / Filled / Primary" (node 3192:9208, as used for
- * Modal/Gallery's "Go to Gallery" action): height 48, paddingHorizontal 16,
- * paddingVertical 8, radius.lg, `colors.buttonDark` bg, centered white
- * `typography.body` label.
+ * Figma "Button / L / Filled / Primary" (node 3192:9208): height 48,
+ * paddingHorizontal 16, paddingVertical 8, radius.lg, centered white
+ * `typography.body` label. See `tone` for the two fills in use.
  */
-export default function PrimaryButton({ label, onPress, disabled, style }: Props) {
+export default function PrimaryButton({ label, onPress, disabled, tone = 'dark', style }: Props) {
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={[styles.button, disabled && styles.buttonDisabled, style]}
+      style={[styles.button, tone === 'accent' && styles.buttonAccent, disabled && styles.buttonDisabled, style]}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
@@ -41,6 +46,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.buttonDark,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonAccent: {
+    backgroundColor: colors.accent,
   },
   buttonDisabled: {
     opacity: 0.4,
