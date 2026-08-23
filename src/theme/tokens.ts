@@ -55,6 +55,7 @@ export const palette = {
   accentSubtle: 'rgba(0, 132, 255, 0.08)', // Figma: Accent at 8% opacity — today's calendar cell highlight
   overlayContainer: 'rgba(38, 41, 45, 0.7)', // Figma: G800 at 70% opacity — SegmentedButton container bg (Add-Image-2, node 3192:12065)
   overlaySolid: 'rgba(3, 3, 3, 0.7)', // Figma: G900 at 70% opacity — SegmentedButton active segment + Button/S/Filled/FAB bg (nodes 3192:11941, 3192:11841)
+  backdrop: 'rgba(3, 3, 3, 0.3)', // Figma: G900 at 30% opacity — full-screen scrim behind a modal sheet (Add-Image-1, node 3184:7350)
 
   // iOS-style system color set (color picker / palette swatch components).
   systemRed: '#FF3B30',
@@ -94,6 +95,8 @@ export const colors = {
   progressTrack: palette.progressTrack,
   overlayContainer: palette.overlayContainer,
   overlaySolid: palette.overlaySolid,
+  backdrop: palette.backdrop,
+  surfaceDark: palette.g600, // Figma G600 — filled tile on a light sheet (Modal/Gallery's camera tile, node 3198:4434)
 };
 
 // ---------------------------------------------------------------------------
@@ -129,6 +132,7 @@ export const radius = {
   sm: 8,
   md: 12,
   lg: 16,
+  xl: 24, // Figma: Modal/Gallery sheet corner (node 3198:4446)
   full: 999,
 } as const;
 

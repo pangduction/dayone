@@ -9,25 +9,27 @@ import IconButton from '../components/IconButton';
 import HeaderActionButton from '../components/HeaderActionButton';
 import SegmentedButton, { type FitMode } from '../components/SegmentedButton';
 import FilledFabButton from '../components/FilledFabButton';
+import GalleryModal from '../components/GalleryModal';
 import { IcArrowLeft, IcImage, IcMicrophone } from '../components/icons/AddIcons';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
- * Figma: "Add-Default" (node 3184:5508, empty state) / "Add-Image-2" (node
- * 3184:5903, photo-selected state), reached from Home's bottom Navigation
- * "Add" tab (node 3184:3528).
+ * Figma flow "Flow 2.1 이미지 삽입하기" (section 3196:14539):
+ *   Add-Default  (3184:5508) — empty state, "Add Today's Photo" button
+ *   Add-Image-1  (3184:7323) — Modal/Gallery sheet over the empty state
+ *   Add-Image-2  (3184:5903) — photo chosen, "Fit"    (image letterboxed)
+ *   Add-Image-3  (3192:12212) — photo chosen, "Filled" (image fills 358x358)
  *
- * DayOne allows exactly one post per calendar day and exactly one photo per
- * post. This screen always targets *today* (no date picker here — the Home
- * calendar's day cells are a separate, not-yet-built way to view/edit past
- * days), so opening it when today already has a post loads that post for
- * editing instead of starting a blank one.
+ * A post holds up to three things: text, one image, and one voice recording.
+ * Any single one of them is enough to publish, which is what drives the Done
+ * pill's enabled state. Voice recording isn't built yet — the mic button is
+ * still a stub — so `hasVoice` is wired in as a constant to keep that rule in
+ * one place rather than having to rediscover it later.
  *
- * The Done pill's on/off states are both verified via get_design_context
- * (off: node 3184:5701 "Header/Add"; on: node 3184:5903 "Add-Image-2") — see
- * HeaderActionButton.tsx. The photo-selected layout (square image, Fit/
- * Filled toggle, Delete pill) is likewise ported from 3184:5903, not
- * invented — see SegmentedButton.tsx / FilledFabButton.tsx.
+ * DayOne allows exactly one post per calendar day. This screen always targets
+ * *today* (no date picker here — the Home calendar's day cells are a separate,
+ * not-yet-built way to view/edit past days), so opening it when today already
+ * has a post loads that post for editing instead of starting a blank one.
  */
 export default function AddScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -37,6 +39,12 @@ export default function AddScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [fitMode, setFitMode] = useState<FitMode>('fit');
   const [text, setText] = useState('');
+  const [galleryOpen, setGalleryOpen] = useState(false);
+
+  // TODO: voice recording (one per post) isn't implemented yet — see the mic
+  // button below. Publishing already accounts for it so the Done rule doesn't
+  // have to be rewritten when it lands.
+  const hasVoice = false;
 
   useEffect(() => {
     let cancelled = false;
@@ -50,9 +58,22 @@ export default function AddScreen() {
     };
   }, [todayKey]);
 
-  const canSave = photoUri !== null || text.trim().length > 0;
+  const canSave = photoUri !== null || text.trim().length > 0 || hasVoice;
 
-  const handlePickPhoto = async () => {
+  const handleOpenCamera = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Camera access needed', 'Allow camera access to take today’s photo.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+    if (!result.canceled && result.assets[0]) {
+      setPhotoUri(result.assets[0].uri);
+      setGalleryOpen(false);
+    }
+  };
+
+  const handleOpenGallery = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert('Photo access needed', 'Allow photo library access to add a picture to your post.');
@@ -67,7 +88,14 @@ export default function AddScreen() {
     });
     if (!result.canceled && result.assets[0]) {
       setPhotoUri(result.assets[0].uri);
+      setGalleryOpen(false);
     }
+  };
+
+  const handlePickRecent = (uri: string) => {
+    // Replaces whatever was there — one photo per post.
+    setPhotoUri(uri);
+    setGalleryOpen(false);
   };
 
   const handleDone = async () => {
@@ -97,8 +125,8 @@ export default function AddScreen() {
       <View style={styles.body}>
         <View style={styles.labelRow}>
           <Text style={[typography.subtext, styles.storyLabel]}>Today's Story</Text>
-          {/* TODO: voice-to-text dictation isn't implemented yet — button is a stub. */}
-          <IconButton accessibilityLabel="Dictate">
+          {/* TODO: voice recording (one per post) isn't implemented yet. */}
+          <IconButton accessibilityLabel="Record voice">
             <IcMicrophone size={24} color={colors.textPrimary} />
           </IconButton>
         </View>
@@ -118,7 +146,7 @@ export default function AddScreen() {
             </View>
           </View>
         ) : (
-          <Pressable onPress={handlePickPhoto} style={styles.photoButton}>
+          <Pressable onPress={() => setGalleryOpen(true)} style={styles.photoButton}>
             <IcImage size={24} color={colors.accent} />
             <Text style={[typography.subtext, styles.photoButtonLabel]}>Add Today's Photo</Text>
           </Pressable>
@@ -134,6 +162,14 @@ export default function AddScreen() {
           style={[typography.body, styles.textInput]}
         />
       </View>
+
+      <GalleryModal
+        visible={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
+        onPickRecent={handlePickRecent}
+        onOpenCamera={handleOpenCamera}
+        onOpenGallery={handleOpenGallery}
+      />
     </View>
   );
 }

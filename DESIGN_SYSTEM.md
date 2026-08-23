@@ -39,6 +39,9 @@ whenever you write or edit a UI component.
 - `colors.overlayContainer` (G800 @ 70%) / `colors.overlaySolid` (G900 @ 70%)
   are for controls overlaid on top of photo content (the Add screen's
   Fit/Filled toggle and Delete pill) — not general chrome backgrounds.
+- `colors.backdrop` (G900 @ 30%) is the full-screen scrim behind a modal
+  sheet; `colors.surfaceDark` (G600) is a filled tile sitting *on* a light
+  sheet (Modal/Gallery's camera tile). Neither is a page background.
 
 ## 3. Typography usage
 
@@ -79,7 +82,6 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 
 | Component (Figma name)              | Padding (H / V)   | Gap  | Radius       | Notes |
 |--------------------------------------|-------------------|------|--------------|-------|
-| Button / L / Filled / Primary        | 16 / 8            | —    | 16 (`radius.lg`) | height 48, `colors.buttonDark` bg, `typography.body` white label |
 | Button / M / Ghost / Secondary       | 16 / —            | —    | 12 (`radius.md`) | min-height 40, white bg, `border` 1px, `shadows.xs`, `typography.subtext` label |
 | Chip Button                          | 8 / 10            | —    | 8 (`radius.sm`)  | height 40, `shadows.xs`; active border = `colors.accent`, inactive = `colors.border` |
 | Alert                                | 20 / 8            | 8    | 8 (`radius.sm`)  | `colors.success` bg, white `typography.body` text (13px) |
@@ -91,6 +93,8 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Button/Icon/Contained                | 8 / 5             | —    | 8 (`radius.sm`)  | white/`colors.surface` bg, `shadows.xs`; the "5" vertical padding is a Figma-exact value, not on the spacing scale. See `IconButtonContained.tsx`. |
 | SegmentedButton (Fit/Filled toggle)  | 2 (container)     | —    | 17 (off-scale) outer, 16 (`radius.lg`) active segment | overlaid top-center on a selected photo; container bg `colors.overlayContainer`, active segment bg `colors.overlaySolid` + white icon/label, inactive = transparent + `colors.textPlaceholder`. Node `3192:12065`. See `SegmentedButton.tsx`. |
 | Button / S / Filled / FAB (e.g. "Delete") | 12 / 3 (left) · 8 / 3 (right) | 3 | 20 (off-scale) | `colors.overlaySolid` bg, white `typography.overline` label, trailing 16×16 `ic/cross`. Node `3192:11841`. See `FilledFabButton.tsx`. |
+| Button / L / Filled / Primary        | 16 / 8            | —    | 16 (`radius.lg`) | height 48, `colors.buttonDark` bg, centered white `typography.body` label. Node `3192:9208`. See `PrimaryButton.tsx`. |
+| Modal/Gallery (bottom sheet)         | 16 (content)      | 3 (tiles) | 24 (`radius.xl`) | white sheet, `shadows.xl`; title `typography.subtext` with paddingTop 20 + a 20px spacer row, close button absolute at right 8 / top 8.4; square tiles at `radius.sm`, first tile `colors.surfaceDark` + 32px `ic/camera`; actions block paddingTop 24 / paddingBottom 24. Backdrop = `colors.backdrop` over a blur, sheet bottom-aligned with paddingTop 16 / paddingBottom 40. Nodes `3198:4446` (sheet) and `3184:7350` (backdrop). See `GalleryModal.tsx`. |
 
 When implementing a component not in this table, pull its real spec with
 `get_design_context` on its node in the Design System page — don't
@@ -153,13 +157,16 @@ the wrong glyph.
   component: `IconButton.tsx` (Button/Icon/Plain), `IconButtonContained.tsx`
   (Button/Icon/Contained), `HeaderActionButton.tsx` (Button / M / Header
   Action), `SegmentedButton.tsx` (Fit/Filled toggle), `FilledFabButton.tsx`
-  (Button / S / Filled / FAB), plus `icons/HomeIcons.tsx` and
-  `icons/AddIcons.tsx` for each screen's ported/stand-in glyphs.
+  (Button / S / Filled / FAB), `PrimaryButton.tsx` (Button / L / Filled /
+  Primary), `GalleryModal.tsx` (Modal/Gallery), plus `icons/HomeIcons.tsx`
+  and `icons/AddIcons.tsx` for each screen's ported glyphs.
 - `src/screens/` — one file per Figma screen/frame.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
   stack (Login/Home/Add). `initialRouteName` is temporarily `"Home"` since
   sign-in has no real auth yet; flip it back to `"Login"` once that's wired
-  up.
+  up. Every route pushes as an ordinary page — Add is a full Figma frame
+  with its own back button, not a modal sheet. The only modal in the app so
+  far is `GalleryModal`, which Figma really does draw as an overlay.
 - `src/data/` — local, on-device data stores (no backend yet). `posts.ts`
   is an AsyncStorage-backed store for the one-post-per-day / one-photo-per-post
   rule; screens should go through its functions rather than touching

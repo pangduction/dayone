@@ -20,6 +20,11 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  *
  * All screens render their own custom header (per Figma), so the native
  * stack header is turned off everywhere.
+ *
+ * "Add" pushes as an ordinary page rather than a modal sheet: its Figma
+ * frame (node 3184:5508) is a full screen with a Header/Add whose
+ * ic/arrow-left goes back to the previous page, which is a push, not a
+ * modal dismissal.
  */
 export default function RootNavigator() {
   return (
@@ -27,7 +32,7 @@ export default function RootNavigator() {
       <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Add" component={AddScreen} options={{ presentation: 'modal' }} />
+        <Stack.Screen name="Add" component={AddScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
