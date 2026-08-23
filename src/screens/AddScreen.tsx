@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Image, Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NavigationAction, RouteProp } from '@react-navigation/native';
@@ -43,6 +43,13 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * "Flow 2.2 텍스트 입력하기" (section 3196:14541) shows the screen turning
  * into a scroll area whose bottom is the toolbar plus the OS keyboard.
  *
+ * That scroll area is why the body is a ScrollView whose viewport shrinks by
+ * the keyboard and toolbar while typing (node 3184:5959: a 450pt viewport
+ * over 691pt of content, scrolled 241 so the story field clears the
+ * keyboard). Scrolling to the end reproduces that offset on its own, because
+ * 691 - 450 is exactly the 241 Figma shows — the field is a fixed 240 tall,
+ * as Figma draws it, rather than stretching to fill.
+ *
  * Leaving with unsaved edits raises Figma's Modal/Leave (see "Add-Leave",
  * node 3233:4558). The guard hangs off navigation's `beforeRemove` rather
  * than the header button's own handler so that the swipe-back gesture is
@@ -68,6 +75,7 @@ export default function AddScreen() {
   const [editorFocused, setEditorFocused] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const [selectedColor, setSelectedColor] = useState<string>(palette.swatchDefault);
   const [activeFormats, setActiveFormats] = useState<ActiveFormats>({
     bold: false,
@@ -150,6 +158,19 @@ export default function AddScreen() {
       hide.remove();
     };
   }, []);
+
+  // Figma's editor is 56 tall, 112 with the palette open (nodes 3184:5987
+  // and 3184:6494) — the height the body has to give up along with the
+  // keyboard's.
+  const dockHeight = paletteOpen ? 112 : 56;
+
+  // Bring the story field above the keyboard once both it and the dock have
+  // settled, and again when the palette changes the dock's height.
+  useEffect(() => {
+    if (!editorFocused || keyboardHeight === 0) return;
+    const timer = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
+    return () => clearTimeout(timer);
+  }, [editorFocused, keyboardHeight, dockHeight]);
 
   const handleCommand = (command: EditorCommand) => {
     if (command.type === 'foreColor') setSelectedColor(command.color);
@@ -240,7 +261,13 @@ export default function AddScreen() {
         <HeaderActionButton label="Done" active={canSave} disabled={!canSave} onPress={handleDone} />
       </View>
 
-      <View style={styles.body}>
+      <ScrollView
+        ref={scrollRef}
+        style={[styles.body, editorFocused ? { marginBottom: keyboardHeight + dockHeight } : null]}
+        contentContainerStyle={styles.bodyContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.labelRow}>
           <Text style={[typography.subtext, styles.storyLabel]}>Today's Story</Text>
           {/* TODO: voice recording (one per post) isn't implemented yet. */}
@@ -286,7 +313,7 @@ export default function AddScreen() {
             />
           ) : null}
         </View>
-      </View>
+      </ScrollView>
 
       {editorFocused ? (
         <View style={[styles.editorDock, { bottom: keyboardHeight }]}>
@@ -345,6 +372,8 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+  },
+  bodyContent: {
     gap: spacing.sm,
     padding: spacing.md,
   },
@@ -395,8 +424,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   textField: {
-    flex: 1,
-    minHeight: 240,
+    // Figma draws the story field at a fixed 240 (node 3184:7406) rather than
+    // stretching it, which is also what gives the scroll area something to
+    // scroll.
+    height: 240,
     width: '100%',
     backgroundColor: colors.background,
     borderWidth: 1,
