@@ -63,6 +63,7 @@ reconstruct a style from raw `fontSize`/`fontFamily`:
 | `typography.subtext`      | Subtext       | Button labels, field labels                |
 | `typography.caption`      | Caption       | Small annotations (Poppins Bold)           |
 | `typography.overline`     | Overline      | Eyebrow/overline labels                    |
+| `typography.alert`        | (local)       | Alert banner text — Inter Medium 13/20, a local override on the Alert component rather than a named Figma style |
 
 Every style already has `fontFamily`, `fontSize`, `letterSpacing`, and (where
 Figma specifies one) `lineHeight` pre-computed in points — spread the whole
@@ -87,7 +88,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 |--------------------------------------|-------------------|------|--------------|-------|
 | Button / M / Ghost / Secondary       | 16 / —            | —    | 12 (`radius.md`) | min-height 40, white bg, 1px **`colors.borderSubtle`** (G100 `#E9E9E9` — the component node `3192:9209` binds G100, not the G200 this row previously said), `shadows.xs`, centered `typography.subtext` label in `colors.textSecondary`. Used for the post detail header's "Edit". See `GhostButton.tsx`. |
 | Chip Button                          | 8 / 10            | —    | 8 (`radius.sm`)  | height 40, `shadows.xs`; active border = `colors.accent`, inactive = `colors.border` |
-| Alert                                | 20 / 8            | 8    | 8 (`radius.sm`)  | `colors.success` bg, white `typography.body` text (13px) |
+| Alert                                | 20 / 8            | 8    | 8 (`radius.sm`)  | `colors.success` bg, 24pt white `ic/check`, then the message in `typography.alert` (white). The screen showing it does the positioning — Figma pins it at top 47 with 16 of horizontal padding, over the header (node `3233:5182`). Node `3233:5183`. See `AlertBanner.tsx`, named that way so it can't be confused with React Native's own `Alert`. |
 | Input (text field)                   | 12 / 10           | —    | 8 (`radius.sm`)  | white bg, `border` 1px, `shadows.xs`, placeholder in `colors.textPlaceholder` |
 | Input with label                     | —                 | 8    | —            | label uses `typography.subtext` in `colors.textSecondary`, 8px above the input |
 | Search input field                   | 12 / 12           | 8    | 8 (`radius.sm`)  | `border` 1px, `colors.accent` text cursor |

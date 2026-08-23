@@ -66,9 +66,10 @@ export default function PostDetailScreen() {
   const handleDelete = async () => {
     await deletePost(date);
     setDeleteOpen(false);
-    // Back to the calendar, which reloads its posts on focus, so the day's
-    // cell drops straight back to its empty state.
-    navigation.goBack();
+    // Back to the calendar — which reloads its posts on focus, so the day's
+    // cell drops straight back to its empty state — carrying the banner
+    // Figma shows there afterwards (node 3233:5040).
+    navigation.navigate('Home', { flash: 'I deleted my journal entry.' });
   };
 
   const written = useMemo(() => parseDateKey(date), [date]);

@@ -219,6 +219,14 @@ export const typography = {
     letterSpacing: -0.22,
     lineHeight: 11,
   },
+  alert: {
+    // Not a named Figma text style — a local override on the Alert component
+    // (node 3233:5183), which sets Inter Medium at 13/20 rather than reusing
+    // Body (15) or Subtext (bold 13).
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    lineHeight: 20,
+  },
 };
 
 // ---------------------------------------------------------------------------

@@ -1,11 +1,13 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { IcArrowDown, IcCalendar, IcPlus, IcPulse, IcRows, IcShare } from '../components/icons/HomeIcons';
 import IconButton from '../components/IconButton';
 import IconButtonContained from '../components/IconButtonContained';
+import AlertBanner from '../components/AlertBanner';
 import CalendarDateCell from '../components/CalendarDateCell';
 import { dateKey, getPostsForMonth } from '../data/posts';
 import type { Post } from '../data/posts';
@@ -28,6 +30,7 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  */
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { params } = useRoute<RouteProp<RootStackParamList, 'Home'>>();
   const today = useMemo(() => new Date(), []);
   const year = today.getFullYear();
   const month = today.getMonth();
@@ -36,6 +39,23 @@ export default function HomeScreen() {
   // Keyed by date ('YYYY-MM-DD'). The whole post is kept, not just the date,
   // because a cell renders the post's photo when it has one.
   const [postsByDate, setPostsByDate] = useState<Record<string, Post>>({});
+  const [flash, setFlash] = useState<string | null>(null);
+
+  // A screen hands the banner over as a route param on its way back here.
+  // Clearing the param immediately means it shows once rather than again
+  // every time the calendar regains focus.
+  useEffect(() => {
+    if (!params?.flash) return;
+    setFlash(params.flash);
+    navigation.setParams({ flash: undefined });
+  }, [params?.flash, navigation]);
+
+  useEffect(() => {
+    if (flash === null) return;
+    // Figma doesn't say how long the banner stays; this is our value.
+    const timer = setTimeout(() => setFlash(null), 3000);
+    return () => clearTimeout(timer);
+  }, [flash]);
 
   useFocusEffect(
     useCallback(() => {
@@ -140,6 +160,12 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {flash !== null ? (
+        <View style={styles.flash} pointerEvents="none">
+          <AlertBanner message={flash} />
+        </View>
+      ) : null}
+
       <View style={styles.navigation}>
         <View style={styles.navItem}>
           <IcCalendar size={24} color={colors.textPrimary} />
@@ -173,6 +199,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 47,
     paddingBottom: 34,
+  },
+  flash: {
+    // Figma pins the banner over the header, not below it (node 3233:5182).
+    position: 'absolute',
+    top: 47,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.md,
   },
   header: {
     flexDirection: 'row',

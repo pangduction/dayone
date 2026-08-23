@@ -7,7 +7,8 @@ import PostDetailScreen from '../screens/PostDetailScreen';
 
 export type RootStackParamList = {
   Login: undefined;
-  Home: undefined;
+  /** `flash` shows a one-off Alert banner over the calendar, e.g. after a delete. */
+  Home: { flash?: string } | undefined;
   /** Omit `date` to write today's post; pass one to edit that day's. */
   Add: { date?: string } | undefined;
   PostDetail: { date: string };
