@@ -59,6 +59,8 @@ export const palette = {
   editorBar: '#E8EAED', // Figma: editor toolbar background (node 13:15150) — a keyboard-accessory grey, outside the G_ scale
   editorPaletteBar: '#F2F2F2', // Figma: the colour-palette row that opens under the toolbar, and the active Text Color button behind it
   swatchDefault: '#282828', // Figma: the palette's first ("default" text colour) swatch — not G900
+  buttonSecondaryFill: '#F2F2F2', // Figma: Button/Secondary/Default's fill (node 3184:7871) — same value as the editor palette row, different role
+  buttonSecondaryRing: '#EEEEEE', // Figma: that button's 1px ring, the second half of its shadow stack
   overlayAccent: 'rgba(0, 132, 255, 0.3)', // Figma: Accent at 30% opacity — tint over today's photo calendar cell (node 3184:3185)
 
   // iOS-style system color set (color picker / palette swatch components).
@@ -105,6 +107,8 @@ export const colors = {
   editorBar: palette.editorBar,
   editorPaletteBar: palette.editorPaletteBar,
   swatchDefault: palette.swatchDefault,
+  buttonSecondary: palette.buttonSecondaryFill,
+  buttonSecondaryRing: palette.buttonSecondaryRing,
   surfaceDark: palette.g600, // Figma G600 — filled tile on a light sheet (Modal/Gallery's camera tile, node 3198:4434)
 };
 
@@ -155,6 +159,13 @@ export const typography = {
     fontFamily: 'Jura_400Regular',
     fontSize: 80,
     letterSpacing: -6.4,
+  },
+  titleLarge: {
+    // Figma: "Title-Large" — the recording screen's timer (node 3184:7866)
+    fontFamily: 'Inter_400Regular',
+    fontSize: 64,
+    letterSpacing: 0,
+    lineHeight: 64,
   },
   titleMedium: {
     // Figma: "Title-Medium"
@@ -241,6 +252,18 @@ export const shadows = {
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+  },
+  secondary: {
+    // Figma "Button/Secondary/Default" stacks a drop shadow with a 1px ring:
+    //   #0000001F offset(0, 6) blur 10 spread -4
+    //   #EEEEEE   offset(0, 0) blur 0  spread 1
+    // RN has no spread, so the ring is drawn as a 1px border on the component
+    // and only the drop shadow lives here.
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
   },
   xl: {
     // Figma "Shadow/xl" stacks two drop shadows:

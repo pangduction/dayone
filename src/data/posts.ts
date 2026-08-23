@@ -15,6 +15,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  */
 export type PhotoFit = 'fit' | 'filled';
 
+/** A post's single voice recording. */
+export type Recording = {
+  /** Local file URI of the audio. */
+  uri: string;
+  durationMs: number;
+  /**
+   * Loudness per slice, 0..1, captured while recording so the waveform can be
+   * drawn from the audio rather than from a fixed decorative shape.
+   */
+  samples: number[];
+};
+
 export type Post = {
   id: string;
   /** Local calendar date the post belongs to, 'YYYY-MM-DD'. */
@@ -29,6 +41,8 @@ export type Post = {
   text: string;
   /** The story as rich HTML from the editor, or null for a plain-text post. */
   html: string | null;
+  /** The post's single voice recording, or null if it has none. */
+  recording: Recording | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -65,7 +79,13 @@ async function readAll(): Promise<Post[]> {
     // `fitMode` and `html` were both added after the first rows were written;
     // default them rather than letting screens read undefined.
     return parsed.map(
-      (post) => ({ ...post, fitMode: post.fitMode ?? 'fit', html: post.html ?? null }) as Post,
+      (post) =>
+        ({
+          ...post,
+          fitMode: post.fitMode ?? 'fit',
+          html: post.html ?? null,
+          recording: post.recording ?? null,
+        }) as Post,
     );
   } catch {
     return [];
@@ -101,6 +121,8 @@ export async function savePost(input: {
   text: string;
   /** The story as rich HTML from the editor, or null for a plain-text post. */
   html: string | null;
+  /** The post's single voice recording, or null if it has none. */
+  recording: Recording | null;
 }): Promise<Post> {
   const posts = await readAll();
   const now = new Date().toISOString();
@@ -113,6 +135,7 @@ export async function savePost(input: {
       fitMode: input.fitMode,
       text: input.text,
       html: input.html,
+      recording: input.recording,
       updatedAt: now,
     };
     posts[existingIndex] = updated;
@@ -127,6 +150,7 @@ export async function savePost(input: {
     fitMode: input.fitMode,
     text: input.text,
     html: input.html,
+    recording: input.recording,
     createdAt: now,
     updatedAt: now,
   };

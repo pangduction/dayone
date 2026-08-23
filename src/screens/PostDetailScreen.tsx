@@ -11,6 +11,7 @@ import GhostButton from '../components/GhostButton';
 import { IcArrowLeft } from '../components/icons/AddIcons';
 import RichTextEditor from '../components/RichTextEditor';
 import PhotoSection from '../components/PhotoSection';
+import RecordRow from '../components/RecordRow';
 import DeletePostModal from '../components/DeletePostModal';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
@@ -39,9 +40,6 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * The header's Delete raises Figma's Modal/Delete-Post (node 3233:4928, in
  * context as "Post-Common-Delete" 3233:4929) and, once confirmed, removes the
  * post and returns to the calendar.
- *
- * TODO: Record/View (instance 3192:12641) is not rendered — voice recording
- * isn't implemented yet. It belongs between the image and the text.
  */
 export default function PostDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -99,6 +97,8 @@ export default function PostDetailScreen() {
         </View>
 
         {post?.photoUri ? <PhotoSection uri={post.photoUri} fitMode={post.fitMode} /> : null}
+
+        {post?.recording ? <RecordRow recording={post.recording} variant="view" /> : null}
 
         {post && post.text.length > 0 ? (
           <View style={styles.textSection}>

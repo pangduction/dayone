@@ -6,12 +6,14 @@ import type { NavigationAction, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { dateKey, getPostByDate, parseDateKey, savePost } from '../data/posts';
+import type { Recording } from '../data/posts';
 import IconButton from '../components/IconButton';
 import HeaderActionButton from '../components/HeaderActionButton';
 import SegmentedButton, { type FitMode } from '../components/SegmentedButton';
 import FilledFabButton from '../components/FilledFabButton';
 import GalleryModal from '../components/GalleryModal';
 import PhotoSection from '../components/PhotoSection';
+import RecordRow from '../components/RecordRow';
 import LeaveModal from '../components/LeaveModal';
 import RichTextEditor from '../components/RichTextEditor';
 import type { ActiveFormats, EditorCommand, RichTextEditorHandle } from '../components/RichTextEditor';
@@ -29,9 +31,10 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  *
  * A post holds up to three things: text, one image, and one voice recording.
  * Any single one of them is enough to publish, which is what drives the Done
- * pill's enabled state. Voice recording isn't built yet — the mic button is
- * still a stub — so `hasVoice` is wired in as a constant to keep that rule in
- * one place rather than having to rediscover it later.
+ * pill's enabled state. The mic button opens the recorder (Figma's "Flow 2.3
+ * 녹음하기", section 3196:14542), which hands its take back through a callback
+ * so nothing is written until Done — and the finished recording shows here as
+ * a Record/Edit row between the photo and the story.
  *
  * DayOne allows exactly one post per calendar day, so this screen targets one
  * date and upserts it: opening it on a day that already has a post loads that
@@ -67,6 +70,7 @@ export default function AddScreen() {
   const [fitMode, setFitMode] = useState<FitMode>('fit');
   const [text, setText] = useState('');
   const [html, setHtml] = useState<string | null>(null);
+  const [recording, setRecording] = useState<Recording | null>(null);
   const [initialHtml, setInitialHtml] = useState<string | null>(null);
   // The editor builds its document once, on mount, so it must not mount until
   // the stored post has arrived — otherwise it freezes as an empty document
@@ -96,16 +100,12 @@ export default function AddScreen() {
     fitMode: FitMode;
     text: string;
     html: string | null;
-  }>({ photoUri: null, fitMode: 'fit', text: '', html: null });
+    recording: Recording | null;
+  }>({ photoUri: null, fitMode: 'fit', text: '', html: null, recording: null });
   // Set just before a navigation we mean to allow — saving, or confirming
   // Leave — so the guard below doesn't re-prompt on our own goBack.
   const bypassLeaveGuard = useRef(false);
   const pendingNavigation = useRef<NavigationAction | null>(null);
-
-  // TODO: voice recording (one per post) isn't implemented yet — see the mic
-  // button below. Publishing already accounts for it so the Done rule doesn't
-  // have to be rewritten when it lands.
-  const hasVoice = false;
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +117,7 @@ export default function AddScreen() {
         setFitMode(existing.fitMode);
         setText(existing.text);
         setHtml(existing.html);
+        setRecording(existing.recording);
         // A post written before the rich editor has no `html`; render its
         // plain text as the document instead.
         setInitialHtml(existing.html ?? escapeHtml(existing.text));
@@ -125,6 +126,7 @@ export default function AddScreen() {
           fitMode: existing.fitMode,
           text: existing.text,
           html: existing.html,
+          recording: existing.recording,
         });
       } else {
         setInitialHtml('');
@@ -136,12 +138,13 @@ export default function AddScreen() {
     };
   }, [targetKey]);
 
-  const canSave = photoUri !== null || text.trim().length > 0 || hasVoice;
+  const canSave = photoUri !== null || text.trim().length > 0 || recording !== null;
   const isDirty =
     photoUri !== baseline.photoUri ||
     fitMode !== baseline.fitMode ||
     text !== baseline.text ||
-    html !== baseline.html;
+    html !== baseline.html ||
+    recording?.uri !== baseline.recording?.uri;
 
   // The toolbar docks directly on top of the keyboard, so it needs the
   // keyboard's height. `Will` fires before the animation, which keeps the two
@@ -245,7 +248,7 @@ export default function AddScreen() {
 
   const handleDone = async () => {
     if (!canSave) return;
-    await savePost({ date: targetKey, photoUri, fitMode, text: text.trim(), html });
+    await savePost({ date: targetKey, photoUri, fitMode, text: text.trim(), html, recording });
     bypassLeaveGuard.current = true;
     navigation.goBack();
   };
@@ -285,8 +288,10 @@ export default function AddScreen() {
         <Pressable style={styles.bodyContent} onPress={dismissEditor} accessible={false}>
         <View style={styles.labelRow}>
           <Text style={[typography.subtext, styles.storyLabel]}>Today's Story</Text>
-          {/* TODO: voice recording (one per post) isn't implemented yet. */}
-          <IconButton accessibilityLabel="Record voice">
+          <IconButton
+            accessibilityLabel="Record voice"
+            onPress={() => navigation.navigate('Recording', { onFinish: setRecording })}
+          >
             <IcMicrophone size={24} color={colors.textPrimary} />
           </IconButton>
         </View>
@@ -306,6 +311,10 @@ export default function AddScreen() {
             <Text style={[typography.subtext, styles.photoButtonLabel]}>Add Today's Photo</Text>
           </Pressable>
         )}
+
+        {recording ? (
+          <RecordRow recording={recording} variant="edit" onRemove={() => setRecording(null)} />
+        ) : null}
 
         <View style={styles.textField}>
           {loaded ? (

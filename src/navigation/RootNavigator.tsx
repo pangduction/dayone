@@ -4,6 +4,8 @@ import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import AddScreen from '../screens/AddScreen';
 import PostDetailScreen from '../screens/PostDetailScreen';
+import RecordingScreen from '../screens/RecordingScreen';
+import type { Recording } from '../data/posts';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -12,6 +14,12 @@ export type RootStackParamList = {
   /** Omit `date` to write today's post; pass one to edit that day's. */
   Add: { date?: string } | undefined;
   PostDetail: { date: string };
+  /**
+   * The recorder hands its take straight back to the Add screen through this
+   * callback rather than saving anything itself, so the post is still only
+   * written when Done is pressed.
+   */
+  Recording: { onFinish: (recording: Recording) => void };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -38,6 +46,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Add" component={AddScreen} />
         <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+        <Stack.Screen name="Recording" component={RecordingScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

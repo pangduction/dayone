@@ -36,6 +36,12 @@
           "savePhotosPermission": "DayOne needs permission to save photos to your library.",
           "isAccessMediaLocationEnabled": false
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "DayOne uses your microphone so you can add a voice recording to your daily record."
+        }
       ]
     ]
   }

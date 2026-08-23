@@ -54,6 +54,7 @@ reconstruct a style from raw `fontSize`/`fontFamily`:
 | Token             | Figma style      | Use for                                   |
 |-------------------|------------------|--------------------------------------------|
 | `typography.display`      | (Login only)  | The "DayOne" wordmark                      |
+| `typography.titleLarge`   | Title-Large   | The recording screen's timer               |
 | `typography.titleMedium`  | Title-Medium  | Large screen/section titles                |
 | `typography.titleSmall`   | Title-Small   | Modal / card titles                        |
 | `typography.calendarTitle`| Calendar/Title| Calendar header title                      |
@@ -103,6 +104,10 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Header/Post                          | 5 (left) / 16 (right) · 16 vertical | 8 (actions) | — | `Button/Icon/Plain` + `ic/arrow-left` on the left; on the right a row of two `Button / M / Ghost / Secondary`, "Edit" then "Delete" (node `3233:4663`). Node `3192:11899`. Same shell as Header/Add. |
 | Header/Add · Header/List (centre)    | 5 (left) / 16 (right) · 16 vertical | — | — | back button left, action(s) right, and a "Date Information" block absolutely centred: the date in `typography.caption`/`colors.textPrimary` over a second line in **`typography.overline`**/`colors.textPlaceholder` — the weekday on Header/Add (node `3184:5701`), the post count on Header/List (node `3192:9263`). The second line was Caption until Figma changed it; only the first line is Caption now. |
 | Post Detail (column)                 | 16                | 16   | —            | stacks Date Written, then whichever of Image Section / Record/View / Text Section the post has. Date Written: height 40, centered, `typography.subtext` in `colors.textPrimary` over `typography.caption` in `colors.textTertiary` (weekday spelled out in full). Image Section: square, Fit letterboxes / Filled crops. Text Section: min-height 240, gap 8, paddingHorizontal 12, a 1px `colors.borderSubtle` divider above `typography.body` content. Section `3192:11364`. See `PostDetailScreen.tsx`. |
+| Button/Secondary/Default             | 8 / 5             | —    | 8 (`radius.sm`) inline, 16 (`radius.lg`) large | glossy light button carrying a play/pause glyph: a white-to-transparent gradient over `colors.buttonSecondary` with a 1px `colors.buttonSecondaryRing` border and `shadows.secondary`. Inline inside Record/Edit and Record/View (node `3192:12489`); 56×48 on the recording screen (node `3184:7871`). Figma's shadow stacks a drop shadow with a 1px *ring* — RN has no spread, so the ring is a real border. See `SecondaryButton.tsx`. |
+| Header/X                             | 5 (left) / 16 (right) · 16 vertical | — | — | the Add header's shell with a single close button pushed right (`justify-end`) and nothing else. Node `3184:7855`. Used by the recording screen. |
+| Record/Edit · Record/View            | 12 (left) / 3 (right) · 8 vertical — edit; 40 / 8 — view | 16 | 8 (`radius.sm`) | min-height 56: a `Button/Secondary/Default`, the waveform, then the duration in `typography.body`. Edit (node `3192:12499`) has a `colors.surface` background and a trailing remove button; View (node `3192:12570`) is transparent, inset further, and shows the duration in `colors.textPrimary`. See `RecordRow.tsx`. |
+| music track (waveform)               | —                 | —    | —            | 44 tall on the recording screen (node `3184:7867`), 14 inside a Record row. Figma draws it as one decorative vector of a few hundred paths (~100KB in `assets/Record/*.svg`), which would freeze the same squiggle onto every recording — so it is drawn from the recording's own loudness instead. See `Waveform.tsx`. |
 | editor (formatting toolbar)          | 16                | space-between | — | `colors.editorBar` bg, seven 24pt icons (text colour, bold, italic, underline, bullet list, numbered list, horizontal rule) — 56 tall. Opening the palette makes it 112: a `colors.editorPaletteBar` row of nine 24pt swatches at `radius.sm` with a 16pt gap after a 16pt inset, plus a 48x48 top-rounded backdrop behind the text-colour button. Node `13:15150`, whole component exported to `assets/editor.svg`. See `EditorToolbar.tsx`. |
 | Modal sheet (shell)                  | 16 (content)      | 8 (actions) | 24 (`radius.xl`) | white sheet, `shadows.xl`; title `typography.subtext` with paddingTop 20 + a 20px spacer row, close button absolute at right 8 / top 8.4; content paddingTop 20; actions block paddingTop 24 / paddingBottom 24. Backdrop = `colors.backdrop` over a blur, sheet bottom-aligned with paddingTop 16 / paddingBottom 40. Every Figma modal repeats this skeleton — build new ones on `ModalSheet.tsx` rather than restating it. |
 | Modal/Gallery                        | —                 | 3 (tiles) | —            | fills the shell above: square `radius.sm` tiles, first `colors.surfaceDark` + 32px `ic/camera`, rest recent photos with a `colors.borderSubtle` hairline; the row is drawn 404 wide inside a 326 content area, so it scrolls horizontally. Action = "Go to Gallery". Node `3198:4446`. See `GalleryModal.tsx`. |
@@ -175,7 +180,7 @@ the wrong glyph.
   and `icons/AddIcons.tsx` for each screen's ported glyphs.
 - `src/screens/` — one file per Figma screen/frame.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
-  stack (Login/Home/Add/PostDetail). `initialRouteName` is temporarily `"Home"` since
+  stack (Login/Home/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
   sign-in has no real auth yet; flip it back to `"Login"` once that's wired
   up. Every route pushes as an ordinary page — Add is a full Figma frame
   with its own back button, not a modal sheet. The only modal in the app so
@@ -198,6 +203,10 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   the current photo instead of appending.
 - **A post needs any one of** text, a photo, or a voice recording to publish
   — that's what the Add header's Done pill enables on.
+- **One voice recording per post.** The recorder is a pushed screen that hands
+  its take back to the Add screen through a callback rather than saving
+  anything itself, so a post is still only written when Done is pressed, and
+  closing the recorder mid-take throws that take away.
 - **The story field is rich text.** Bold, italic, underline, per-range colour,
   bullet and numbered lists, and horizontal rules, all visible while typing.
   React Native's `TextInput` cannot render mixed inline formatting during
