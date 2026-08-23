@@ -20,8 +20,10 @@ type Props = {
  *
  * NOTE: icons currently use @expo/vector-icons brand glyphs as a stand-in —
  * this sandbox's network policy blocks downloading the exact Figma-exported
- * logo assets (www.figma.com is not reachable). Swap `iconName` usage below
- * for the real exported SVG/PNG assets once available.
+ * logo assets (www.figma.com is not reachable, confirmed again via
+ * get_design_context/download_assets on 2026-08-23). Swap `iconName` usage
+ * below for the real exported assets once reachable — nodes:
+ * Logo/Google 3182:2741, Logo/Apple 3182:2740, Logo/Kakao 3182:2739.
  */
 export default function SocialLoginButton({
   label,

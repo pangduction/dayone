@@ -50,6 +50,7 @@ export const palette = {
   warning: '#D92D20',
   success: '#19AF66',
   kakaoYellow: '#FEE500',
+  buttonLightFill: '#F5F5F5', // Figma: local fill on Button/Google (not a bound variable)
 
   // iOS-style system color set (color picker / palette swatch components).
   systemRed: '#FF3B30',
@@ -78,7 +79,7 @@ export const colors = {
   textOnDark: palette.white,
 
   buttonDark: palette.grey900, // Figma "grey 900" — used on filled/primary buttons
-  buttonLight: palette.g50,
+  buttonLight: palette.buttonLightFill,
   kakaoYellow: palette.kakaoYellow,
 
   accent: palette.accent,
