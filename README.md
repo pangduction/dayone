@@ -27,3 +27,5 @@ src/
 1. Figma에서 구현할 화면(프레임)의 링크를 `node-id`까지 포함해 전달
 2. 디자인 내용을 읽어 해당 화면을 `src/screens/`에 구현
 3. 반복되는 요소는 `src/components/`로 분리하고 `src/theme/tokens.ts`의 토큰을 사용
+
+디자인 시스템 토큰 사용 규칙은 [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md)를 참고하세요.

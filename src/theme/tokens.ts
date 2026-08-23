@@ -1,59 +1,237 @@
 /**
- * Design tokens for the Daypic app, pulled from Figma.
+ * Design tokens for the DayOne app, extracted from the Figma design system.
  *
- * Figma file: https://www.figma.com/design/Fv2MwZPH1NImXNF16W5cxw/Daypic-기획-
- * Values below are confirmed against implemented screens (currently: Login).
- * Extend this file as more screens are implemented rather than guessing ahead.
+ * Figma file: https://www.figma.com/design/Fv2MwZPH1NImXNF16W5cxw/DayOne
+ * Design System page: node 27:24771 ("Design System")
+ *
+ * This file mirrors every color, type style, spacing, corner-radius and
+ * shadow value pulled from the Design System page's components (buttons,
+ * inputs, headers, modals, chips, alerts, calendar, etc.) via the Figma
+ * MCP `get_variable_defs` / `get_design_context` tools. Components should
+ * always pull values from here instead of hardcoding hex codes or font
+ * sizes — see DESIGN_SYSTEM.md at the repo root for the full rules.
+ *
+ * Extend this file (don't fork it) whenever Figma introduces a token that
+ * isn't captured yet.
  */
 
-export const colors = {
-  background: '#FFFFFF',
-  surface: '#F5F5F5',
-  textPrimary: '#030303', // G900
-  textSecondary: '#454C53', // G600
-  textOnDark: '#FFFFFF',
-  buttonDark: '#18181B', // grey 900
-  buttonLight: '#F5F5F5',
+// ---------------------------------------------------------------------------
+// Palette — raw color values, named the way Figma names them. Prefer the
+// semantic `colors` export below in component code; reach for `palette`
+// directly only when no semantic alias fits yet.
+// ---------------------------------------------------------------------------
+export const palette = {
+  white: '#FFFFFF',
+  black: '#000000',
+
+  // Canonical grayscale ("G_" in Figma) — used by nearly every component.
+  g50: '#F7F7F7',
+  g100: '#E9E9E9',
+  g200: '#C9CDD2',
+  g400: '#9EA4AA',
+  g500: '#72787F',
+  g600: '#454C53',
+  g800: '#26292D',
+  g900: '#030303',
+
+  // Legacy grayscale — still referenced by a handful of older components
+  // (icons, a couple of headers) in the Figma file. Prefer the G_ scale
+  // above for anything new; these exist only so we can match those nodes
+  // exactly if we ever port them.
+  grey400: '#A1A1AA',
+  grey900: '#18181B',
+  gray600: '#52525B',
+  gray900: '#18181B',
+  neutral700: '#404040',
+  neutral900: '#171717',
+
+  // Brand / semantic
+  accent: '#0084FF',
+  warning: '#D92D20',
+  success: '#19AF66',
   kakaoYellow: '#FEE500',
-  border: '#E0E0E0',
+
+  // iOS-style system color set (color picker / palette swatch components).
+  systemRed: '#FF3B30',
+  systemOrange: '#FF9500',
+  systemYellow: '#FFCC00',
+  systemGreen: '#34C759',
+  systemBlue: '#007AFF',
+  systemIndigo: '#5856D6',
+  systemPurple: '#AF52DE',
+  systemPink: '#FF2D55',
+} as const;
+
+// ---------------------------------------------------------------------------
+// Semantic colors — what screens/components should actually import.
+// ---------------------------------------------------------------------------
+export const colors = {
+  background: palette.white,
+  surface: palette.g50,
+  border: palette.g200,
+  borderSubtle: palette.g100,
+
+  textPrimary: palette.g900,
+  textSecondary: palette.g600,
+  textTertiary: palette.g500,
+  textPlaceholder: palette.g400,
+  textOnDark: palette.white,
+
+  buttonDark: palette.grey900, // Figma "grey 900" — used on filled/primary buttons
+  buttonLight: palette.g50,
+  kakaoYellow: palette.kakaoYellow,
+
+  accent: palette.accent,
+  warning: palette.warning,
+  success: palette.success,
 };
 
+// ---------------------------------------------------------------------------
+// Spacing — numeric scale plus the semantic aliases existing screens use.
+// ---------------------------------------------------------------------------
 export const spacing = {
+  0: 0,
+  1: 2,
+  2: 4,
+  3: 8,
+  4: 10,
+  5: 12,
+  6: 16,
+  7: 20,
+  8: 24,
+  9: 32,
+  10: 40,
+
+  // Semantic aliases (used throughout src/screens and src/components).
   xs: 4,
   sm: 8,
   md: 16,
   lg: 24,
   xl: 32,
-};
+} as const;
 
+// ---------------------------------------------------------------------------
+// Corner radius
+// ---------------------------------------------------------------------------
+export const radius = {
+  none: 0,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  full: 999,
+} as const;
+
+// ---------------------------------------------------------------------------
+// Typography — one entry per Figma text style found on the Design System
+// page. `letterSpacing` and `lineHeight` are pre-converted to points
+// (Figma stores letter-spacing as a percentage of font size).
+// ---------------------------------------------------------------------------
 export const typography = {
   display: {
     fontFamily: 'Jura_400Regular',
     fontSize: 80,
     letterSpacing: -6.4,
   },
-  overline: {
+  titleMedium: {
+    // Figma: "Title-Medium"
+    fontFamily: 'Inter_400Regular',
+    fontSize: 40,
+    letterSpacing: 0,
+    lineHeight: 40,
+  },
+  titleSmall: {
+    // Figma: "Title-Small"
     fontFamily: 'Inter_500Medium',
+    fontSize: 24,
+    letterSpacing: 0,
+    lineHeight: 24,
+  },
+  calendarTitle: {
+    // Figma: "Calendar/Title"
+    fontFamily: 'Raleway_800ExtraBold',
+    fontSize: 24,
+    letterSpacing: 0,
+    lineHeight: 24,
+  },
+  calendarDate: {
+    // Figma: "Calendar/Date"
+    fontFamily: 'Inter_500Medium',
+    fontSize: 15,
+    letterSpacing: 0,
+    lineHeight: 15,
+  },
+  calendarDay: {
+    // Figma: "Calendar/Day"
+    fontFamily: 'Inter_700Bold',
     fontSize: 11,
     letterSpacing: -0.22,
+    lineHeight: 11,
   },
   body: {
+    // Figma: "Body"
     fontFamily: 'Inter_500Medium',
     fontSize: 15,
     letterSpacing: -0.075,
     lineHeight: 15 * 1.5,
   },
+  subtext: {
+    // Figma: "Subtext" — button labels, input labels
+    fontFamily: 'Inter_700Bold',
+    fontSize: 13,
+    letterSpacing: -0.13,
+    lineHeight: 13 * 1.45,
+  },
+  caption: {
+    // Figma: "Caption"
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 11,
+    letterSpacing: 0.012,
+    lineHeight: 11 * 1.4,
+  },
+  overline: {
+    // Figma: "Overline"
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
+    letterSpacing: -0.22,
+    lineHeight: 11,
+  },
 };
 
-export const radius = {
-  sm: 4,
-  md: 8,
-  lg: 16,
-  full: 999,
-};
+// ---------------------------------------------------------------------------
+// Shadows — Figma effect styles, converted to React Native's shadow* props.
+// `elevation` is the Android fallback; iOS/web use the shadow* props.
+// ---------------------------------------------------------------------------
+export const shadows = {
+  xs: {
+    // Figma "Shadow/xs": drop shadow #0000000D, offset (0, 1), blur 2
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  xl: {
+    // Figma "Shadow/xl" stacks two drop shadows:
+    //   #0000000A offset(0, 8) blur 8 spread -4
+    //   #0000001A offset(0, 20) blur 24 spread -4
+    // RN only supports one shadow per view, so this approximates the pair
+    // with a single deeper shadow; use the two values above directly for
+    // web (CSS `box-shadow`) if pixel-perfect fidelity is needed there.
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+} as const;
 
 /** Fonts to load with `useFonts` before rendering any screen. */
 export const fontAssets = {
   Jura_400Regular: require('@expo-google-fonts/jura/400Regular/Jura_400Regular.ttf'),
+  Inter_400Regular: require('@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf'),
   Inter_500Medium: require('@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf'),
+  Inter_700Bold: require('@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf'),
+  Raleway_800ExtraBold: require('@expo-google-fonts/raleway/800ExtraBold/Raleway_800ExtraBold.ttf'),
+  Poppins_700Bold: require('@expo-google-fonts/poppins/700Bold/Poppins_700Bold.ttf'),
 };
