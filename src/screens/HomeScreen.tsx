@@ -4,9 +4,11 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { IcArrowDown, IcCalendar, IcPlus, IcPulse, IcRows, IcShare } from '../components/icons/HomeIcons';
+import IconButton from '../components/IconButton';
+import IconButtonContained from '../components/IconButtonContained';
 import { dateKey, getPostsForMonth } from '../data/posts';
 import { WEEKDAY_LABELS, daysInMonth, getCalendarWeeks } from '../utils/calendar';
-import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
  * Figma: "Home-Calendar-Default" (node 3184:4117) — the first screen after
@@ -49,12 +51,12 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable style={styles.headerIconButton} hitSlop={8}>
+        <IconButton accessibilityLabel="Menu">
           <IcRows size={24} color={colors.textPrimary} />
-        </Pressable>
-        <Pressable style={styles.shareButton} hitSlop={8}>
+        </IconButton>
+        <IconButtonContained accessibilityLabel="Share">
           <IcShare size={24} color={colors.textPrimary} />
-        </Pressable>
+        </IconButtonContained>
       </View>
 
       <View style={styles.calendar}>
@@ -170,23 +172,6 @@ const styles = StyleSheet.create({
     paddingLeft: 5,
     paddingRight: spacing.md,
     paddingVertical: spacing.md,
-  },
-  headerIconButton: {
-    width: 40,
-    height: 40,
-    padding: spacing.sm,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shareButton: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 5,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.xs,
   },
   calendar: {
     width: '100%',

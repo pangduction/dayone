@@ -1,16 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { dateKey, getPostByDate, savePost } from '../data/posts';
+import IconButton from '../components/IconButton';
+import HeaderActionButton from '../components/HeaderActionButton';
+import SegmentedButton, { type FitMode } from '../components/SegmentedButton';
+import FilledFabButton from '../components/FilledFabButton';
+import { IcArrowLeft, IcImage, IcMicrophone } from '../components/icons/AddIcons';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
- * Figma: "Add-Default" (node 3184:5508), reached from Home's bottom
- * Navigation "Add" tab (node 3184:3528).
+ * Figma: "Add-Default" (node 3184:5508, empty state) / "Add-Image-2" (node
+ * 3184:5903, photo-selected state), reached from Home's bottom Navigation
+ * "Add" tab (node 3184:3528).
  *
  * DayOne allows exactly one post per calendar day and exactly one photo per
  * post. This screen always targets *today* (no date picker here — the Home
@@ -18,9 +23,11 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * days), so opening it when today already has a post loads that post for
  * editing instead of starting a blank one.
  *
- * The "on" (enabled) visual for the Done pill wasn't in the fetched Figma
- * node (only `active="off"` was) — its filled/accent style below is an
- * inferred default, not a pixel-perfect port.
+ * The Done pill's on/off states are both verified via get_design_context
+ * (off: node 3184:5701 "Header/Add"; on: node 3184:5903 "Add-Image-2") — see
+ * HeaderActionButton.tsx. The photo-selected layout (square image, Fit/
+ * Filled toggle, Delete pill) is likewise ported from 3184:5903, not
+ * invented — see SegmentedButton.tsx / FilledFabButton.tsx.
  */
 export default function AddScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -28,6 +35,7 @@ export default function AddScreen() {
   const todayKey = useMemo(() => dateKey(today), [today]);
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [fitMode, setFitMode] = useState<FitMode>('fit');
   const [text, setText] = useState('');
 
   useEffect(() => {
@@ -74,43 +82,44 @@ export default function AddScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.headerIconButton} hitSlop={8}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </Pressable>
+        <IconButton accessibilityLabel="Back" onPress={() => navigation.goBack()}>
+          <IcArrowLeft size={24} color={colors.textPrimary} />
+        </IconButton>
 
         <View style={styles.dateInfo} pointerEvents="none">
           <Text style={[typography.caption, styles.dateLabel]}>{dateLabel}</Text>
           <Text style={[typography.caption, styles.weekdayLabel]}>{weekdayLabel}</Text>
         </View>
 
-        <Pressable
-          onPress={handleDone}
-          disabled={!canSave}
-          style={[styles.doneButton, canSave && styles.doneButtonActive]}
-        >
-          <Text style={[typography.subtext, styles.doneLabel, canSave && styles.doneLabelActive]}>Done</Text>
-        </Pressable>
+        <HeaderActionButton label="Done" active={canSave} disabled={!canSave} onPress={handleDone} />
       </View>
 
       <View style={styles.body}>
         <View style={styles.labelRow}>
           <Text style={[typography.subtext, styles.storyLabel]}>Today's Story</Text>
           {/* TODO: voice-to-text dictation isn't implemented yet — button is a stub. */}
-          <Pressable style={styles.micButton} hitSlop={8}>
-            <Ionicons name="mic-outline" size={24} color={colors.textPrimary} />
-          </Pressable>
+          <IconButton accessibilityLabel="Dictate">
+            <IcMicrophone size={24} color={colors.textPrimary} />
+          </IconButton>
         </View>
 
         {photoUri ? (
           <View style={styles.photoPreview}>
-            <Image source={{ uri: photoUri }} style={styles.photoImage} resizeMode="cover" />
-            <Pressable onPress={() => setPhotoUri(null)} style={styles.photoRemoveButton} hitSlop={8}>
-              <Ionicons name="close-circle" size={24} color={colors.buttonDark} />
-            </Pressable>
+            <Image
+              source={{ uri: photoUri }}
+              style={styles.photoImage}
+              resizeMode={fitMode === 'fit' ? 'contain' : 'cover'}
+            />
+            <View style={styles.photoOverlayTop} pointerEvents="box-none">
+              <SegmentedButton value={fitMode} onChange={setFitMode} />
+            </View>
+            <View style={styles.photoOverlayBottom} pointerEvents="box-none">
+              <FilledFabButton label="Delete" onPress={() => setPhotoUri(null)} />
+            </View>
           </View>
         ) : (
           <Pressable onPress={handlePickPhoto} style={styles.photoButton}>
-            <Ionicons name="image-outline" size={24} color={colors.accent} />
+            <IcImage size={24} color={colors.accent} />
             <Text style={[typography.subtext, styles.photoButtonLabel]}>Add Today's Photo</Text>
           </Pressable>
         )}
@@ -144,14 +153,6 @@ const styles = StyleSheet.create({
     paddingRight: spacing.md,
     paddingVertical: spacing.md,
   },
-  headerIconButton: {
-    width: 40,
-    height: 40,
-    padding: spacing.sm,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   dateInfo: {
     position: 'absolute',
     top: 0,
@@ -167,24 +168,6 @@ const styles = StyleSheet.create({
   weekdayLabel: {
     color: colors.textPlaceholder,
   },
-  doneButton: {
-    height: 40,
-    paddingHorizontal: spacing[5],
-    paddingVertical: spacing.sm,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneButtonActive: {
-    backgroundColor: colors.accent,
-  },
-  doneLabel: {
-    color: colors.border,
-  },
-  doneLabelActive: {
-    color: colors.textOnDark,
-  },
   body: {
     flex: 1,
     gap: spacing.sm,
@@ -197,14 +180,6 @@ const styles = StyleSheet.create({
   },
   storyLabel: {
     color: colors.textSecondary,
-  },
-  micButton: {
-    width: 40,
-    height: 40,
-    padding: spacing.sm,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   photoButton: {
     flexDirection: 'row',
@@ -223,20 +198,26 @@ const styles = StyleSheet.create({
   },
   photoPreview: {
     width: '100%',
-    height: 200,
-    borderRadius: radius.sm,
+    aspectRatio: 1,
     overflow: 'hidden',
   },
   photoImage: {
     width: '100%',
     height: '100%',
   },
-  photoRemoveButton: {
+  photoOverlayTop: {
     position: 'absolute',
     top: spacing.sm,
-    right: spacing.sm,
-    backgroundColor: colors.background,
-    borderRadius: radius.full,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  photoOverlayBottom: {
+    position: 'absolute',
+    bottom: spacing.sm,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
   textInput: {
     flex: 1,
