@@ -19,9 +19,16 @@ type Props = {
  * over the plain "Input" field (3201:8015 / 3201:8023): white bg, 1px
  * `colors.border`, `radius.sm`, `shadows.xs`, paddingHorizontal 12 /
  * paddingVertical 10 (Figma's 43-tall single-line box is exactly 10 + one
- * 23pt Body line + 10 — unlike the search field's fixed-height trick, this
- * box is built *around* Body's own lineHeight, so the whole style spreads
- * cleanly per §3 rather than needing the search field's workaround).
+ * 23pt Body line + 10).
+ *
+ * The single-line box (Email) drops `typography.body`'s own `lineHeight`
+ * from its style, same as the search field's own workaround
+ * (`PostSearchScreen.tsx`) and for the same reason: with the full style
+ * spread, iOS renders the text visibly off-centre in the box despite the
+ * padding math lining up on paper. The multiline box (Contents) keeps
+ * `lineHeight` — its text is top-aligned rather than centred, which is
+ * what the single-line box's bug depends on, and multiple wrapped lines
+ * need it for correct line spacing.
  *
  * Figma's own label text already carries the "*" required marker inline
  * ("Email*", "Contents*") rather than as a separate glyph — ported as
@@ -72,7 +79,12 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.background,
     color: colors.textPrimary,
-    ...typography.body,
+    // Body's fields are listed out rather than spread — see this file's own
+    // doc comment for why `lineHeight` is dropped here (the single-line
+    // iOS centering bug `PostSearchScreen.tsx` already worked around).
+    fontFamily: typography.body.fontFamily,
+    fontSize: typography.body.fontSize,
+    letterSpacing: typography.body.letterSpacing,
     ...shadows.xs,
   },
   inputMultiline: {
@@ -81,5 +93,9 @@ const styles = StyleSheet.create({
     // a few lines instead of staying put like Figma's static box. Content
     // past this height scrolls inside the field instead.
     height: 240,
+    // Restored here (dropped from the base `input` style above): multiple
+    // wrapped lines need real line spacing, and this box's text is
+    // top-aligned rather than centred, so it doesn't hit the same bug.
+    lineHeight: typography.body.lineHeight,
   },
 });
