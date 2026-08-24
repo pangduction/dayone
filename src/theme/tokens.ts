@@ -117,6 +117,7 @@ export const colors = {
   textEmpty: palette.emptyStateText, // the empty-list message (node 3192:9215)
   lockPaper: palette.lockPaper, // the veil over an unfinished month's report (node 3196:14417)
   textFaint: palette.g200, // Setting screen's section eyebrow labels (APP/SUPPORT/ACCOUNT, node 3198:7120) — lighter than textPlaceholder (G400)
+  monthLabel: palette.neutral700, // Figma "Neutral/700" — the Export-to-PDF date range picker's month label (node 3201:5617), verified via get_variable_defs
 };
 
 // ---------------------------------------------------------------------------

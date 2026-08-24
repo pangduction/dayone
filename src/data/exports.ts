@@ -1,0 +1,131 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Directory, File, Paths } from 'expo-file-system';
+
+/**
+ * Local metadata for a generated Export-to-PDF file (Figma "Setting-Export to
+ * PDF-2", node 3201:5947 — the "Files" section's rows). Export to PDF is a
+ * real device feature (explicit product requirement), so this is a genuine
+ * file on disk, not a mock row: `saveExportFile` moves the PDF `expo-print`
+ * just wrote out of the cache directory into a stable, named home in
+ * `documentDirectory` (the cache isn't guaranteed to survive), and every read
+ * here prunes anything past its "Valid until" date — deleting the row *and*
+ * the bytes, per the product decision that expiry is real deletion rather
+ * than a stale label.
+ */
+export type ExportFile = {
+  id: string;
+  /** e.g. "Dayone-260806-260813.pdf" — also the file's real on-disk name. */
+  filename: string;
+  /** Real `file://` URI of the generated PDF. */
+  uri: string;
+  /** The export's date range, 'YYYY-MM-DD'. */
+  startDate: string;
+  endDate: string;
+  createdAt: string;
+  /** createdAt + 30 days — the product's chosen "Valid until" window. */
+  expiresAt: string;
+};
+
+const STORAGE_KEY = 'dayone.exports.v1';
+const VALIDITY_DAYS = 30;
+const EXPORTS_DIR_NAME = 'exports';
+
+function exportsDirectory(): Directory {
+  return new Directory(Paths.document, EXPORTS_DIR_NAME);
+}
+
+async function readAll(): Promise<ExportFile[]> {
+  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as ExportFile[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function writeAll(files: ExportFile[]): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(files));
+}
+
+/** Deletes a PDF's bytes. A file already gone (or never written) isn't an error. */
+function deleteFileBytes(uri: string): void {
+  try {
+    const file = new File(uri);
+    if (file.exists) file.delete();
+  } catch {
+    // Nothing left to clean up.
+  }
+}
+
+/** Drops every row whose `expiresAt` has passed, deleting its PDF too. */
+function pruneExpired(files: ExportFile[]): ExportFile[] {
+  const now = Date.now();
+  const alive: ExportFile[] = [];
+  for (const file of files) {
+    if (new Date(file.expiresAt).getTime() <= now) {
+      deleteFileBytes(file.uri);
+    } else {
+      alive.push(file);
+    }
+  }
+  return alive;
+}
+
+/** Every export still valid, newest first (Figma's Files section reads as a fresh-first list, like every other list in the app). */
+export async function getExportFiles(): Promise<ExportFile[]> {
+  const files = await readAll();
+  const alive = pruneExpired(files);
+  if (alive.length !== files.length) await writeAll(alive);
+  return [...alive].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function getExportFile(id: string): Promise<ExportFile | null> {
+  const files = await getExportFiles();
+  return files.find((file) => file.id === id) ?? null;
+}
+
+/**
+ * Moves a freshly `printToFileAsync`'d PDF (which lands in the cache
+ * directory under a generated name) into `documentDirectory/exports/` under
+ * its real filename, and records its metadata with a 30-day expiry from now.
+ */
+export async function saveExportFile(input: {
+  sourceUri: string;
+  filename: string;
+  startDate: string;
+  endDate: string;
+}): Promise<ExportFile> {
+  const dir = exportsDirectory();
+  if (!dir.exists) dir.create({ intermediates: true });
+
+  const destination = new File(dir, input.filename);
+  if (destination.exists) destination.delete();
+  await new File(input.sourceUri).move(destination);
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + VALIDITY_DAYS * 24 * 60 * 60 * 1000);
+  const created: ExportFile = {
+    id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    filename: input.filename,
+    uri: destination.uri,
+    startDate: input.startDate,
+    endDate: input.endDate,
+    createdAt: now.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+  };
+
+  const files = await readAll();
+  await writeAll([...files, created]);
+  return created;
+}
+
+/** Removes an export before its natural expiry — not currently reachable from any screen, kept for symmetry with `deletePost`. */
+export async function deleteExportFile(id: string): Promise<void> {
+  const files = await readAll();
+  const target = files.find((file) => file.id === id);
+  if (!target) return;
+  deleteFileBytes(target.uri);
+  await writeAll(files.filter((file) => file.id !== id));
+}

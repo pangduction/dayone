@@ -1,3 +1,5 @@
+import { dateKey } from '../data/posts';
+
 /** Number of days in `month` (0-indexed, matches `Date#getMonth()`) of `year`. */
 export function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
@@ -46,6 +48,41 @@ export function getCalendarWeeks(year: number, month: number): (number | null)[]
   const weeks: (number | null)[][] = [];
   for (let i = 0; i < days.length; i += 7) {
     weeks.push(days.slice(i, i + 7));
+  }
+  return weeks;
+}
+
+export type DateRangeCell = {
+  date: Date;
+  key: string;
+  /** Whether this cell falls in the month being shown, vs. spilling in from the previous/next month. */
+  inMonth: boolean;
+};
+
+/**
+ * A Monday-start six-row grid for a month, with real day numbers filling the
+ * leading/trailing gaps from the previous/next month — unlike
+ * `getCalendarWeeks` (which blanks non-month slots for the Home calendar),
+ * the Export-to-PDF date range picker (Figma "Modal/Date picker menu", node
+ * 3201:5786) draws real numbers there, e.g. "26" through "31" of July before
+ * August 1. Six rows always covers a month regardless of where it starts, by
+ * the same math as `CALENDAR_WEEK_ROWS`.
+ */
+export function getDateRangeGrid(year: number, month: number): DateRangeCell[][] {
+  const firstOfMonth = new Date(year, month, 1);
+  // Monday-first weekday index: 0 = Monday … 6 = Sunday.
+  const firstWeekday = (firstOfMonth.getDay() + 6) % 7;
+  const start = new Date(year, month, 1 - firstWeekday);
+
+  const cells: DateRangeCell[] = [];
+  for (let i = 0; i < CALENDAR_WEEK_ROWS * 7; i += 1) {
+    const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    cells.push({ date, key: dateKey(date), inMonth: date.getMonth() === month });
+  }
+
+  const weeks: DateRangeCell[][] = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
   }
   return weeks;
 }

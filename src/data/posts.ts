@@ -181,3 +181,16 @@ export async function getPostsForMonth(year: number, month: number): Promise<Pos
   const prefix = `${year}-${pad(month + 1)}-`;
   return posts.filter((post) => post.date.startsWith(prefix));
 }
+
+/**
+ * Posts within `[startDate, endDate]`, both inclusive 'YYYY-MM-DD' keys, oldest
+ * first — what Export to PDF needs: one page per post, in the order a diary
+ * reads front to back. String comparison is safe because every key is the
+ * same zero-padded shape.
+ */
+export async function getPostsInRange(startDate: string, endDate: string): Promise<Post[]> {
+  const posts = await readAll();
+  return posts
+    .filter((post) => post.date >= startDate && post.date <= endDate)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}

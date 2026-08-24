@@ -6,6 +6,8 @@ import HomeListScreen from '../screens/HomeListScreen';
 import PostSearchScreen from '../screens/PostSearchScreen';
 import ReportScreen from '../screens/ReportScreen';
 import SettingScreen from '../screens/SettingScreen';
+import ExportToPdfScreen from '../screens/ExportToPdfScreen';
+import PdfPreviewScreen from '../screens/PdfPreviewScreen';
 import AddScreen from '../screens/AddScreen';
 import PostDetailScreen from '../screens/PostDetailScreen';
 import RecordingScreen from '../screens/RecordingScreen';
@@ -31,6 +33,15 @@ export type RootStackParamList = {
   Report: undefined;
   /** Reached from Report's ic/setting (Figma Setting-Main, node 3198:6348). */
   Setting: undefined;
+  /**
+   * The real Export to PDF list (Figma Setting-Export to PDF-2, node
+   * 3201:5947). Reached only after applying a range on the date-range modal
+   * that opens directly over Setting-Main — the pre-filled range comes along
+   * as params rather than being recomputed here.
+   */
+  ExportToPdf: { startDate: string; endDate: string };
+  /** The real generated PDF, shown in place of Figma's page-image mock (node 3267:6006). */
+  PdfPreview: { fileId: string };
   /** Omit `date` to write today's post; pass one to edit that day's. */
   Add: { date?: string } | undefined;
   PostDetail: { date: string };
@@ -90,6 +101,8 @@ export default function RootNavigator() {
           options={{ animation: 'none' }}
         />
         <Stack.Screen name="Setting" component={SettingScreen} />
+        <Stack.Screen name="ExportToPdf" component={ExportToPdfScreen} />
+        <Stack.Screen name="PdfPreview" component={PdfPreviewScreen} />
         <Stack.Screen name="Add" component={AddScreen} />
         <Stack.Screen name="PostDetail" component={PostDetailScreen} />
         <Stack.Screen name="Recording" component={RecordingScreen} />

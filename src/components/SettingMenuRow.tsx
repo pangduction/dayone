@@ -6,6 +6,8 @@ type Props = {
   label: string;
   /** A trailing value, right-aligned opposite the label — e.g. "Off", "English", "v1.0.0". */
   value?: string;
+  /** Override the value's color — Export to PDF's "Date Range" row shows its value in `colors.accent` (node 3201:6515) rather than the usual placeholder grey. */
+  valueColor?: string;
   /** Whether the row navigates somewhere. Rows with no chevron are pure info (App version, Log in). */
   chevron?: boolean;
   onPress?: () => void;
@@ -27,7 +29,7 @@ type Props = {
  * The chevron is G600 (verified via get_variable_defs on node 3198:7124) —
  * not the G800 a `typography.subtext` label would suggest.
  */
-export default function SettingMenuRow({ label, value, chevron = true, onPress }: Props) {
+export default function SettingMenuRow({ label, value, valueColor, chevron = true, onPress }: Props) {
   const Container = onPress ? Pressable : View;
 
   return (
@@ -41,7 +43,7 @@ export default function SettingMenuRow({ label, value, chevron = true, onPress }
         {label}
       </Text>
       {value !== undefined ? (
-        <Text style={[typography.subtext, styles.value]} numberOfLines={1}>
+        <Text style={[typography.subtext, styles.value, valueColor ? { color: valueColor } : null]} numberOfLines={1}>
           {value}
         </Text>
       ) : null}

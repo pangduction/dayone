@@ -122,6 +122,11 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Post Report Thumbnail                | 4 (image box)     | 8 / 16 | —      | one post in the Report montage: a 120-wide column whose image block is a fixed 120x160. With a photo the block *is* the photo; with none it's an empty box outlined 1px **dashed** `colors.border`, holding the post's text at `typography.reportCaption` / `colors.textStrong`. The day label — `typography.reportDate` / `colors.textSecondary`, reading "(2), Thu" — hugs the image at gap 8; a caption (only when the post has a photo, else the text is already inside the box) sits at the far end at gap 16. `dateUp` mirrors the column, so label and caption swap ends. A recording draws Figma's Record/View pinned to the block's bottom — waveform over duration — on `colors.photoScrim` when over a photo. Nodes `3196:14379`/`14381`/`14383`/`14385`/`14387`/`14389`. See `PostReportThumbnail.tsx`. |
 | Post Thumbnail Rows                  | 16 (ours)         | 16   | —            | the montage strip: each post gets a 120-wide **320-tall** Thumbnail Section, and sections **alternate top- and bottom-aligned**, which also sets each thumbnail's `dateUp` so the day label always falls toward the middle. Verified against Figma's six sections, whose (y, height) are (0,180) (82,238) (0,238) (140,180) (0,180) (140,180) — every even one topped out, every odd one bottomed out at 320. Figma's strip is 800 wide = 6x120 + 5x16, centred so it bleeds past both screen edges. Nodes `3196:14205` / `3196:14377`. See `PostThumbnailRows.tsx`. |
 | Lock Paper                           | 16 / 16 top · 40 bottom | 16 | —     | the veil over a month whose report isn't ready: `colors.lockPaper` (white @ 70%) over a background blur, so the strip stays visible underneath. Centred 40pt `ic/present` over two lines of `typography.subtext` in `colors.textSecondary`. Node `3196:14417`. |
+| Header/Title Page                    | 5 (left) / 16 (right) · 16 vertical | — | — | back button + centred `typography.subtext` title, same absolute-centring technique as Header/List's Date Information block so the button keeps the row's real edge. Figma's own `buttonShow` variant adds a trailing "Done" `HeaderActionButton`, unused by anything built so far. Node `3198:7683`. Used by Export to PDF's list screen; meant for Terms of Service too. See `HeaderTitlePage.tsx`. |
+| Header/PDF Page                      | 5 (left) / 16 (right) · 16 vertical | — | — | Header/Title Page's shell, but the left side is a `flex:1` row holding **both** the back button and a trailing `Button/Icon/Contained` share button (`IconButtonContained`, ic/share) — Figma nests them together rather than treating the share button as a separate header slot. Title still centres absolutely over the whole row. Node `3267:6298`, PDF-preview-only. See `HeaderPdfPage.tsx`. |
+| Modal/Date picker menu (date range)  | 16 (content)      | 16   | —            | the Export to PDF entry point: a month stepper (plain, transparent 36×36 `Button/Icon/Plain`-style buttons either side of `typography.body` in `colors.monthLabel` — Neutral/700, verified via `get_variable_defs`, **not** `colors.yearLabel`'s Neutral/900), a pair of read-only date-display fields (14/10 padding — Figma-exact, off the spacing scale — 1px `colors.border`, `shadows.xs`), then a Monday-start calendar. Weekday header is Figma's own literal row — `Mo Tu We Th Fr Sat Su`, asymmetric two-letter/three-letter mix, ported as-is rather than "fixed". Each day cell is `flex:1`/`aspectRatio:1` (not a literal 40px — Figma's number is just its default-frame measurement) at `radius.full`; a grey `colors.textPlaceholder` 5px dot marks a day with a real post, in-month numbers are `colors.textSecondary`, spillover days from the prev/next month are `colors.textTertiary`, and the selected start/end are an accent-filled circle with white text. The band linking a multi-day selection is a flat `colors.surface` rectangle under every day in range rather than a port of Figma's "Connection" vectors — contiguous same-colour rectangles read identically once the row has no gaps, the same trade-off `Waveform.tsx` makes drawing bars from data instead of a decorative vector. Node `3201:5786`, in context on Setting-Export to PDF-1 `3199:8735` (confirmed by re-fetch: this modal opens **directly over Setting-Main**, not a dedicated screen first — the real Export to PDF screen only exists once "Apply" is pressed). See `DateRangeModal.tsx`. |
+| Modal (Generating PDF)               | —                 | 16   | —            | **not** `ModalSheet` — Figma draws no card, just the full-screen `colors.backdrop` blur scrim with a spinner and two-line `typography.subtext` white text centred directly on it. The spinner's colours (`colors.border` track, `colors.accent` arc) are confirmed via `get_design_context`; Figma's asset is one static frame of what's clearly meant to be spinning, so this drives a real looping rotation instead. Node `3201:6624`. Figma's copy has "alomost" for "almost" — read as an authoring typo and corrected. See `GeneratingPdfModal.tsx`. |
+| File Item                            | 16 / 12           | 8    | —            | one row of the Export to PDF screen's Files section: real filename (`typography.body`/`colors.textPrimary`) over its "Valid until" date (`typography.caption`/`colors.textTertiary`) at a tight gap 3 (Figma-exact, the same off-scale gap Share Image's "Created by Dayone" pill uses), then a chevron. Node `3201:6535`. See `ExportFileRow.tsx`. |
 | Modal/Date-Report                    | 16 (content)      | 16   | —            | **structurally identical to Modal/Date-Default** — same shell, year stepper, divider, twelve chips, Done. Only which chips are enabled differs, so it reuses `MonthPickerModal` through its `isSelectable` prop rather than being a second component. Node `3198:4736`, in context `3198:4740`. |
 | Modal/Delete-Post                    | —                 | 8    | —            | fills the shell above: two body lines in `typography.body` / `colors.textSecondary`, then "Delete" (Primary, **warning** tone) over "Cancel" (White). Raised by the post detail header's Delete. Node `3233:4928`, in context `3233:4929`. See `DeletePostModal.tsx`. |
 
@@ -204,24 +209,43 @@ the wrong glyph.
   `SettingScreen.tsx` is Flow 7's entry list (Setting-Main, node
   `3198:6348`), reached from Report's ic/setting; its menu rows are inert
   until each sub-flow (7.1 Notification through 7.6 Delete Account) gets
-  built, per the TODO on each row.
+  built, per the TODO on each row. "Export to PDF" (7.3) is wired: see the
+  product rule below.
+  `ExportToPdfScreen.tsx` is the real Export to PDF list (Setting-Export to
+  PDF-2, node `3201:5947`); `PdfPreviewScreen.tsx` shows a generated file
+  (Setting-Export to PDF-6, node `3267:6006`) via `react-native-webview`
+  pointed at its real `file://` URI, not a re-render of Figma's page-image
+  mock.
   `HomeScreen.tsx`'s Share button (Flow 6, section `3198:4811`) renders
   `ShareableCalendarCard.tsx` off-screen, captures it with
   `react-native-view-shot`, and hands the resulting PNG to `expo-sharing`'s
   OS share sheet — see `ShareableCalendarCard.tsx`'s own doc comment for why
   it isn't simply a screenshot of the live screen.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
-  stack (Login/Home/HomeList/PostSearch/Report/Setting/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
-  sign-in has no real auth yet; flip it back to `"Login"` once that's wired
-  up. Every route pushes as an ordinary page — Add is a full Figma frame
-  with its own back button, not a modal sheet. The only modal in the app so
-  far is `GalleryModal`, which Figma really does draw as an overlay.
+  stack
+  (Login/Home/HomeList/PostSearch/Report/Setting/ExportToPdf/PdfPreview/Add/PostDetail/Recording).
+  `initialRouteName` is temporarily `"Home"` since sign-in has no real auth
+  yet; flip it back to `"Login"` once that's wired up. Every route pushes as
+  an ordinary page — Add is a full Figma frame with its own back button, not
+  a modal sheet. The only modals in the app are ones Figma really does draw
+  as an overlay: `GalleryModal`, and `DateRangeModal` (opened directly over
+  `SettingScreen`, per Flow 7.3 below).
 - `src/data/` — local, on-device data stores (no backend yet). `posts.ts`
   is an AsyncStorage-backed store for the one-post-per-day / one-photo-per-post
   rule; screens should go through its functions rather than touching
-  AsyncStorage directly.
+  AsyncStorage directly. `exports.ts` is the same pattern for generated PDF
+  file metadata, with real files under `documentDirectory/exports/` — see
+  the Export to PDF product rule below.
+- `src/pdf/postPageTemplate.ts` — builds the static HTML `expo-print` turns
+  into the real exported PDF, one page per post mirroring
+  `PostDetailScreen.tsx`'s own conditional section logic exactly (Figma's
+  "PDF Image" node `3267:6263` is the same eight post shapes as Post Detail,
+  just as print pages).
 - `src/utils/calendar.ts` — pure date-math helpers (days in month, weekday
-  grid) shared by any screen that renders a calendar.
+  grid) shared by any screen that renders a calendar. `getDateRangeGrid` is
+  a second, Monday-start grid for `DateRangeModal` that (unlike
+  `getCalendarWeeks`) fills leading/trailing gaps with real spillover-month
+  day numbers, since Figma's date-range picker draws them.
 
 ## 7. Product rules that shape the UI
 
@@ -328,6 +352,33 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   never shows. Pressing Share renders that frame off-screen, captures it as a
   PNG, and opens the OS share sheet on the result — the live Home screen with
   its interactive chrome is never what leaves the app.
+- **Export to PDF is a real device feature**, not a mock list, per explicit
+  product direction. "Generate PDF" reads the actual posts in the chosen
+  range (`getPostsInRange`), renders them with `src/pdf/postPageTemplate.ts`,
+  and hands that HTML to `expo-print`'s `printToFileAsync` — a real PDF file,
+  not a placeholder row. The three behaviors a static Figma mock can't show
+  were product decisions rather than reads:
+  - **Entry flow**: tapping "Export to PDF" on Setting-Main opens the
+    date-range modal (`DateRangeModal`) *directly over* Setting-Main, per a
+    re-fetch of node `3199:8735` (its backdrop is the blurred Setting-Main
+    screen itself) — confirmed by re-examining Figma, not guessed. The real
+    Export to PDF screen (`ExportToPdfScreen`) is only pushed once "Apply" is
+    pressed, pre-filled with the picked range.
+  - **Default range**: the modal's first-open default is the **last 7
+    days**, ending today.
+  - **File validity**: each generated file's "Valid until" is real —
+    **creation date + 30 days** — and is enforced, not cosmetic:
+    `src/data/exports.ts`'s `getExportFiles` prunes any row past its
+    `expiresAt` on every read, deleting both the metadata row and the PDF's
+    actual bytes (`documentDirectory/exports/<filename>.pdf`), so an expired
+    file is genuinely gone rather than just hidden.
+  A photo embeds as a base64 data URI rather than a `file://` reference,
+  because `printToFileAsync`'s iOS WebView can't resolve local asset paths
+  (a documented WKWebView limitation) — see `postPageTemplate.ts`'s own doc
+  comment. The template's fonts fall back to the system sans-serif stack
+  rather than embedding Inter/Poppins as base64 `@font-face` data, the same
+  trade-off already made for unreachable Figma assets elsewhere (§5) — colour,
+  spacing, and radius still come from `tokens.ts`.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.
