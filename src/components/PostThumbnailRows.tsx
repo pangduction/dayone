@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import type { LayoutChangeEvent } from 'react-native';
 import PostReportThumbnail, { REPORT_THUMBNAIL_WIDTH } from './PostReportThumbnail';
 import type { Post } from '../data/posts';
@@ -42,20 +43,35 @@ const DRIFT_INTERVAL_MS = 16;
  *
  * The strip drifts left to right on its own and can be dragged. A drag hands
  * it over for good, so the drift never fights the reader. A tap is different:
- * it only pauses the drift while the finger is down, then the drift resumes.
- * That distinction is not cosmetic — a thumbnail cannot be tapped while the
- * strip is moving under the finger, because the scroll view reads the touch
- * as the start of a gesture. It also stops on reaching the end rather than
- * looping, since a jump back to the start would be more jarring.
+ * it holds the drift only while the finger is down, so a thumbnail can be
+ * opened mid-drift — without that hold the scroll view reads the touch as the
+ * start of a gesture and swallows it. The hold is a ref rather than state so
+ * it takes effect on the very next tick.
+ *
+ * The drift also stops while the screen is not focused, which is what lets a
+ * post opened from here come back to the strip where it was left rather than
+ * to wherever it would have crept to in the meantime. Coming back counts as a
+ * new visit, so the drift resumes — from that same spot, not from the start.
+ * A drag therefore holds the strip for the rest of that visit, not forever.
+ *
+ * It stops on reaching the end rather than looping, since a jump back to the
+ * start would be more jarring.
  */
 export default function PostThumbnailRows({ posts, onPressPost, autoScroll = true }: Props) {
   const scrollRef = useRef<ScrollView>(null);
   const offset = useRef(0);
   const maxOffset = useRef(0);
+  // Whether the drift is allowed at all: switched off for good by a drag, by
+  // reaching the end, or by the Lock Paper.
   const [drifting, setDrifting] = useState(autoScroll);
-  // Set once the reader actually drags. A tap is not a drag, so it only
-  // pauses the drift for as long as the finger is down.
+  // Set once the reader actually drags, which hands the strip over for good.
   const tookOver = useRef(false);
+  // A momentary hold while a finger is down. A ref, not state, so a touch
+  // stops the next tick immediately instead of waiting for a re-render —
+  // that latency is the difference between a tap landing and being swallowed.
+  const driftPaused = useRef(false);
+  // The strip must not creep along while a post's detail page is on top of it.
+  const isFocused = useIsFocused();
 
   // Measurements needed to know where the end is.
   const viewportWidth = useRef(0);
@@ -75,10 +91,16 @@ export default function PostThumbnailRows({ posts, onPressPost, autoScroll = tru
     recomputeMax();
   };
 
+  // Arriving at the screen starts the drift again — from wherever the strip
+  // currently sits, since nothing here touches the offset. Handing the strip
+  // over by dragging lasts for that visit; coming back from a post is a new
+  // one, and the drift picks up where it was left.
   useEffect(() => {
+    if (!isFocused) return;
     tookOver.current = false;
+    driftPaused.current = false;
     setDrifting(autoScroll);
-  }, [autoScroll]);
+  }, [autoScroll, isFocused]);
 
   // A new month means a new strip; start it from the left again. Keyed on the
   // month rather than the array, because coming back from a post reloads the
@@ -91,10 +113,10 @@ export default function PostThumbnailRows({ posts, onPressPost, autoScroll = tru
   }, [monthKey]);
 
   useEffect(() => {
-    if (!drifting || posts.length === 0) return;
+    if (!drifting || !isFocused || posts.length === 0) return;
     const step = (DRIFT_POINTS_PER_SECOND * DRIFT_INTERVAL_MS) / 1000;
     const timer = setInterval(() => {
-      if (maxOffset.current <= 0) return;
+      if (driftPaused.current || maxOffset.current <= 0) return;
       const next = Math.min(offset.current + step, maxOffset.current);
       if (next === offset.current) {
         setDrifting(false); // reached the end
@@ -104,15 +126,17 @@ export default function PostThumbnailRows({ posts, onPressPost, autoScroll = tru
       scrollRef.current?.scrollTo({ x: next, animated: false });
     }, DRIFT_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [drifting, posts.length]);
+  }, [drifting, isFocused, posts.length]);
 
   // A tap cannot land while the strip is moving under the finger: the scroll
-  // view reads the touch as the start of a gesture and swallows it. Pausing
-  // the drift on touch-down — rather than on drag, which a tap never
-  // produces — is what makes a thumbnail tappable at all.
-  const pauseForTouch = () => setDrifting(false);
+  // view reads the touch as the start of a gesture and swallows it. So the
+  // drift holds from the moment a finger touches down — not from the moment
+  // it drags, which a tap never does — and picks up again when it lifts.
+  const pauseForTouch = () => {
+    driftPaused.current = true;
+  };
   const resumeAfterTouch = () => {
-    if (!tookOver.current && autoScroll) setDrifting(true);
+    driftPaused.current = false;
   };
 
   return (
