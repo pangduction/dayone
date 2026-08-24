@@ -117,7 +117,19 @@ export default function ExportToPdfScreen() {
       for (const post of posts) {
         const ref = captureRefs.current[post.date];
         if (!ref) continue;
-        const dataUri = await captureRef(ref, { format: 'png', quality: 1, result: 'data-uri' });
+        // Pinned to the exact print page size rather than left at the
+        // view's native (device-pixel-ratio-scaled) resolution — otherwise
+        // the captured PNG's own pixel dimensions and the print page's
+        // declared 390x844 only agree on *ratio*, and any DPI/rounding
+        // mismatch between react-native-view-shot's capture and
+        // expo-print's WebView renderer becomes a real scale difference.
+        const dataUri = await captureRef(ref, {
+          format: 'png',
+          quality: 1,
+          result: 'data-uri',
+          width: PAGE_WIDTH,
+          height: PAGE_HEIGHT,
+        });
         pageDataUris.push(dataUri);
       }
 
