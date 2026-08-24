@@ -131,21 +131,28 @@ export default function PostThumbnailRows({ posts, onPressPost, autoScroll = tru
     setDrifting(autoScroll);
   }, [autoScroll, isFocused]);
 
-  useEffect(() => {
-    if (!drifting || !isFocused || touchHeld.current || posts.length === 0) return;
-    startDrift();
-    return stopDrift;
-  }, [drifting, isFocused, posts.length, measureTick, startDrift, stopDrift]);
-
   // A new month means a new strip; start it from the left again. Keyed on the
   // month rather than the array, because coming back from a post reloads the
   // same posts into a new array and the strip should stay where it was.
+  //
+  // Declared *before* the drift below, and `monthKey` is one of the drift's
+  // dependencies, because effects run in declaration order on every commit:
+  // with this one second it rewound and stopped the drift the drift effect
+  // had just started, and if the new month happened to hold as many posts as
+  // the old one nothing else changed to start it again — the strip simply sat
+  // still.
   const monthKey = posts.length > 0 ? posts[0].date.slice(0, 7) : '';
   useEffect(() => {
     translateX.stopAnimation();
     offset.current = 0;
     translateX.setValue(0);
   }, [monthKey, translateX]);
+
+  useEffect(() => {
+    if (!drifting || !isFocused || touchHeld.current || posts.length === 0) return;
+    startDrift();
+    return stopDrift;
+  }, [drifting, isFocused, posts.length, monthKey, measureTick, startDrift, stopDrift]);
 
   /** Where the strip stood when the current drag began. */
   const dragOrigin = useRef(0);
