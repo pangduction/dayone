@@ -175,6 +175,18 @@ function WheelColumn({ items, selectedIndex, onChange, width }: WheelColumnProps
     onChange(Math.max(0, Math.min(items.length - 1, index)));
   };
 
+  // Tapping one of the dimmed rows above/below center (an "8" or "AM" sitting
+  // next to the bold "9"/"PM") is the other half of a real wheel picker's
+  // interaction, not just dragging it — scroll that row to center and set
+  // the value directly, rather than relying on onMomentumScrollEnd firing
+  // after a *programmatic* animated scroll, which Android doesn't reliably
+  // fire.
+  const handlePress = (index: number) => {
+    const clamped = Math.max(0, Math.min(items.length - 1, index));
+    scrollRef.current?.scrollTo({ y: clamped * ROW_HEIGHT, animated: true });
+    onChange(clamped);
+  };
+
   return (
     <ScrollView
       ref={scrollRef}
@@ -186,9 +198,15 @@ function WheelColumn({ items, selectedIndex, onChange, width }: WheelColumnProps
       onMomentumScrollEnd={handleMomentumEnd}
     >
       {items.map((label, index) => (
-        <View key={label} style={styles.cell}>
+        <Pressable
+          key={label}
+          style={styles.cell}
+          onPress={() => handlePress(index)}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+        >
           <Text style={index === selectedIndex ? styles.cellTextActive : styles.cellTextInactive}>{label}</Text>
-        </View>
+        </Pressable>
       ))}
     </ScrollView>
   );
