@@ -7,7 +7,7 @@ type Props = {
   value: string;
   onChangeText: (text: string) => void;
   placeholder: string;
-  /** Switches to Contents' variant: min-height 240, text top-aligned instead of vertically centered. */
+  /** Switches to Contents' variant: a fixed 240 height (not a minimum — a multiline TextInput grows to fit its content by default, which drifted from Figma's static box as soon as typing wrapped past a few lines), text top-aligned instead of vertically centered. */
   multiline?: boolean;
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
@@ -76,6 +76,10 @@ const styles = StyleSheet.create({
     ...shadows.xs,
   },
   inputMultiline: {
-    minHeight: 240,
+    // Fixed, not minHeight — an RN multiline TextInput otherwise grows to
+    // fit its own content, so the box kept resizing as the user typed past
+    // a few lines instead of staying put like Figma's static box. Content
+    // past this height scrolls inside the field instead.
+    height: 240,
   },
 });
