@@ -1,19 +1,17 @@
-import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import { deletePost, getPostByDate, parseDateKey } from '../data/posts';
+import { deletePost, getPostByDate } from '../data/posts';
 import type { Post } from '../data/posts';
 import IconButton from '../components/IconButton';
 import GhostButton from '../components/GhostButton';
 import { IcArrowLeft } from '../components/icons/AddIcons';
-import RichTextEditor from '../components/RichTextEditor';
-import PhotoSection from '../components/PhotoSection';
-import RecordRow from '../components/RecordRow';
+import PostDetailBody from '../components/PostDetailBody';
 import DeletePostModal from '../components/DeletePostModal';
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, spacing } from '../theme/tokens';
 
 /**
  * Figma "Flow 4. Post Detail Type" (section 3192:11364), reached by tapping a
@@ -35,7 +33,9 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
  * The story renders through the same `RichTextEditor` the Add screen writes
  * with, in read-only mode, so a post's bold / colour / list formatting shows
  * here exactly as it was typed. Posts written before the rich editor have no
- * `html`, so their plain `text` is rendered directly.
+ * `html`, so their plain `text` is rendered directly. All of that section
+ * logic lives in `PostDetailBody.tsx`, shared with the Export-to-PDF preview
+ * (`PdfPagePreview.tsx`) so the two can never drift apart.
  *
  * The header's Delete raises Figma's Modal/Delete-Post (node 3233:4928, in
  * context as "Post-Common-Delete" 3233:4929) and, once confirmed, removes the
@@ -70,12 +70,6 @@ export default function PostDetailScreen() {
     navigation.navigate('Home', { flash: 'I deleted my journal entry.' });
   };
 
-  const written = useMemo(() => parseDateKey(date), [date]);
-  const dateLabel = written.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  // Figma's Date Written spells the weekday out ("Saturday"), unlike the Add
-  // header's short form ("Sat").
-  const dayLabel = written.toLocaleDateString('en-US', { weekday: 'long' });
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -88,29 +82,7 @@ export default function PostDetailScreen() {
         </View>
       </View>
 
-      <View style={styles.detail}>
-        <View style={styles.dateWritten}>
-          <Text style={[typography.subtext, styles.dateLabel]}>{dateLabel}</Text>
-          {/* Figma switched this line from Caption to Overline (node
-              3192:12409), matching the same change in Header/Add. */}
-          <Text style={[typography.overline, styles.dayLabel]}>{dayLabel}</Text>
-        </View>
-
-        {post?.photoUri ? <PhotoSection uri={post.photoUri} fitMode={post.fitMode} /> : null}
-
-        {post?.recording ? <RecordRow recording={post.recording} variant="view" /> : null}
-
-        {post && post.text.length > 0 ? (
-          <View style={styles.textSection}>
-            <View style={styles.divider} />
-            {post.html ? (
-              <RichTextEditor initialHtml={post.html} editable={false} onChange={() => {}} />
-            ) : (
-              <Text style={[typography.body, styles.content]}>{post.text}</Text>
-            )}
-          </View>
-        ) : null}
-      </View>
+      {post ? <PostDetailBody post={post} /> : null}
 
       <DeletePostModal
         visible={deleteOpen}
@@ -141,39 +113,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: spacing.sm, // Figma: the Edit/Delete row, node 3233:4663
-  },
-  detail: {
-    flex: 1,
-    width: '100%',
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  dateWritten: {
-    width: '100%',
-    height: 40,
-    alignItems: 'center',
-  },
-  dateLabel: {
-    color: colors.textPrimary,
-  },
-  dayLabel: {
-    color: colors.textTertiary,
-  },
-  textSection: {
-    flex: 1,
-    width: '100%',
-    minHeight: 240,
-    gap: spacing.sm,
-    paddingHorizontal: spacing[5],
-    borderRadius: radius.sm,
-  },
-  divider: {
-    width: '100%',
-    height: 1,
-    backgroundColor: colors.borderSubtle, // Figma: G100, verified via get_variable_defs on node 3192:12438
-  },
-  content: {
-    width: '100%',
-    color: colors.textPrimary,
   },
 });
