@@ -49,9 +49,10 @@ function formatRangeLabel(startDate: string, endDate: string): string {
  * `PdfPreviewScreen` to show. That's what makes the preview and the printed
  * file identical — not a design goal a second render has to keep up with,
  * but the exact same bytes read twice. `saveExportFile`
- * (`src/data/exports.ts`) also prunes anything past its 30-day "Valid
- * until" — so the Files list below only ever shows what's still real and
- * still valid.
+ * (`src/data/exports.ts`) also prunes anything past its 7-day "Valid
+ * until" — kept short on purpose, to minimize how much generated-PDF storage
+ * sits on the device — so the Files list below only ever shows what's still
+ * real and still valid.
  */
 export default function ExportToPdfScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();

@@ -390,11 +390,14 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     `ExportToPdfScreen` opens rather than as the modal's first-open value, is
     still the **last 7 days**, ending today.
   - **File validity**: each generated file's "Valid until" is real —
-    **creation date + 30 days** — and is enforced, not cosmetic:
+    **creation date + 7 days** — and is enforced, not cosmetic:
     `src/data/exports.ts`'s `getExportFiles` prunes any row past its
     `expiresAt` on every read, deleting both the metadata row and the PDF's
     actual bytes (`documentDirectory/exports/<filename>.pdf`), so an expired
-    file is genuinely gone rather than just hidden.
+    file is genuinely gone rather than just hidden. Kept to a week rather
+    than a month, per explicit product direction, since a generated PDF plus
+    one JPEG per page is real, uncompressed on-device storage — minimizing
+    how long it sits around was the point, not just giving it *some* expiry.
   - **The printed file and the in-app preview are the same bytes, read
     twice — not two renders a design goal has to keep matching.**
     `ExportToPdfScreen.tsx`'s "Generate PDF" renders each post's

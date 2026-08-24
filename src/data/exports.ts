@@ -30,7 +30,7 @@ export type ExportFile = {
   startDate: string;
   endDate: string;
   createdAt: string;
-  /** createdAt + 30 days — the product's chosen "Valid until" window. */
+  /** createdAt + 7 days — the product's chosen "Valid until" window, kept short to minimize on-device storage. */
   expiresAt: string;
 };
 
@@ -40,7 +40,10 @@ export type ExportFile = {
 // files are simply orphaned under documentDirectory/exports/ rather than
 // explicitly swept, since this only ever matters for dev/test data.
 const STORAGE_KEY = 'dayone.exports.v2';
-const VALIDITY_DAYS = 30;
+// Short on purpose: a generated PDF (plus one JPEG per page) is real,
+// uncompressed storage sitting in documentDirectory, and the product wants
+// that footprint minimized rather than accumulating for a month per file.
+const VALIDITY_DAYS = 7;
 const EXPORTS_DIR_NAME = 'exports';
 
 function exportsDirectory(): Directory {
@@ -108,7 +111,7 @@ export async function getExportFile(id: string): Promise<ExportFile | null> {
  * Writes the PDF's own bytes (`buildPdfFromJpegPages`) into
  * `documentDirectory/exports/` under its real filename, moves each page's
  * own captured JPEG (`react-native-view-shot`'s real temp file, one per
- * post) alongside it, and records the whole thing's metadata with a 30-day
+ * post) alongside it, and records the whole thing's metadata with a 7-day
  * expiry from now.
  */
 export async function saveExportFile(input: {
