@@ -11,8 +11,16 @@ type Props = {
 
 /**
  * Figma "Chip Button" (node 3198:4670 and its siblings), used for the month
- * picker's twelve months: 72.5 x 40, paddingHorizontal 8 / paddingVertical 10,
- * `radius.sm`, white fill, `shadows.xs`, and a `typography.body` label.
+ * picker's twelve months: 72.5 x 40, paddingHorizontal 8, `radius.sm`, white
+ * fill, `shadows.xs`, and a `typography.body` label.
+ *
+ * The vertical padding is deliberately not set. Figma's auto-layout says 10,
+ * but the chip also has a fixed height of 40, and the fixed height wins: its
+ * text node measures y=8.5 / height=23, i.e. one Body line (22.5) centred in
+ * the 40, with 8.5 above and below rather than 10. Applying the 10 here left
+ * only 40 - 2 (border) - 20 = 18pt for a 22.5pt line, and the descenders of
+ * "May" / "Aug" / "Sep" were cut off. Centring the line in the full height is
+ * both what Figma renders and what fits.
  *
  * Its three states differ only in the border and the label:
  *   enabled  — `colors.border` border,      `colors.textStrong` label
@@ -41,14 +49,12 @@ const styles = StyleSheet.create({
     width: 72.5, // Figma-exact: four across the sheet's 326 content width
     height: 40,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing[4],
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
     ...shadows.xs,
   },
   active: {
