@@ -62,6 +62,16 @@ export default function HomeListScreen() {
     return `${monthName}, ${year}`;
   }, [year, month]);
 
+  // "Add Record" is the empty state's way out of being empty, and it only is
+  // one for the current month: it writes *today*, which does nothing for a
+  // March list you are looking at in August. Past months keep the message and
+  // drop the button. Future months never get here — the month picker stops at
+  // the current one (DESIGN_SYSTEM.md §7, "No writing ahead").
+  const isCurrentMonth = useMemo(() => {
+    const now = new Date();
+    return year === now.getFullYear() && month === now.getMonth();
+  }, [year, month]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -87,7 +97,9 @@ export default function HomeListScreen() {
         <View style={styles.empty}>
           <IcEditAlt size={40} color={colors.textPrimary} />
           <Text style={[typography.subtext, styles.emptyText]}>You haven&rsquo;t written anything yet.</Text>
-          <GhostButton label="Add Record" onPress={() => navigation.navigate('Add')} />
+          {isCurrentMonth ? (
+            <GhostButton label="Add Record" onPress={() => navigation.navigate('Add')} />
+          ) : null}
         </View>
       ) : (
         <ScrollView style={styles.body} contentContainerStyle={styles.list}>

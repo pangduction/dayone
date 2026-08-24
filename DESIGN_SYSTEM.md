@@ -222,6 +222,14 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   saved post read-only on the detail screen. A post stores both `html` and a
   plain-text `text`, because emptiness checks and future previews want text
   rather than markup.
+- **The empty list's "Add Record" is current-month only.** Home-List's empty
+  state (node `3192:8914`) offers a way out of being empty, and that only
+  works for the month you can still write into: the button writes *today*, so
+  on a past month's list it would leave the list just as empty. Past months
+  keep the message and drop the button. There is no sensible day to offer
+  instead — the 1st and the last are both inventions that would create a post
+  on a date nobody picked. (Future months never reach this screen; the month
+  picker stops at the current one, per the rule below.)
 - **No writing ahead.** DayOne records the day you are living, so calendar
   days after today are inert: they don't open Add and don't open a post.
   Today and past days both stay writable. The month picker follows the same
