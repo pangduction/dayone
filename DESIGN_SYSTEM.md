@@ -93,8 +93,8 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Chip Button                          | 8 / — (see note)  | —    | 8 (`radius.sm`)  | 72.5×40 (four across a sheet's 326 content width), white bg, `shadows.xs`, `typography.body` label. Three states: enabled = `colors.border` border / `colors.textStrong` label; active = `colors.accent` border, same label; disabled = same border with a `colors.borderSubtle` label. Its auto-layout says 10 of vertical padding, but the fixed 40 height wins — the text node sits at y=8.5 with height 23 (node `3198:4669`), one Body line centred. Setting the 10 in RN leaves only 18pt for a 22.5pt line and cuts the descenders of "May"/"Aug"/"Sep", so the label is simply centred in the 40. Node `3198:4670`. See `ChipButton.tsx`. |
 | Button / M / Icon / Secondary        | 12 / —            | —    | 12 (`radius.md`) | the icon-only sibling of Ghost/Secondary: min-height 40, min-width 44, white bg, 1px `colors.borderSubtle`, `shadows.xs`. Used for the month picker's year stepper. Node `3198:4642`. See `GhostIconButton.tsx`. |
 | Alert                                | 20 / 8            | 8    | 8 (`radius.sm`)  | `colors.success` bg, 24pt white `ic/check`, then the message in `typography.alert` (white). The screen showing it does the positioning — Figma pins it at top 47 with 16 of horizontal padding, over the header (node `3233:5182`). Node `3233:5183`. See `AlertBanner.tsx`, named that way so it can't be confused with React Native's own `Alert`. |
-| Input (text field)                   | 12 / 10           | —    | 8 (`radius.sm`)  | white bg, `border` 1px, `shadows.xs`, placeholder in `colors.textPlaceholder` |
-| Input with label                     | —                 | 8    | —            | label uses `typography.subtext` in `colors.textSecondary`, 8px above the input |
+| Input (text field)                   | 12 / 10           | —    | 8 (`radius.sm`)  | white bg, `border` 1px, `shadows.xs`, placeholder in `colors.textPlaceholder`. Its 43-tall single-line box is exactly 10 + one 23pt Body line + 10 — built *around* Body's own lineHeight, unlike the search field's fixed-height workaround, so the whole `typography.body` object spreads onto it cleanly. A `multiline` variant (Help & Support's "Contents") swaps in a 240 min-height instead. |
+| Input with label                     | —                 | 8    | —            | label uses `typography.subtext` in `colors.textSecondary`, 8px above the input; Figma's own label text carries the required marker inline ("Email*"), ported as literal label text rather than a separate glyph. See `LabeledInput.tsx`, which builds both rows above as one component. |
 | Search input field                   | 12 / 12           | 8    | 8 (`radius.sm`)  | 358x47 (12 + one Body line + 12), white bg, 1px **`colors.borderSubtle`** (G100 `#E9E9E9` — the node binds G100, not the G200 this row previously implied by saying `border`), and **no shadow** — unlike the plain Input field, this one carries none. A 16pt `ic/search` — not the header's 24 — then the query in `typography.body`, caret in `colors.accent`. It has **two states, keyed on whether anything has been typed** (both Figma frames show a caret, so the trigger is the query rather than focus): empty = G900 icon over the placeholder "What are you looking for?" in `colors.textPlaceholder` (node `3192:10554`); typing = **`colors.accent` icon** over the query in `colors.textPrimary` (node `3192:11131`). The border does not change. Nodes `3192:10553` / `3192:11130`. See `PostSearchScreen.tsx`. |
 | Button / M / Header Action (e.g. "Done") | 12 / 8        | —    | 16 (`radius.lg`) | height 40; off = `colors.surface` bg / `colors.border` text (node `3184:5701`), on = `colors.accent` bg / `colors.textOnDark` text (node `3184:5903`) — both states verified via `get_design_context`. See `HeaderActionButton.tsx`. |
 | Button/Icon/Plain                    | 8 (all)           | —    | 16 (`radius.lg`) | bare 40×40 tap target, transparent bg. See `IconButton.tsx`. |
@@ -212,12 +212,16 @@ the wrong glyph.
   `3196:12678` locked / Report-Done `3196:14258`).
   `SettingScreen.tsx` is Flow 7's entry list (Setting-Main, node
   `3198:6348`), reached from Report's ic/setting; its menu rows are inert
-  until each sub-flow (7.4 Help & Support through 7.6 Delete Account) gets
+  until each sub-flow (7.5 Terms of Service through 7.6 Delete Account) gets
   built, per the TODO on each row. "Notifications" (7.1), "Language" (7.2),
-  and "Export to PDF" (7.3) are wired: see the product rules below.
+  "Export to PDF" (7.3), and "Help & Support" (7.4) are wired: see the
+  product rules below.
   `NotificationScreen.tsx` is Flow 7.1 (section `3199:8210`) — three
   `NotificationToggleRow`s, the middle one expanding to show a real picked
   time once Daily Reminder is on.
+  `HelpSupportScreen.tsx` is Flow 7.4 (section `3201:7418`) — a contact form
+  whose "Done" actually sends a real email; see the product rule below and
+  `LabeledInput.tsx` for the "Email*"/"Contents*" fields it introduces.
   `ExportToPdfScreen.tsx` is the real Export to PDF list (Setting-Export to
   PDF-2, node `3201:5947`); `PdfPreviewScreen.tsx` shows a generated file
   (Setting-Export to PDF-6, node `3267:6006`) as a scroll of shadowed white
@@ -235,14 +239,14 @@ the wrong glyph.
   it isn't simply a screenshot of the live screen.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
   stack
-  (Login/Home/HomeList/PostSearch/Report/Setting/Notification/ExportToPdf/PdfPreview/Add/PostDetail/Recording).
+  (Login/Home/HomeList/PostSearch/Report/Setting/Notification/HelpSupport/ExportToPdf/PdfPreview/Add/PostDetail/Recording).
   `initialRouteName` is temporarily `"Home"` since sign-in has no real auth
   yet; flip it back to `"Login"` once that's wired up. Every route pushes as
   an ordinary page — Add is a full Figma frame with its own back button, not
   a modal sheet. The only modals in the app are ones Figma really does draw
   as an overlay: `GalleryModal`, and `DateRangeModal` (opened directly over
   `SettingScreen`, per Flow 7.3 below).
-- `src/data/` — local, on-device data stores (no backend yet). `posts.ts`
+- `src/data/` — mostly local, on-device data stores. `posts.ts`
   is an AsyncStorage-backed store for the one-post-per-day / one-photo-per-post
   rule; screens should go through its functions rather than touching
   AsyncStorage directly. `exports.ts` is the same pattern for generated PDF
@@ -251,7 +255,15 @@ the wrong glyph.
   same pattern for Daily Reminder / Monthly Report: `saveNotificationSettings`
   is the only path a screen should use to change either, since it persists
   the preference *and* (re)schedules the real `expo-notifications` local
-  trigger in one call — see the Notification product rule below.
+  trigger in one call — see the Notification product rule below. `contact.ts`
+  is the one exception to "local" in this folder: it doesn't store anything
+  on-device, it POSTs a Help & Support submission to a real server — see
+  `api/` below and the Help & Support product rule.
+- `api/` — the app's only server-side code: `contact.ts`, a Vercel Edge
+  Function that relays a Help & Support submission to Resend so it arrives
+  as a real email. See its own doc comment and the Help & Support product
+  rule below for why a server sits here at all rather than the client
+  calling an email API directly.
 - `src/pdf/` — `postPageTemplate.ts` holds the shared page size
   (`PAGE_WIDTH`/`PAGE_HEIGHT`) and the export filename helper;
   `buildPdf.ts`'s `buildPdfFromJpegPages` writes a PDF's actual bytes
@@ -516,6 +528,48 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     (`scheduleNotificationAsync` with a `DAILY`/`MONTHLY` calendar trigger),
     which still works there — DayOne never needs a push token or a remote
     server for either reminder.
+- **Help & Support (Flow 7.4) sends a real email**, per explicit product
+  direction — "Done" is not a mailto placeholder. `HelpSupportScreen.tsx`
+  is otherwise a straight Figma port (`LabeledInput` for Email*/Contents*,
+  up to 3 photos via the same `GalleryModal` the Add screen uses, appending
+  instead of replacing), but submitting it is a real network request:
+  - **The client never talks to an email API directly.** `submitContactRequest`
+    (`src/data/contact.ts`) POSTs the form (plus each photo read to base64
+    via `File.base64()`) to a small Vercel Edge Function, `api/contact.ts`.
+    That function is the only thing that ever calls Resend, using an API
+    key that lives only in Vercel's project settings (`RESEND_API_KEY`) —
+    never in this repo. Shipping a mobile app with a real email-provider
+    secret embedded in its bundle would hand that key to anyone who
+    inspects the app, so the split is load-bearing, not just tidy layering.
+  - **The destination is fixed to the product owner's own inbox**
+    (`una.choi0109@gmail.com`, hardcoded in `api/contact.ts`) — a contact
+    form's whole point. It uses Resend's default `onboarding@resend.dev`
+    sender rather than a verified custom domain, which works with zero
+    domain setup specifically because Resend's sandbox mode only allows
+    sending *to* the account's own registered email — which is exactly this
+    address anyway, so the constraint costs nothing here. `reply_to` is set
+    to the submitter's own email, so replying to the notification reaches
+    them directly.
+  - **This is the one place the app has ever needed a real backend.**
+    Nothing else in DayOne does (see `src/data/`'s own note above), so this
+    function is deliberately the smallest possible thing: one file, no
+    framework, no build step — Vercel picks up any `/api/*.ts` as a
+    zero-config Edge Function regardless of what else lives in the repo.
+    Deploying it requires two things this repo alone can't do: a Resend
+    account + API key, and a Vercel deployment of this repo with
+    `RESEND_API_KEY` set in its project settings — after which
+    `EXPO_PUBLIC_CONTACT_API_URL` (`.env`, see `.env.example`) points the
+    client at the deployed function's URL. Until both exist,
+    `submitContactRequest` throws with a message naming the missing env var
+    rather than silently pretending to send.
+  - **Success doesn't clear the form or navigate away.** Per
+    Setting-Help & Support-6 (node `3202:5200`), the screenshot is exactly
+    the filled-in form with an `AlertBanner` ("Feedback sent. Thank you for
+    sharing!") over the header — the same 3s transient-banner pattern
+    `HomeScreen`'s post-delete flash and Language's "Not supported yet."
+    both already use. A failed send (missing config, network error, a
+    non-2xx from the function) shows a native `Alert` instead, the same
+    failure-reporting pattern `ExportToPdfScreen`'s "Generate PDF" uses.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.

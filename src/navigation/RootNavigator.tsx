@@ -7,6 +7,7 @@ import PostSearchScreen from '../screens/PostSearchScreen';
 import ReportScreen from '../screens/ReportScreen';
 import SettingScreen from '../screens/SettingScreen';
 import NotificationScreen from '../screens/NotificationScreen';
+import HelpSupportScreen from '../screens/HelpSupportScreen';
 import ExportToPdfScreen from '../screens/ExportToPdfScreen';
 import PdfPreviewScreen from '../screens/PdfPreviewScreen';
 import AddScreen from '../screens/AddScreen';
@@ -36,6 +37,8 @@ export type RootStackParamList = {
   Setting: undefined;
   /** Flow 7.1 Notification (section 3199:8210), reached from Setting-Main's "Notifications" row. */
   Notification: undefined;
+  /** Flow 7.4 Help & Support (section 3201:7418), reached from Setting-Main's "Help & Support" row. */
+  HelpSupport: undefined;
   /**
    * The real Export to PDF list (Figma Setting-Export to PDF-2, node
    * 3201:5947). Reached only after applying a range on the date-range modal
@@ -105,6 +108,7 @@ export default function RootNavigator() {
         />
         <Stack.Screen name="Setting" component={SettingScreen} />
         <Stack.Screen name="Notification" component={NotificationScreen} />
+        <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
         <Stack.Screen name="ExportToPdf" component={ExportToPdfScreen} />
         <Stack.Screen name="PdfPreview" component={PdfPreviewScreen} />
         <Stack.Screen name="Add" component={AddScreen} />

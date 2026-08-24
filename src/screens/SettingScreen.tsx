@@ -31,7 +31,7 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  *
  * Rows that lead to a sub-flow not yet built are inert (no `onPress`) with a
  * TODO — this screen was asked for first, on its own, so each row is wired up
- * as its own flow (7.4 Help & Support, etc.) gets built next.
+ * as its own flow (7.5 Terms of Service, etc.) gets built next.
  *
  * "Notifications" (Flow 7.1) is wired to `NotificationScreen`; its value
  * reads "On" only when the OS permission is actually granted *and* at least
@@ -58,6 +58,11 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  * already reopens the same `DateRangeModal` from its own "Date Range" row,
  * so nothing about changing the range is lost — only the surprise of it
  * being the very first thing on screen.
+ *
+ * "Help & Support" (Flow 7.4) is wired to `HelpSupportScreen` — a real
+ * contact form, not a mailto placeholder: submitting it actually sends an
+ * email to the product owner (see that screen's own doc comment and
+ * `src/data/contact.ts` / `api/contact.ts` for the send path).
  */
 export default function SettingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -109,8 +114,7 @@ export default function SettingScreen() {
           {/* TODO: Figma gives this row a chevron but no destination screen
               anywhere in the file. */}
           <SettingMenuRow label="FAQ" />
-          {/* TODO: wire once Flow 7.4 Help & Support exists. */}
-          <SettingMenuRow label="Help & Support" />
+          <SettingMenuRow label="Help & Support" onPress={() => navigation.navigate('HelpSupport')} />
           {/* TODO: wire once Flow 7.5 Terms of Service exists. */}
           <SettingMenuRow label="Terms of Service" />
           {/* TODO: no screen in Figma for this either — eventually a store
