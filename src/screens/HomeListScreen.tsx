@@ -62,11 +62,16 @@ export default function HomeListScreen() {
     return `${monthName}, ${year}`;
   }, [year, month]);
 
-  // "Add Record" is the empty state's way out of being empty, and it only is
-  // one for the current month: it writes *today*, which does nothing for a
-  // March list you are looking at in August. Past months keep the message and
-  // drop the button. Future months never get here — the month picker stops at
-  // the current one (DESIGN_SYSTEM.md §7, "No writing ahead").
+  // Figma only ever drew this screen's empty state for the current month, and
+  // two things about it don't survive being looked at from a later one:
+  //
+  //   - "Add Record" is the way out of being empty, and it only is one here:
+  //     it writes *today*, which leaves a March list you opened in August
+  //     just as empty. Past months drop the button.
+  //   - "…yet" says the month is still open. A past one isn't.
+  //
+  // Future months never get here — the month picker stops at the current one
+  // (DESIGN_SYSTEM.md §7, "No writing ahead").
   const isCurrentMonth = useMemo(() => {
     const now = new Date();
     return year === now.getFullYear() && month === now.getMonth();
@@ -96,7 +101,14 @@ export default function HomeListScreen() {
       ) : posts.length === 0 ? (
         <View style={styles.empty}>
           <IcEditAlt size={40} color={colors.textPrimary} />
-          <Text style={[typography.subtext, styles.emptyText]}>You haven&rsquo;t written anything yet.</Text>
+          <Text style={[typography.subtext, styles.emptyText]}>
+            {isCurrentMonth
+              ? // Figma's copy (node 3192:9215), written for the current month.
+                'You haven’t written anything yet.'
+              : // A past month isn't "yet" any more — it's closed. The header
+                // right above names the month, so this needn't repeat it.
+                'You didn’t write anything.'}
+          </Text>
           {isCurrentMonth ? (
             <GhostButton label="Add Record" onPress={() => navigation.navigate('Add')} />
           ) : null}
