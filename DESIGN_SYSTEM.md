@@ -127,6 +127,8 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 
 | Share Image                          | 47 top / 34 bottom (card) | space-between | — | the picture actually shared from Home's Share button, not a screenshot of the live screen: Figma draws its own frame (node `3198:5765`) at a fixed 390x844, with Header/Calendar and Navigation present but at **opacity 0** — kept only to reserve their height so the calendar lands on the same spot it does on Home. The Calendar Title drops `ic/arrow-down` and isn't a button, since nothing on a shared image can be tapped. **No date cell is ever drawn as "today"** — the frame's design-context carries no Accent reference at all, so a day with a post renders solid-fill/photo-tint the same whether or not it is today, unlike the live Home calendar's accent ring. The progress bar's fill is `colors.textPrimary` (G900) here rather than `colors.accent`, the one other place Accent would otherwise appear (node `3198:6336`). The Processing block also gains a second line: a solid `colors.textPrimary` "Created by Dayone" pill (`typography.overline` "Created by" + `typography.caption` "Dayone", both `colors.textOnDark`, gap **3** — Figma-exact, not on the spacing scale) under "This month's record", at the same tight 3pt gap. In short: this export reads as a finished, monochrome picture of the month — no accent colour and no "in progress" marker survive into it. See `ShareableCalendarCard.tsx`, captured off-screen by `react-native-view-shot` and handed to `expo-sharing`'s OS share sheet from `HomeScreen.tsx`. |
 
+| Setting Menu (row)                   | 16 / 12           | 8    | —            | one row of the Setting screen's list (node e.g. `3198:7121`): min-height 44, label `typography.subtext`/`colors.textStrong` and an optional trailing value `colors.textPlaceholder`, both `flex: 1` so they split whatever width is left of an optional 20pt `ic/arrow-right-l` (`colors.textSecondary` — verified via `get_variable_defs`, not the `colors.textStrong` a subtext label would suggest) evenly, rather than a fixed 161/161. A row with no `onPress` renders as a plain View — "App version" and "Log in" carry no chevron either. Section eyebrow labels ("APP"/"SUPPORT"/"ACCOUNT") are `typography.caption` in a new alias, `colors.textFaint` (G200) — lighter than `textPlaceholder`'s G400 and used nowhere else yet. Sections are separated by an 8pt `colors.surface` (G50) divider. See `SettingMenuRow.tsx`, `SettingSection.tsx`, `SettingDivider.tsx`, `SettingScreen.tsx`. |
+
 When implementing a component not in this table, pull its real spec with
 `get_design_context` on its node in the Design System page — don't
 extrapolate from a similar-looking row above.
@@ -199,13 +201,17 @@ the wrong glyph.
   `3192:10548` / -2 `3192:11125`), opened from Header/List's ic/search.
   `ReportScreen.tsx` is Flow 5's month-as-a-montage (Report-Default
   `3196:12678` locked / Report-Done `3196:14258`).
+  `SettingScreen.tsx` is Flow 7's entry list (Setting-Main, node
+  `3198:6348`), reached from Report's ic/setting; its menu rows are inert
+  until each sub-flow (7.1 Notification through 7.6 Delete Account) gets
+  built, per the TODO on each row.
   `HomeScreen.tsx`'s Share button (Flow 6, section `3198:4811`) renders
   `ShareableCalendarCard.tsx` off-screen, captures it with
   `react-native-view-shot`, and hands the resulting PNG to `expo-sharing`'s
   OS share sheet — see `ShareableCalendarCard.tsx`'s own doc comment for why
   it isn't simply a screenshot of the live screen.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
-  stack (Login/Home/HomeList/PostSearch/Report/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
+  stack (Login/Home/HomeList/PostSearch/Report/Setting/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
   sign-in has no real auth yet; flip it back to `"Login"` once that's wired
   up. Every route pushes as an ordinary page — Add is a full Figma frame
   with its own back button, not a modal sheet. The only modal in the app so

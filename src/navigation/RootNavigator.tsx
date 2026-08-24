@@ -5,6 +5,7 @@ import HomeScreen from '../screens/HomeScreen';
 import HomeListScreen from '../screens/HomeListScreen';
 import PostSearchScreen from '../screens/PostSearchScreen';
 import ReportScreen from '../screens/ReportScreen';
+import SettingScreen from '../screens/SettingScreen';
 import AddScreen from '../screens/AddScreen';
 import PostDetailScreen from '../screens/PostDetailScreen';
 import RecordingScreen from '../screens/RecordingScreen';
@@ -28,6 +29,8 @@ export type RootStackParamList = {
   PostSearch: { year: number; month: number };
   /** The month-as-a-montage screen (Figma Report-Default, node 3196:12678). */
   Report: undefined;
+  /** Reached from Report's ic/setting (Figma Setting-Main, node 3198:6348). */
+  Setting: undefined;
   /** Omit `date` to write today's post; pass one to edit that day's. */
   Add: { date?: string } | undefined;
   PostDetail: { date: string };
@@ -86,6 +89,7 @@ export default function RootNavigator() {
           component={ReportScreen}
           options={{ animation: 'none' }}
         />
+        <Stack.Screen name="Setting" component={SettingScreen} />
         <Stack.Screen name="Add" component={AddScreen} />
         <Stack.Screen name="PostDetail" component={PostDetailScreen} />
         <Stack.Screen name="Recording" component={RecordingScreen} />

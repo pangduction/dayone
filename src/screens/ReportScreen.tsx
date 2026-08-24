@@ -78,9 +78,7 @@ export default function ReportScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        {/* TODO: the Setting screen isn't built yet — Figma gives Header/Report
-            only this button (node 3196:13123), not what it opens. */}
-        <IconButton accessibilityLabel="Settings">
+        <IconButton accessibilityLabel="Settings" onPress={() => navigation.navigate('Setting')}>
           <IcSetting size={24} color={colors.textPrimary} />
         </IconButton>
       </View>

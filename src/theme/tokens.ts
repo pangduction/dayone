@@ -116,6 +116,7 @@ export const colors = {
   surfaceDark: palette.g600, // Figma G600 — filled tile on a light sheet (Modal/Gallery's camera tile, node 3198:4434)
   textEmpty: palette.emptyStateText, // the empty-list message (node 3192:9215)
   lockPaper: palette.lockPaper, // the veil over an unfinished month's report (node 3196:14417)
+  textFaint: palette.g200, // Setting screen's section eyebrow labels (APP/SUPPORT/ACCOUNT, node 3198:7120) — lighter than textPlaceholder (G400)
 };
 
 // ---------------------------------------------------------------------------
