@@ -114,6 +114,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Modal/Gallery                        | —                 | 3 (tiles) | —            | fills the shell above: square `radius.sm` tiles, first `colors.surfaceDark` + 32px `ic/camera`, rest recent photos with a `colors.borderSubtle` hairline; the row is drawn 404 wide inside a 326 content area, so it scrolls horizontally. Action = "Go to Gallery". Node `3198:4446`. See `GalleryModal.tsx`. |
 | Modal/Leave                          | —                 | 8    | —            | fills the shell above: body in `typography.body` / `colors.textSecondary`, then "Leave" (Primary, accent tone) over "Keep Editing" (White). Raised when leaving the Add screen with unsaved edits. Node `3233:4557`, in context `3233:4558`. See `LeaveModal.tsx`. |
 | Modal/Date-Default (month picker)    | 16 (content)      | 16   | —            | fills the shell above: a year stepper (two Button / M / Icon / Secondary either side of the year in `typography.titleMedium` / `colors.yearLabel`, gap 24), a 1px `colors.borderSubtle` divider, then twelve Chip Buttons wrapping four to a row at gap 8, and a "Done" primary. Node `3229:4259`, in context `3229:4271`. See `MonthPickerModal.tsx`. |
+| Post List Thumbnail                  | 16 / 24 (content) | 4 (pill) | 8 (`radius.sm`) | the Home-List row: height 88, white bg, a 1px **`colors.borderStrong`** (G600) outline — much darker than `colors.border`. A fixed 72-wide Image block (weekday in `typography.subtext` over the day in `typography.titleSmall`, the latter at lineHeight **29**, not the token's 24 — this instance leaves the leading on auto, which is what makes the Date Field 19 + 29 = 48) then a flexible Content block. Component set `3192:9526` has five variants and which applies follows from the post alone: a photo stays inside the 72 block when there is also text (`Photo and Text`, `3192:9523`) and bleeds across the whole card when there isn't (`Only Photo` `3192:9527`, `Photo and Record` `3192:9655`) — under `colors.photoScrim` either way, with the date white; with no photo the block is white and the date `colors.textStrong` (`Text and Record` `3192:9524`, `Only Record` `3192:9525`). Content shows the text if there is any (2 lines, ellipsised), otherwise the recording pill (20pt `ic/play` + `typography.body` duration, white over a full-bleed photo, else `colors.textPrimary`) — **a recording is never drawn next to text in any variant**. Those five cover all seven shapes a post can take: text-only is `Text and Record` minus the record it never rendered, and photo+text+record is `Photo and Text` for the same reason. See `PostListThumbnail.tsx`. |
 | Modal/Delete-Post                    | —                 | 8    | —            | fills the shell above: two body lines in `typography.body` / `colors.textSecondary`, then "Delete" (Primary, **warning** tone) over "Cancel" (White). Raised by the post detail header's Delete. Node `3233:4928`, in context `3233:4929`. See `DeletePostModal.tsx`. |
 
 When implementing a component not in this table, pull its real spec with
@@ -180,9 +181,12 @@ the wrong glyph.
   (Button / S / Filled / FAB), `PrimaryButton.tsx` (Button / L / Filled /
   Primary), `GalleryModal.tsx` (Modal/Gallery), plus `icons/HomeIcons.tsx`
   and `icons/AddIcons.tsx` for each screen's ported glyphs.
-- `src/screens/` — one file per Figma screen/frame.
+- `src/screens/` — one file per Figma screen/frame. `HomeListScreen.tsx` is
+  the calendar's month as a list (Home-List-Default `3192:8914` empty /
+  Home-List-Done `3192:9547` filled); it has **no bottom navigation** —
+  Figma gives it only Header/List and the list body.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
-  stack (Login/Home/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
+  stack (Login/Home/HomeList/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
   sign-in has no real auth yet; flip it back to `"Login"` once that's wired
   up. Every route pushes as an ordinary page — Add is a full Figma frame
   with its own back button, not a modal sheet. The only modal in the app so

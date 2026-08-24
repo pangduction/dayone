@@ -62,6 +62,7 @@ export const palette = {
   buttonSecondaryFill: '#F2F2F2', // Figma: Button/Secondary/Default's fill (node 3184:7871) — same value as the editor palette row, different role
   buttonSecondaryRing: '#EEEEEE', // Figma: that button's 1px ring, the second half of its shadow stack
   overlayAccent: 'rgba(0, 132, 255, 0.3)', // Figma: Accent at 30% opacity — tint over today's photo calendar cell (node 3184:3185)
+  emptyStateText: '#929DAD', // Figma: local fill on Home-List-Default's "You haven't written anything yet." (node 3192:9215) — get_variable_defs shows it binds no colour variable, and it is NOT G400 (#9EA4AA)
 
   // iOS-style system color set (color picker / palette swatch components).
   systemRed: '#FF3B30',
@@ -82,6 +83,7 @@ export const colors = {
   surface: palette.g50,
   border: palette.g200,
   borderSubtle: palette.g100,
+  borderStrong: palette.g600, // Figma G600 — the Post List Thumbnail card's 1px outline (node 3192:9523); much darker than `border`
 
   textPrimary: palette.g900,
   textSecondary: palette.g600,
@@ -111,6 +113,7 @@ export const colors = {
   buttonSecondaryRing: palette.buttonSecondaryRing,
   yearLabel: palette.neutral900, // Figma "Neutral/900" — the month picker's year (node 3229:4220)
   surfaceDark: palette.g600, // Figma G600 — filled tile on a light sheet (Modal/Gallery's camera tile, node 3198:4434)
+  textEmpty: palette.emptyStateText, // the empty-list message (node 3192:9215)
 };
 
 // ---------------------------------------------------------------------------

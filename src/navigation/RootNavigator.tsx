@@ -2,6 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
+import HomeListScreen from '../screens/HomeListScreen';
 import AddScreen from '../screens/AddScreen';
 import PostDetailScreen from '../screens/PostDetailScreen';
 import RecordingScreen from '../screens/RecordingScreen';
@@ -11,6 +12,13 @@ export type RootStackParamList = {
   Login: undefined;
   /** `flash` shows a one-off Alert banner over the calendar, e.g. after a delete. */
   Home: { flash?: string } | undefined;
+  /**
+   * The calendar's month as a list (Figma Home-List, node 3192:9547). The
+   * month is passed in rather than assumed to be today's, so that browsing
+   * the calendar and then tapping ic/rows lists the month on screen.
+   * `month` is 0-indexed, matching `Date#getMonth()`.
+   */
+  HomeList: { year: number; month: number };
   /** Omit `date` to write today's post; pass one to edit that day's. */
   Add: { date?: string } | undefined;
   PostDetail: { date: string };
@@ -44,6 +52,7 @@ export default function RootNavigator() {
       <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="HomeList" component={HomeListScreen} />
         <Stack.Screen name="Add" component={AddScreen} />
         <Stack.Screen name="PostDetail" component={PostDetailScreen} />
         <Stack.Screen name="Recording" component={RecordingScreen} />

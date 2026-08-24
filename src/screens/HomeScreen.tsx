@@ -94,7 +94,10 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <IconButton accessibilityLabel="Menu">
+        <IconButton
+          accessibilityLabel="Show this month as a list"
+          onPress={() => navigation.navigate('HomeList', { year, month })}
+        >
           <IcRows size={24} color={colors.textPrimary} />
         </IconButton>
         <IconButtonContained accessibilityLabel="Share">
