@@ -109,7 +109,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Post Detail (column)                 | 16                | 16   | —            | stacks Date Written, then whichever of Image Section / Record/View / Text Section the post has. Date Written: height 40, centered, `typography.subtext` in `colors.textPrimary` over `typography.caption` in `colors.textTertiary` (weekday spelled out in full). Image Section: square, Fit letterboxes / Filled crops. Text Section: min-height 240, gap 8, paddingHorizontal 12, a 1px `colors.borderSubtle` divider above `typography.body` content. Section `3192:11364`. Lives in `PostDetailBody.tsx` (the column only, no header) so `PostDetailScreen.tsx` and the Export-to-PDF preview's `PdfPagePreview.tsx` render the exact same thing — the latter wraps it in a shadowed white "page" card instead of a screen. |
 | Button/Secondary/Default             | 8 / 5             | —    | 8 (`radius.sm`) inline, 16 (`radius.lg`) large | glossy light button carrying a play/pause glyph: a white-to-transparent gradient over `colors.buttonSecondary` with a 1px `colors.buttonSecondaryRing` border and `shadows.secondary`. Inline inside Record/Edit and Record/View (node `3192:12489`); 56×48 on the recording screen (node `3184:7871`). Figma's shadow stacks a drop shadow with a 1px *ring* — RN has no spread, so the ring is a real border. See `SecondaryButton.tsx`. |
 | Header/X                             | 5 (left) / 16 (right) · 16 vertical | — | — | the Add header's shell with a single close button pushed right (`justify-end`) and nothing else. Node `3184:7855`. Used by the recording screen and by post search, so it lives in `HeaderX.tsx` rather than being restated in each. |
-| Record/Edit · Record/View            | 12 (left) / 3 (right) · 8 vertical — edit; 40 / 8 — view | 16 | 8 (`radius.sm`) | min-height 56: a `Button/Secondary/Default`, the waveform, then the duration in `typography.body`. Edit (node `3192:12499`) has a `colors.surface` background and a trailing remove button; View (node `3192:12570`) is transparent, inset further, and shows the duration in `colors.textPrimary`. See `RecordRow.tsx`. |
+| Record/Edit · Record/View            | 12 (left) / 3 (right) · 8 vertical — edit; 40 / 8 — view | 16 | 8 (`radius.sm`) | min-height 56: a `Button/Secondary/Default`, the waveform, then the duration in `typography.body`. Edit (node `3192:12499`) has a `colors.surface` background and a trailing remove button; View (node `3192:12570`) is transparent, inset further, and shows the duration in `colors.textPrimary`. See `RecordRow.tsx`. Its non-interactive twin `StaticRecordRow.tsx` renders the same "view" look with no real `expo-audio` player and no `onPress` — used wherever a recording is only ever a *picture* of itself (the Export-to-PDF preview and the capture that becomes the real PDF page), never something to actually press play on. |
 | music track (waveform)               | —                 | —    | —            | 44 tall on the recording screen (node `3184:7867`), 14 inside a Record row. Figma draws it as one decorative vector of a few hundred paths (~100KB in `assets/Record/*.svg`), which would freeze the same squiggle onto every recording — so it is drawn from the recording's own loudness instead. See `Waveform.tsx`. |
 | editor (formatting toolbar)          | 16                | space-between | — | `colors.editorBar` bg, seven 24pt icons (text colour, bold, italic, underline, bullet list, numbered list, horizontal rule) — 56 tall. Opening the palette makes it 112: a `colors.editorPaletteBar` row of nine 24pt swatches at `radius.sm` with a 16pt gap after a 16pt inset, plus a 48x48 top-rounded backdrop behind the text-colour button. Node `13:15150`, whole component exported to `assets/editor.svg`. See `EditorToolbar.tsx`. |
 | Modal sheet (shell)                  | 16 (content)      | 8 (actions) | 24 (`radius.xl`) | white sheet, `shadows.xl`; title `typography.subtext` with paddingTop 20 + a 20px spacer row, close button absolute at right 8 / top 8.4; content paddingTop 20; actions block paddingTop 24 / paddingBottom 24. Backdrop = `colors.backdrop` over a blur, sheet bottom-aligned with paddingTop 16 / paddingBottom 40. Every Figma modal repeats this skeleton — build new ones on `ModalSheet.tsx` rather than restating it. |
@@ -415,6 +415,24 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     with it. A `<meta name="viewport" content="width=390, …">` tag fixes it:
     it makes the declared page width the WebView's *actual* rendering width,
     not a box floating inside a wider default one.
+  - **A post's story text never showed up in the exported file at all**,
+    even though the same text rendered fine in the in-app preview. The
+    culprit was `RichTextEditor` itself: it's a WebView, and a WebView
+    renders on its own native surface rather than synchronously with the
+    rest of the tree, so it being mounted is not the same as it having
+    painted anything — `react-native-view-shot` can only capture what has
+    actually painted. `PostDetailBody`'s readiness tracking (the same
+    mechanism that waits on a photo's real size) now also waits on
+    `RichTextEditor`'s own `onLoadEnd` before reporting a page ready, for
+    exactly this reason.
+  - **A recording showed a real, pressable play button on the Export-to-PDF
+    preview screen.** That screen's whole job is to preview the *file* —
+    it's not a second live post-detail screen — so nothing on it should be
+    able to do something the actual PDF page can't. `RecordRow` (the real,
+    `expo-audio`-backed row `PostDetailScreen` uses) and `StaticRecordRow`
+    (its non-interactive twin, no player, no `onPress`) now split that
+    concern: `PostDetailBody` takes an `interactive` prop, and
+    `PdfPagePreview` always passes `false`.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.

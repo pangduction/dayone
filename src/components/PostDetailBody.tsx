@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import PhotoSection from './PhotoSection';
 import RecordRow from './RecordRow';
+import StaticRecordRow from './StaticRecordRow';
 import RichTextEditor from './RichTextEditor';
 import { parseDateKey } from '../data/posts';
 import type { Post } from '../data/posts';
@@ -10,10 +11,22 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
 type Props = {
   post: Post;
   /**
-   * Fires once the body has nothing left to settle asynchronously — a photo
-   * post waits on `PhotoSection`'s own real-size read, a photo-less post
-   * fires immediately. The Export-to-PDF capture flow uses this to know when
-   * an off-screen page is actually safe to screenshot.
+   * Whether a recording can actually be played from here. `PostDetailScreen`
+   * (the real, on-screen post) wants that; the Export-to-PDF preview and the
+   * off-screen capture that becomes the real PDF page don't — both are only
+   * ever a picture of the post, so a working play button there would be
+   * showing a capability that isn't real. Defaults to `true`.
+   */
+  interactive?: boolean;
+  /**
+   * Fires once the body has nothing left to settle asynchronously: a photo
+   * post waits on `PhotoSection`'s own real-size read, and a post with
+   * formatted text waits on `RichTextEditor`'s WebView finishing its load —
+   * that WebView renders on its own native surface, so mounting it is not
+   * the same as it having painted anything yet, and a capture taken before
+   * it has would show a blank text section. The Export-to-PDF capture flow
+   * uses this to know when an off-screen page is actually safe to
+   * screenshot.
    */
   onReady?: () => void;
 };
@@ -27,18 +40,23 @@ type Props = {
  * Detail, just drawn as pages) instead of a second, hand-copied version that
  * could drift from the live screen.
  */
-export default function PostDetailBody({ post, onReady }: Props) {
+export default function PostDetailBody({ post, interactive = true, onReady }: Props) {
   const written = useMemo(() => parseDateKey(post.date), [post.date]);
   // Same formatting the live screen has always used for its own Date Written block.
   const dateLabel = written.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const dayLabel = written.toLocaleDateString('en-US', { weekday: 'long' });
 
-  // A photo-less post has nothing async to wait on — PhotoSection's own
-  // onLoadSettled covers the other case.
+  // Two independent things this body can be waiting on before it's safe to
+  // capture — a plain-text-only post (or one with neither) has nothing async
+  // at all and starts already "ready".
+  const hasRichText = !!post.html && post.text.length > 0;
+  const [photoReady, setPhotoReady] = useState(!post.photoUri);
+  const [textReady, setTextReady] = useState(!hasRichText);
+
   useEffect(() => {
-    if (!post.photoUri) onReady?.();
+    if (photoReady && textReady) onReady?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [post.photoUri]);
+  }, [photoReady, textReady]);
 
   return (
     <View style={styles.detail}>
@@ -49,16 +67,27 @@ export default function PostDetailBody({ post, onReady }: Props) {
       </View>
 
       {post.photoUri ? (
-        <PhotoSection uri={post.photoUri} fitMode={post.fitMode} onLoadSettled={onReady} />
+        <PhotoSection uri={post.photoUri} fitMode={post.fitMode} onLoadSettled={() => setPhotoReady(true)} />
       ) : null}
 
-      {post.recording ? <RecordRow recording={post.recording} variant="view" /> : null}
+      {post.recording ? (
+        interactive ? (
+          <RecordRow recording={post.recording} variant="view" />
+        ) : (
+          <StaticRecordRow recording={post.recording} />
+        )
+      ) : null}
 
       {post.text.length > 0 ? (
         <View style={styles.textSection}>
           <View style={styles.divider} />
           {post.html ? (
-            <RichTextEditor initialHtml={post.html} editable={false} onChange={() => {}} />
+            <RichTextEditor
+              initialHtml={post.html}
+              editable={false}
+              onChange={() => {}}
+              onLoadEnd={() => setTextReady(true)}
+            />
           ) : (
             <Text style={[typography.body, styles.content]}>{post.text}</Text>
           )}

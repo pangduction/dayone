@@ -50,6 +50,13 @@ type Props = {
   onBlur?: () => void;
   placeholder?: string;
   editable?: boolean;
+  /**
+   * Fires once the WebView has finished loading the document. A screenshot
+   * taken before this (the Export-to-PDF capture flow) can miss the WebView's
+   * content entirely — it renders on its own native surface, not synchronously
+   * with the rest of the tree, so mounting alone doesn't mean it has painted.
+   */
+  onLoadEnd?: () => void;
 };
 
 /**
@@ -68,7 +75,7 @@ type Props = {
  * The same component renders a saved post read-only — pass `editable={false}`.
  */
 const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichTextEditor(
-  { initialHtml, onChange, onActiveFormatsChange, onFocus, onBlur, placeholder = '', editable = true },
+  { initialHtml, onChange, onActiveFormatsChange, onFocus, onBlur, placeholder = '', editable = true, onLoadEnd },
   ref,
 ) {
   const webRef = useRef<WebView>(null);
@@ -124,6 +131,7 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         originWhitelist={['*']}
         source={{ html }}
         onMessage={handleMessage}
+        onLoadEnd={onLoadEnd}
         style={styles.web}
         // The document scrolls internally; letting the WebView bounce as well
         // makes the field feel detached from the screen around it.

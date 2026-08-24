@@ -30,12 +30,18 @@ type Props = {
  * which is where the huge blank gap under short text came from. A post long
  * enough to overflow this fixed page just clips, the same trade-off a real
  * printed page's fixed height makes.
+ *
+ * `PostDetailBody` renders `interactive={false}` here — every use of this
+ * component (the in-app preview screen, and the off-screen render captured
+ * for the real PDF) is only ever a *picture* of the post, never a live one,
+ * so a recording shows as a static row rather than one with a working play
+ * button.
  */
 export default function PdfPagePreview({ post, onReady }: Props) {
   return (
     <View style={styles.page}>
       <View style={styles.topInset} />
-      <PostDetailBody post={post} onReady={onReady} />
+      <PostDetailBody post={post} interactive={false} onReady={onReady} />
     </View>
   );
 }
