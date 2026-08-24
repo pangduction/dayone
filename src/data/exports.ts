@@ -34,7 +34,12 @@ export type ExportFile = {
   expiresAt: string;
 };
 
-const STORAGE_KEY = 'dayone.exports.v1';
+// Bumped from v1 to drop every export written during the expo-print-era
+// debugging (base64 PNGs, HTML-rendered pages) — those rows point at a
+// storage shape and file layout this module no longer produces. The old
+// files are simply orphaned under documentDirectory/exports/ rather than
+// explicitly swept, since this only ever matters for dev/test data.
+const STORAGE_KEY = 'dayone.exports.v2';
 const VALIDITY_DAYS = 30;
 const EXPORTS_DIR_NAME = 'exports';
 
