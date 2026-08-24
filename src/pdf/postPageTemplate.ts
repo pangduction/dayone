@@ -22,6 +22,17 @@ export function buildExportFilename(startDate: string, endDate: string): string 
  * Wraps pre-captured page screenshots (data URIs from `captureRef`) into the
  * HTML `printToFileAsync` prints — a full-bleed image per page, in the same
  * order they were captured (oldest post first).
+ *
+ * The `<meta name="viewport">` tag matters more than it looks: without it,
+ * `printToFileAsync`'s WebView laid the document out against its own default
+ * layout-viewport width (wider than our declared `PAGE_WIDTH` (390) pages,
+ * the usual mobile-WebView default), so each `.page` div rendered pinned to
+ * the *left edge* of that wider canvas rather than filling it — and then got
+ * scaled down as a whole into the actual PDF page size, carrying that
+ * left-alignment with it. That's what made an in-app-perfectly-centered
+ * photo come out shifted left in the exported file. Pinning the viewport
+ * width to `PAGE_WIDTH` makes our CSS page width the *actual* rendering
+ * width, not a box floating inside a wider one.
  */
 export function buildImagePagesHtml(pageDataUris: string[]): string {
   const pages = pageDataUris
@@ -32,9 +43,14 @@ export function buildImagePagesHtml(pageDataUris: string[]): string {
 <html>
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=${PAGE_WIDTH}, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: ${PAGE_WIDTH}px;
+  }
   .page {
     width: ${PAGE_WIDTH}px;
     height: ${PAGE_HEIGHT}px;

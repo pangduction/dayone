@@ -400,7 +400,21 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     PDF's photo size didn't match the preview's), not a hypothetical one.
     `ExportToPdfScreen.tsx` also waits two animation frames after every page
     reports ready, for the same reason: one frame for the last such render to
-    commit, a second for it to actually paint.
+    commit, a second for it to actually paint. `captureRef` is also pinned to
+    the exact print page's pixel dimensions (`PAGE_WIDTH`/`PAGE_HEIGHT`)
+    rather than left at the view's native device-pixel-ratio-scaled
+    resolution.
+  - **A photo that was perfectly centered in the captured screenshot still
+    came out shifted left in the exported file** — a separate bug, in
+    `postPageTemplate.ts` rather than the capture itself.
+    `printToFileAsync`'s WebView was laying our HTML out against its own
+    default layout-viewport width (wider than the 390px pages our CSS
+    declares), so each `.page` div rendered pinned to the *left edge* of that
+    wider canvas instead of filling it, and the whole thing then got scaled
+    down as one unit into the actual PDF page — carrying that left-alignment
+    with it. A `<meta name="viewport" content="width=390, …">` tag fixes it:
+    it makes the declared page width the WebView's *actual* rendering width,
+    not a box floating inside a wider default one.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.
