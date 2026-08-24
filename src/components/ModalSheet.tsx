@@ -15,6 +15,17 @@ type Props = {
   children: ReactNode;
   /** Fills the sheet's "Modal actions" block; omit for a sheet with no buttons. */
   actions?: ReactNode;
+  /**
+   * Rendered on top of the backdrop *and* the sheet, pinned to the screen's
+   * top like `HomeScreen`'s own flash banner (`top: 47`) — for a banner that
+   * has to appear while this modal stays open (e.g. `LanguageModal`'s "Not
+   * supported yet."). RN's `Modal` is a native layer painted in front of the
+   * whole app; a sibling `AlertBanner` rendered by the screen underneath
+   * this modal would sit *behind* it, dimmed by the backdrop blur along with
+   * everything else back there — this slot exists so that content can join
+   * the modal's own native layer instead and actually render on top.
+   */
+  overlay?: ReactNode;
 };
 
 /**
@@ -44,7 +55,7 @@ type Props = {
  * and a centred 24pt glyph in a 40pt box both render identically, so this
  * reuses `IconButton`.
  */
-export default function ModalSheet({ visible, title, onClose, children, actions }: Props) {
+export default function ModalSheet({ visible, title, onClose, children, actions, overlay }: Props) {
   // Kept mounted across the closing animation so the sheet can slide out.
   const [mounted, setMounted] = useState(visible);
   const progress = useRef(new Animated.Value(0)).current;
@@ -110,6 +121,12 @@ export default function ModalSheet({ visible, title, onClose, children, actions 
             </Pressable>
           </Animated.View>
         </Pressable>
+
+        {overlay ? (
+          <View style={styles.overlay} pointerEvents="none">
+            {overlay}
+          </View>
+        ) : null}
       </View>
     </Modal>
   );
@@ -129,6 +146,15 @@ const styles = StyleSheet.create({
   },
   scrim: {
     backgroundColor: colors.backdrop,
+  },
+  overlay: {
+    // Matches HomeScreen's own flash placement — pinned to the screen's top
+    // regardless of where the sheet itself has slid to.
+    position: 'absolute',
+    top: 47,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.md,
   },
   sheetWrap: {
     width: '100%',

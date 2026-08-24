@@ -112,7 +112,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Record/Edit · Record/View            | 12 (left) / 3 (right) · 8 vertical — edit; 40 / 8 — view | 16 | 8 (`radius.sm`) | min-height 56: a `Button/Secondary/Default`, the waveform, then the duration in `typography.body`. Edit (node `3192:12499`) has a `colors.surface` background and a trailing remove button; View (node `3192:12570`) is transparent, inset further, and shows the duration in `colors.textPrimary`. See `RecordRow.tsx`. Its non-interactive twin `StaticRecordRow.tsx` renders the same "view" look with no real `expo-audio` player and no `onPress` — used wherever a recording is only ever a *picture* of itself (the Export-to-PDF preview and the capture that becomes the real PDF page), never something to actually press play on. |
 | music track (waveform)               | —                 | —    | —            | 44 tall on the recording screen (node `3184:7867`), 14 inside a Record row. Figma draws it as one decorative vector of a few hundred paths (~100KB in `assets/Record/*.svg`), which would freeze the same squiggle onto every recording — so it is drawn from the recording's own loudness instead. See `Waveform.tsx`. |
 | editor (formatting toolbar)          | 16                | space-between | — | `colors.editorBar` bg, seven 24pt icons (text colour, bold, italic, underline, bullet list, numbered list, horizontal rule) — 56 tall. Opening the palette makes it 112: a `colors.editorPaletteBar` row of nine 24pt swatches at `radius.sm` with a 16pt gap after a 16pt inset, plus a 48x48 top-rounded backdrop behind the text-colour button. Node `13:15150`, whole component exported to `assets/editor.svg`. See `EditorToolbar.tsx`. |
-| Modal sheet (shell)                  | 16 (content)      | 8 (actions) | 24 (`radius.xl`) | white sheet, `shadows.xl`; title `typography.subtext` with paddingTop 20 + a 20px spacer row, close button absolute at right 8 / top 8.4; content paddingTop 20; actions block paddingTop 24 / paddingBottom 24. Backdrop = `colors.backdrop` over a blur, sheet bottom-aligned with paddingTop 16 / paddingBottom 40. Every Figma modal repeats this skeleton — build new ones on `ModalSheet.tsx` rather than restating it. |
+| Modal sheet (shell)                  | 16 (content)      | 8 (actions) | 24 (`radius.xl`) | white sheet, `shadows.xl`; title `typography.subtext` with paddingTop 20 + a 20px spacer row, close button absolute at right 8 / top 8.4; content paddingTop 20; actions block paddingTop 24 / paddingBottom 24. Backdrop = `colors.backdrop` over a blur, sheet bottom-aligned with paddingTop 16 / paddingBottom 40. Every Figma modal repeats this skeleton — build new ones on `ModalSheet.tsx` rather than restating it. An optional `overlay` slot renders on top of the backdrop *and* the sheet, pinned at `top: 47` like `HomeScreen`'s own flash — needed because RN's `Modal` is a native layer painted in front of the whole app, so a banner the screen underneath renders as an ordinary sibling would sit *behind* it, dimmed by the backdrop blur along with everything else back there (`LanguageModal`'s "Not supported yet." is the first thing to use it — see the Language product rule below). |
 | Modal/Gallery                        | —                 | 3 (tiles) | —            | fills the shell above: square `radius.sm` tiles, first `colors.surfaceDark` + 32px `ic/camera`, rest recent photos with a `colors.borderSubtle` hairline; the row is drawn 404 wide inside a 326 content area, so it scrolls horizontally. Action = "Go to Gallery". Node `3198:4446`. See `GalleryModal.tsx`. |
 | Modal/Leave                          | —                 | 8    | —            | fills the shell above: body in `typography.body` / `colors.textSecondary`, then "Leave" (Primary, accent tone) over "Keep Editing" (White). Raised when leaving the Add screen with unsaved edits. Node `3233:4557`, in context `3233:4558`. See `LeaveModal.tsx`. |
 | Modal/Date-Default (month picker)    | 16 (content)      | 16   | —            | fills the shell above: a year stepper (two Button / M / Icon / Secondary either side of the year in `typography.titleMedium` / `colors.yearLabel`, gap 24), a 1px `colors.borderSubtle` divider, then twelve Chip Buttons wrapping four to a row at gap 8, and a "Done" primary. Node `3229:4259`, in context `3229:4271`. See `MonthPickerModal.tsx`. |
@@ -373,12 +373,18 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   Korean strings — no translated copy anywhere — so `LanguageModal` renders
   한국어 as a real, tappable chip (nothing in Figma marks it `disabled`) but
   pressing it never selects it. Per Setting-Language-Korea (node
-  `3267:5909`), the modal stays open with English still active and the
-  screen underneath flashes an `AlertBanner` ("Not supported yet.") over
-  its header — not a native `Alert`, and not the modal closing to show it.
-  `SettingScreen` owns that banner's 3-second auto-dismiss timer, the same
-  pattern (and duration — Figma doesn't specify one, so this reuses that
-  earlier choice) as `HomeScreen`'s post-delete flash.
+  `3267:5909`), the modal stays open with English still active and an
+  `AlertBanner` ("Not supported yet.") appears on top of it — not a native
+  `Alert`, and not the modal closing to show it. The banner renders through
+  `ModalSheet`'s `overlay` slot rather than as an ordinary sibling on
+  `SettingScreen`: `Modal` is a native layer painted in front of the whole
+  app, so a banner the screen renders directly would land *behind* the open
+  modal, dimmed by its backdrop blur along with everything else back
+  there — confirmed against Figma's own z-order in that same node, where
+  the Alert frame is the topmost layer. `SettingScreen` still owns the
+  banner's message and its 3-second auto-dismiss timer (Figma doesn't
+  specify a duration; this reuses `HomeScreen`'s post-delete flash timing) —
+  only where it paints moved into the modal.
 - **Export to PDF is a real device feature**, not a mock list, per explicit
   product direction. "Generate PDF" reads the actual posts in the chosen
   range (`getPostsInRange`) and writes a real, multi-page PDF file — not a

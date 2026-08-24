@@ -10,7 +10,6 @@ import SettingSection from '../components/SettingSection';
 import SettingMenuRow from '../components/SettingMenuRow';
 import SettingDivider from '../components/SettingDivider';
 import LanguageModal from '../components/LanguageModal';
-import AlertBanner from '../components/AlertBanner';
 import { dateKey } from '../data/posts';
 import { getNotificationSettings } from '../data/notificationSettings';
 import { colors, spacing } from '../theme/tokens';
@@ -44,9 +43,11 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  * "modal over Setting-Main" pattern Export to PDF's date-range picker uses.
  * English is the only real language: per Setting-Language-Korea (node
  * 3267:5909), tapping the 한국어 chip doesn't select it — the modal stays
- * open with English still active, and this screen flashes an `AlertBanner`
- * ("Not supported yet.") over its header, the same transient-banner pattern
- * `HomeScreen`'s post-delete flash already uses (3s, then gone).
+ * open with English still active, and an `AlertBanner` ("Not supported
+ * yet.") appears on top of the modal itself (`LanguageModal`'s `overlay`
+ * slot, since a real `Modal` paints in front of anything this screen draws
+ * directly). This screen still owns the message and its 3s auto-dismiss —
+ * the same transient-banner timing `HomeScreen`'s post-delete flash uses.
  *
  * "Export to PDF" (Flow 7.3) is wired: tapping it pushes `ExportToPdfScreen`
  * directly, pre-filled with the last 7 days. Figma's own node 3199:8735
@@ -137,13 +138,8 @@ export default function SettingScreen() {
         visible={languageModalVisible}
         onClose={() => setLanguageModalVisible(false)}
         onUnsupportedLanguagePress={() => setLanguageAlert('Not supported yet.')}
+        alertMessage={languageAlert}
       />
-
-      {languageAlert !== null ? (
-        <View style={styles.flash} pointerEvents="none">
-          <AlertBanner message={languageAlert} />
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -162,14 +158,5 @@ const styles = StyleSheet.create({
   },
   menuContent: {
     gap: spacing.md,
-  },
-  flash: {
-    // Figma pins the banner over the header, not below it (node 3267:6000
-    // sits at the same y as HomeScreen's own Alert placement, 3233:5182).
-    position: 'absolute',
-    top: 47,
-    left: 0,
-    right: 0,
-    paddingHorizontal: spacing.md,
   },
 });
