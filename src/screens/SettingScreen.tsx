@@ -9,7 +9,6 @@ import HeaderX from '../components/HeaderX';
 import SettingSection from '../components/SettingSection';
 import SettingMenuRow from '../components/SettingMenuRow';
 import SettingDivider from '../components/SettingDivider';
-import DateRangeModal from '../components/DateRangeModal';
 import { dateKey } from '../data/posts';
 import { getNotificationSettings } from '../data/notificationSettings';
 import { colors, spacing } from '../theme/tokens';
@@ -38,16 +37,18 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  * one of Daily Reminder / Monthly Report is on — matching what the two
  * sub-toggles being off would otherwise silently contradict.
  *
- * "Export to PDF" (Flow 7.3) is wired: per Figma node 3199:8735, tapping it
- * opens the date-range modal directly over this screen rather than pushing a
- * dedicated page first — the real Export to PDF screen only exists once
- * "Apply" is pressed, pre-filled with the chosen range. The modal's own
- * default, on first open, is the last 7 days.
+ * "Export to PDF" (Flow 7.3) is wired: tapping it pushes `ExportToPdfScreen`
+ * directly, pre-filled with the last 7 days. Figma's own node 3199:8735
+ * draws this as a date-range modal opening first, directly over Setting-Main
+ * — but landing straight in that modal every time hid the screen's own
+ * "Files" list of previously generated PDFs behind an extra, easy-to-dismiss
+ * step, which read as the app losing track of them. `ExportToPdfScreen`
+ * already reopens the same `DateRangeModal` from its own "Date Range" row,
+ * so nothing about changing the range is lost — only the surprise of it
+ * being the very first thing on screen.
  */
 export default function SettingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [exportRangeVisible, setExportRangeVisible] = useState(false);
-  const [exportRange, setExportRange] = useState(lastSevenDaysRange);
   const [notificationsOn, setNotificationsOn] = useState(false);
 
   // Refreshed on every focus, since this reflects state that can change
@@ -79,7 +80,7 @@ export default function SettingScreen() {
           />
           {/* TODO: wire once Flow 7.2 Language exists. */}
           <SettingMenuRow label="Language" value="English" />
-          <SettingMenuRow label="Export to PDF" onPress={() => setExportRangeVisible(true)} />
+          <SettingMenuRow label="Export to PDF" onPress={() => navigation.navigate('ExportToPdf', lastSevenDaysRange())} />
         </SettingSection>
 
         <SettingDivider />
@@ -112,18 +113,6 @@ export default function SettingScreen() {
           <SettingMenuRow label="Delete Account" />
         </SettingSection>
       </ScrollView>
-
-      <DateRangeModal
-        visible={exportRangeVisible}
-        startDate={exportRange.startDate}
-        endDate={exportRange.endDate}
-        onClose={() => setExportRangeVisible(false)}
-        onApply={(range) => {
-          setExportRange(range);
-          setExportRangeVisible(false);
-          navigation.navigate('ExportToPdf', range);
-        }}
-      />
     </View>
   );
 }
