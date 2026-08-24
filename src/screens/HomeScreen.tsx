@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   topGroup: {
     // Header and calendar are one block so the gap between them is a fixed
     // `layout.headerToTitle` rather than whatever space-between happens to
-    // distribute. That pins the title to Figma's 135.58 on every device — and
+    // distribute. That pins the title to Figma's 143.87 on every device — and
     // lets the Report screen land its own title on exactly the same line.
     // The free space still spreads below, across the two gaps that remain.
     width: '100%',

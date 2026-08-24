@@ -150,14 +150,19 @@ export const spacing = {
 export const layout = {
   /**
    * Figma: the gap between a screen's header and the Calendar Title under it.
-   * Home's header ends at y 119 and its Calendar starts at 135.58 (nodes
-   * 3184:5500 / 3184:4121), so 16.58.
+   * The header ends at y 119 on both screens, and both put the title at
+   * 143.87 — Home-Calendar-Default's Calendar sits at 119 with its title
+   * 24.87 inside it (node 3192:9061), and Report Content does exactly the
+   * same (node 3196:13480).
    *
-   * Report's own frame puts its title 8.29 lower (Report Content at 119 with
-   * the title at 24.87 inside it, node 3196:13480). That difference reads as a
-   * jump when switching tabs, so both screens use Home's figure.
+   * An older Home frame (3184:4117) disagrees: there the Calendar is pinned
+   * at 135.58 and is 447.26 tall, its exact content height, so the title sits
+   * flush at the top. 3192:9057 instead stretches the Calendar to 497 and
+   * centres the same content inside it — and 497 - 447.26 is 49.74, whose
+   * half is this 24.87. The stretched frame is the one to follow; taking the
+   * older one is what pulled the title 8.29 too high.
    */
-  headerToTitle: 16.58,
+  headerToTitle: 24.87,
 } as const;
 
 // ---------------------------------------------------------------------------

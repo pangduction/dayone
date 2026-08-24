@@ -184,11 +184,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   titleRow: {
-    // Figma "Calendar Title" — the same block Home has. Report's own frame
-    // puts it 8.29 lower than Home's (Report Content at y 119 with the title
-    // at 24.87 inside it, node 3196:13480, against Home's 135.58), which reads
-    // as the title jumping when you switch tabs. Both screens use Home's
-    // offset instead.
+    // Figma "Calendar Title" — the same block Home has, on the same line:
+    // Report Content starts at y 119 with the title 24.87 inside it (node
+    // 3196:13480), and Home-Calendar-Default does exactly the same (node
+    // 3192:9061). `layout.headerToTitle` holds that shared offset.
     flexDirection: 'row',
     gap: spacing.sm,
     alignItems: 'center',

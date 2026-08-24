@@ -252,14 +252,18 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   List Thumbnails, which carry a weekday and a day but no month — across
   months, two rows reading "Sat 15" would be indistinguishable. Figma draws
   no "no matches" state, so a query that finds nothing lists nothing.
-- **Home and Report put the Calendar Title on the same line.** Figma does
-  not: Home's title sits at y 135.58 (node `3184:4121`) and Report's at
-  143.87 (node `3196:13480`), 8.29 apart, which reads as the title jumping
-  when the tab changes. Both use Home's figure, kept as
-  `layout.headerToTitle` (16.58 below a header that ends at 119). Home
-  reaches it by grouping its header and calendar so that gap is fixed
-  rather than whatever `space-between` distributes — otherwise the title's
-  position would shift with the screen height and could never match.
+- **Home and Report put the Calendar Title on the same line, y 143.87.**
+  Both frames agree on it: Home-Calendar-Default's Calendar starts at 119
+  with its title 24.87 inside (node `3192:9061`), and Report Content does
+  the same (node `3196:13480`). Kept as `layout.headerToTitle`.
+  **Take the Home frame from `3192:9057`, not `3184:4117`** — the older one
+  pins its Calendar at 135.58 at exactly its content height (447.26), so
+  the title sits flush at the top, while `3192:9057` stretches the Calendar
+  to 497 and centres the same content, which is where the 24.87 comes from
+  (half of 497 - 447.26). Home reaches that offset by grouping its header
+  and calendar so the gap is fixed rather than whatever `space-between`
+  distributes — otherwise the title would shift with the screen height and
+  could never match Report's.
 - **Switching between Home and Report has no transition.** They are peers
   on the same bottom bar, not one pushed out of the other; a slide reads as
   going deeper, and a cross-fade still animates a swap that should just
