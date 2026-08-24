@@ -388,8 +388,19 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     Share button. `src/pdf/postPageTemplate.ts` only wraps those captured
     images into print-ready HTML now; it no longer reconstructs any layout
     itself. A photo post's capture waits on `PhotoSection`'s own
-    `onLoadSettled` callback (its real-size read is async) before the
-    screenshot is taken, so a page is never captured half-loaded.
+    `onLoadSettled` callback before the screenshot is taken, and that
+    callback is deliberately strict — it fires only once *both*
+    `Image.getSize` has resolved *and* the `Image` element's own `onLoadEnd`
+    has fired, not at the instant `getSize` returns. `getSize` returning is
+    just a plain async callback; it says nothing about whether the render it
+    triggered (the new `aspectRatio`) has actually committed to native
+    layout yet, or whether the `Image` has finished decoding into that final
+    box. Firing `onLoadSettled` at `getSize`'s callback alone captured pages
+    whose photo hadn't grown into its real size yet — a real bug (the shipped
+    PDF's photo size didn't match the preview's), not a hypothetical one.
+    `ExportToPdfScreen.tsx` also waits two animation frames after every page
+    reports ready, for the same reason: one frame for the last such render to
+    commit, a second for it to actually paint.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.

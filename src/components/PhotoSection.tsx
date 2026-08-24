@@ -9,11 +9,13 @@ type Props = {
   /** Overlays drawn on top of the photo, e.g. the Add screen's Fit/Filled toggle. */
   children?: ReactNode;
   /**
-   * Fires once the photo's real size has been read (or reading it failed) —
-   * i.e. once this section has settled into its final aspect ratio and has
-   * nothing left to wait on. The Export-to-PDF capture flow
+   * Fires once this section has actually settled into its final size on
+   * screen — both the real aspect ratio has been read *and re-rendered*, and
+   * the `Image` itself has finished loading at that size — rather than the
+   * instant `Image.getSize` merely returns. The Export-to-PDF capture flow
    * (`ExportToPdfScreen.tsx`) uses this to know when an off-screen page is
-   * actually safe to screenshot, rather than capturing mid-layout.
+   * actually safe to screenshot; firing it any earlier captured a page whose
+   * photo hadn't finished growing into its real size yet.
    */
   onLoadSettled?: () => void;
 };
@@ -40,27 +42,41 @@ export default function PhotoSection({ uri, fitMode, children, onLoadSettled }: 
   // Width over height. 1 until the real size is known, so the first paint is
   // the square Figma draws rather than a jump from some other shape.
   const [photoAspect, setPhotoAspect] = useState(1);
+  // Two independent async things this section waits on: `Image.getSize`
+  // resolving (so `photoAspect` — and the box it drives — is correct) and
+  // the `<Image>` element itself finishing loading (so its bitmap has
+  // actually been decoded and painted, not just requested). Neither alone
+  // means the section looks the way it's about to; `onLoadSettled` only
+  // fires once both have.
+  const [sizeResolved, setSizeResolved] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    setSizeResolved(false);
+    setImageLoaded(false);
     Image.getSize(
       uri,
       (width, height) => {
         if (cancelled) return;
         if (height > 0) setPhotoAspect(width / height);
-        onLoadSettled?.();
+        setSizeResolved(true);
       },
       () => {
         if (cancelled) return;
         setPhotoAspect(1);
-        onLoadSettled?.();
+        setSizeResolved(true);
       },
     );
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uri]);
+
+  useEffect(() => {
+    if (sizeResolved && imageLoaded) onLoadSettled?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sizeResolved, imageLoaded]);
 
   // Never taller than the square: a portrait keeps Figma's framing.
   const aspectRatio = fitMode === 'filled' ? 1 : Math.max(photoAspect, 1);
@@ -71,6 +87,7 @@ export default function PhotoSection({ uri, fitMode, children, onLoadSettled }: 
         source={{ uri }}
         style={styles.image}
         resizeMode={fitMode === 'fit' ? 'contain' : 'cover'}
+        onLoadEnd={() => setImageLoaded(true)}
       />
       {children}
     </View>

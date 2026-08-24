@@ -105,8 +105,12 @@ export default function ExportToPdfScreen() {
 
       setCaptureBatch(posts);
       await allReady;
-      // One more frame so every page's fully-settled layout has actually
-      // been committed natively before it gets screenshotted.
+      // Two more frames: the first lets the render that `onReady` fired
+      // inside actually commit (state updates from an async image callback
+      // aren't guaranteed to have flushed to native layout yet when
+      // `onReady` runs), the second lets that committed layout actually
+      // paint before anything gets screenshotted.
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
       const pageDataUris: string[] = [];
