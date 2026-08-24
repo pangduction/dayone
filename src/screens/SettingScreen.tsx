@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
@@ -9,6 +9,8 @@ import HeaderX from '../components/HeaderX';
 import SettingSection from '../components/SettingSection';
 import SettingMenuRow from '../components/SettingMenuRow';
 import SettingDivider from '../components/SettingDivider';
+import LanguageModal from '../components/LanguageModal';
+import AlertBanner from '../components/AlertBanner';
 import { dateKey } from '../data/posts';
 import { getNotificationSettings } from '../data/notificationSettings';
 import { colors, spacing } from '../theme/tokens';
@@ -30,12 +32,21 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  *
  * Rows that lead to a sub-flow not yet built are inert (no `onPress`) with a
  * TODO — this screen was asked for first, on its own, so each row is wired up
- * as its own flow (7.2 Language, etc.) gets built next.
+ * as its own flow (7.4 Help & Support, etc.) gets built next.
  *
  * "Notifications" (Flow 7.1) is wired to `NotificationScreen`; its value
  * reads "On" only when the OS permission is actually granted *and* at least
  * one of Daily Reminder / Monthly Report is on — matching what the two
  * sub-toggles being off would otherwise silently contradict.
+ *
+ * "Language" (Flow 7.2) is wired to `LanguageModal`, opened directly over
+ * this screen per Figma's own Setting-Language (node 3199:8605) — the same
+ * "modal over Setting-Main" pattern Export to PDF's date-range picker uses.
+ * English is the only real language: per Setting-Language-Korea (node
+ * 3267:5909), tapping the 한국어 chip doesn't select it — the modal stays
+ * open with English still active, and this screen flashes an `AlertBanner`
+ * ("Not supported yet.") over its header, the same transient-banner pattern
+ * `HomeScreen`'s post-delete flash already uses (3s, then gone).
  *
  * "Export to PDF" (Flow 7.3) is wired: tapping it pushes `ExportToPdfScreen`
  * directly, pre-filled with the last 7 days. Figma's own node 3199:8735
@@ -50,6 +61,8 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
 export default function SettingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [notificationsOn, setNotificationsOn] = useState(false);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [languageAlert, setLanguageAlert] = useState<string | null>(null);
 
   // Refreshed on every focus, since this reflects state that can change
   // from the Notification screen itself, or from the device's real Settings
@@ -67,6 +80,13 @@ export default function SettingScreen() {
     }, []),
   );
 
+  useEffect(() => {
+    if (languageAlert === null) return;
+    // Figma doesn't say how long the banner stays; matches HomeScreen's flash.
+    const timer = setTimeout(() => setLanguageAlert(null), 3000);
+    return () => clearTimeout(timer);
+  }, [languageAlert]);
+
   return (
     <View style={styles.container}>
       <HeaderX onClose={() => navigation.goBack()} />
@@ -78,8 +98,7 @@ export default function SettingScreen() {
             value={notificationsOn ? 'On' : 'Off'}
             onPress={() => navigation.navigate('Notification')}
           />
-          {/* TODO: wire once Flow 7.2 Language exists. */}
-          <SettingMenuRow label="Language" value="English" />
+          <SettingMenuRow label="Language" value="English" onPress={() => setLanguageModalVisible(true)} />
           <SettingMenuRow label="Export to PDF" onPress={() => navigation.navigate('ExportToPdf', lastSevenDaysRange())} />
         </SettingSection>
 
@@ -113,6 +132,18 @@ export default function SettingScreen() {
           <SettingMenuRow label="Delete Account" />
         </SettingSection>
       </ScrollView>
+
+      <LanguageModal
+        visible={languageModalVisible}
+        onClose={() => setLanguageModalVisible(false)}
+        onUnsupportedLanguagePress={() => setLanguageAlert('Not supported yet.')}
+      />
+
+      {languageAlert !== null ? (
+        <View style={styles.flash} pointerEvents="none">
+          <AlertBanner message={languageAlert} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -131,5 +162,14 @@ const styles = StyleSheet.create({
   },
   menuContent: {
     gap: spacing.md,
+  },
+  flash: {
+    // Figma pins the banner over the header, not below it (node 3267:6000
+    // sits at the same y as HomeScreen's own Alert placement, 3233:5182).
+    position: 'absolute',
+    top: 47,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.md,
   },
 });

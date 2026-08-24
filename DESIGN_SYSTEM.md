@@ -129,6 +129,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | File Item                            | 16 / 12           | 8    | —            | one row of the Export to PDF screen's Files section: real filename (`typography.body`/`colors.textPrimary`) over its expiry (`typography.caption`/`colors.textTertiary`) at a tight gap 3 (Figma-exact, the same off-scale gap Share Image's "Created by Dayone" pill uses), then a chevron. Figma's own mock spells this out as an absolute "Valid until Sep 23, 2026" — implementer's choice to show a D-day countdown ("D-3", "D-DAY") instead, once the file's validity window shrank to 7 days and an absolute date became needless arithmetic for something that short. Node `3201:6535`. See `ExportFileRow.tsx`. |
 | Modal/Date-Report                    | 16 (content)      | 16   | —            | **structurally identical to Modal/Date-Default** — same shell, year stepper, divider, twelve chips, Done. Only which chips are enabled differs, so it reuses `MonthPickerModal` through its `isSelectable` prop rather than being a second component. Node `3198:4736`, in context `3198:4740`. |
 | Modal/Delete-Post                    | —                 | 8    | —            | fills the shell above: two body lines in `typography.body` / `colors.textSecondary`, then "Delete" (Primary, **warning** tone) over "Cancel" (White). Raised by the post detail header's Delete. Node `3233:4928`, in context `3233:4929`. See `DeletePostModal.tsx`. |
+| Modal/Language                       | 16 (content)      | 8    | —            | fills the shell above: two full-width `ChipButton`s stacked (English `active`/accent-bordered, 한국어 plain `enabled`), then a dark-tone Primary "Done" — the same chip reused from the month picker, just stretched full-width via a `style` override instead of its default 72.5. Node `3199:8604`, in context on Setting-Language `3199:8605`. See `LanguageModal.tsx`, and the Language product rule below for what tapping 한국어 actually does. |
 
 | Share Image                          | 47 top / 34 bottom (card) | space-between | — | the picture actually shared from Home's Share button, not a screenshot of the live screen: Figma draws its own frame (node `3198:5765`) at a fixed 390x844, with Header/Calendar and Navigation present but at **opacity 0** — kept only to reserve their height so the calendar lands on the same spot it does on Home. The Calendar Title drops `ic/arrow-down` and isn't a button, since nothing on a shared image can be tapped. **No date cell is ever drawn as "today"** — the frame's design-context carries no Accent reference at all, so a day with a post renders solid-fill/photo-tint the same whether or not it is today, unlike the live Home calendar's accent ring. The progress bar's fill is `colors.textPrimary` (G900) here rather than `colors.accent`, the one other place Accent would otherwise appear (node `3198:6336`). The Processing block also gains a second line: a solid `colors.textPrimary` "Created by Dayone" pill (`typography.overline` "Created by" + `typography.caption` "Dayone", both `colors.textOnDark`, gap **3** — Figma-exact, not on the spacing scale) under "This month's record", at the same tight 3pt gap. In short: this export reads as a finished, monochrome picture of the month — no accent colour and no "in progress" marker survive into it. See `ShareableCalendarCard.tsx`, captured off-screen by `react-native-view-shot` and handed to `expo-sharing`'s OS share sheet from `HomeScreen.tsx`. |
 
@@ -211,9 +212,9 @@ the wrong glyph.
   `3196:12678` locked / Report-Done `3196:14258`).
   `SettingScreen.tsx` is Flow 7's entry list (Setting-Main, node
   `3198:6348`), reached from Report's ic/setting; its menu rows are inert
-  until each sub-flow (7.2 Language through 7.6 Delete Account) gets built,
-  per the TODO on each row. "Notifications" (7.1) and "Export to PDF" (7.3)
-  are wired: see the product rules below.
+  until each sub-flow (7.4 Help & Support through 7.6 Delete Account) gets
+  built, per the TODO on each row. "Notifications" (7.1), "Language" (7.2),
+  and "Export to PDF" (7.3) are wired: see the product rules below.
   `NotificationScreen.tsx` is Flow 7.1 (section `3199:8210`) — three
   `NotificationToggleRow`s, the middle one expanding to show a real picked
   time once Daily Reminder is on.
@@ -368,6 +369,16 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   never shows. Pressing Share renders that frame off-screen, captures it as a
   PNG, and opens the OS share sheet on the result — the live Home screen with
   its interactive chrome is never what leaves the app.
+- **Language (Flow 7.2) has exactly one real option.** The app has no
+  Korean strings — no translated copy anywhere — so `LanguageModal` renders
+  한국어 as a real, tappable chip (nothing in Figma marks it `disabled`) but
+  pressing it never selects it. Per Setting-Language-Korea (node
+  `3267:5909`), the modal stays open with English still active and the
+  screen underneath flashes an `AlertBanner` ("Not supported yet.") over
+  its header — not a native `Alert`, and not the modal closing to show it.
+  `SettingScreen` owns that banner's 3-second auto-dismiss timer, the same
+  pattern (and duration — Figma doesn't specify one, so this reuses that
+  earlier choice) as `HomeScreen`'s post-delete flash.
 - **Export to PDF is a real device feature**, not a mock list, per explicit
   product direction. "Generate PDF" reads the actual posts in the chosen
   range (`getPostsInRange`) and writes a real, multi-page PDF file — not a

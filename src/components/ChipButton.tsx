@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
 
 export type ChipStatus = 'enabled' | 'active' | 'disabled';
@@ -7,6 +8,13 @@ type Props = {
   label: string;
   status: ChipStatus;
   onPress?: () => void;
+  /**
+   * Overrides the chip's own fixed 72.5 width — Modal/Language (node
+   * 3199:8544) reuses this same component full-width, one per row, rather
+   * than four across a grid. Everything else (height, radius, border,
+   * shadow, label style) stays identical between the two uses.
+   */
+  style?: StyleProp<ViewStyle>;
 };
 
 /**
@@ -27,14 +35,14 @@ type Props = {
  *   active   — `colors.accent` border,      `colors.textStrong` label
  *   disabled — `colors.border` border,      `colors.borderSubtle` label
  */
-export default function ChipButton({ label, status, onPress }: Props) {
+export default function ChipButton({ label, status, onPress, style }: Props) {
   const disabled = status === 'disabled';
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={[styles.chip, status === 'active' && styles.active]}
+      style={[styles.chip, status === 'active' && styles.active, style]}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled, selected: status === 'active' }}
