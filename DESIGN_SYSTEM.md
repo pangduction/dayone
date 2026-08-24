@@ -398,6 +398,13 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     than a month, per explicit product direction, since a generated PDF plus
     one JPEG per page is real, uncompressed on-device storage — minimizing
     how long it sits around was the point, not just giving it *some* expiry.
+    Shrinking `VALIDITY_DAYS` after some files already existed on disk would
+    otherwise have left those specific rows keeping the 30-day expiry they
+    were written with (nothing else ever recomputes a saved `expiresAt`), so
+    `readAll`'s `enforceCurrentValidity` re-caps every file's `expiresAt` to
+    its `createdAt` plus the *current* `VALIDITY_DAYS` on every read —
+    shortening only, never extending, so a later increase to the constant
+    can't resurrect bytes an earlier read already deleted.
   - **The printed file and the in-app preview are the same bytes, read
     twice — not two renders a design goal has to keep matching.**
     `ExportToPdfScreen.tsx`'s "Generate PDF" renders each post's

@@ -50,6 +50,22 @@ function exportsDirectory(): Directory {
   return new Directory(Paths.document, EXPORTS_DIR_NAME);
 }
 
+/**
+ * Re-applies the *current* `VALIDITY_DAYS` to a file written under an older
+ * policy, rather than trusting whatever `expiresAt` it was saved with.
+ * `VALIDITY_DAYS` shrank from 30 to 7 after some files were already on
+ * disk; without this, those rows would keep the 30-day expiry they were
+ * born with (a stale "D-23"-ish countdown) since nothing else ever
+ * recomputes `expiresAt` once it's written. Only ever shortens a file's
+ * life, never extends it, so a future increase to `VALIDITY_DAYS` can't
+ * resurrect bytes this already deleted.
+ */
+function enforceCurrentValidity(file: ExportFile): ExportFile {
+  const cappedExpiry = new Date(file.createdAt).getTime() + VALIDITY_DAYS * 24 * 60 * 60 * 1000;
+  if (new Date(file.expiresAt).getTime() <= cappedExpiry) return file;
+  return { ...file, expiresAt: new Date(cappedExpiry).toISOString() };
+}
+
 async function readAll(): Promise<ExportFile[]> {
   const raw = await AsyncStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
@@ -59,7 +75,9 @@ async function readAll(): Promise<ExportFile[]> {
     // `pageUris` was added after the first exports were written; default
     // those to an empty list rather than letting the preview screen read
     // undefined.
-    return parsed.map((file) => ({ ...file, pageUris: file.pageUris ?? [] }) as ExportFile);
+    return parsed
+      .map((file) => ({ ...file, pageUris: file.pageUris ?? [] }) as ExportFile)
+      .map(enforceCurrentValidity);
   } catch {
     return [];
   }
