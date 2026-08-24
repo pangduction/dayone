@@ -133,6 +133,9 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Share Image                          | 47 top / 34 bottom (card) | space-between | — | the picture actually shared from Home's Share button, not a screenshot of the live screen: Figma draws its own frame (node `3198:5765`) at a fixed 390x844, with Header/Calendar and Navigation present but at **opacity 0** — kept only to reserve their height so the calendar lands on the same spot it does on Home. The Calendar Title drops `ic/arrow-down` and isn't a button, since nothing on a shared image can be tapped. **No date cell is ever drawn as "today"** — the frame's design-context carries no Accent reference at all, so a day with a post renders solid-fill/photo-tint the same whether or not it is today, unlike the live Home calendar's accent ring. The progress bar's fill is `colors.textPrimary` (G900) here rather than `colors.accent`, the one other place Accent would otherwise appear (node `3198:6336`). The Processing block also gains a second line: a solid `colors.textPrimary` "Created by Dayone" pill (`typography.overline` "Created by" + `typography.caption` "Dayone", both `colors.textOnDark`, gap **3** — Figma-exact, not on the spacing scale) under "This month's record", at the same tight 3pt gap. In short: this export reads as a finished, monochrome picture of the month — no accent colour and no "in progress" marker survive into it. See `ShareableCalendarCard.tsx`, captured off-screen by `react-native-view-shot` and handed to `expo-sharing`'s OS share sheet from `HomeScreen.tsx`. |
 
 | Setting Menu (row)                   | 16 / 12           | 8    | —            | one row of the Setting screen's list (node e.g. `3198:7121`): min-height 44, label `typography.subtext`/`colors.textStrong` and an optional trailing value `colors.textPlaceholder`, both `flex: 1` so they split whatever width is left of an optional 20pt `ic/arrow-right-l` (`colors.textSecondary` — verified via `get_variable_defs`, not the `colors.textStrong` a subtext label would suggest) evenly, rather than a fixed 161/161. A row with no `onPress` renders as a plain View — "App version" and "Log in" carry no chevron either. Section eyebrow labels ("APP"/"SUPPORT"/"ACCOUNT") are `typography.caption` in a new alias, `colors.textFaint` (G200) — lighter than `textPlaceholder`'s G400 and used nowhere else yet. Sections are separated by an 8pt `colors.surface` (G50) divider. See `SettingMenuRow.tsx`, `SettingSection.tsx`, `SettingDivider.tsx`, `SettingScreen.tsx`. |
+| toggle                                | —                 | —    | 999 (`radius.full`) | Flow 7.1 Notification's switch (component node `9:6902` off / `9:6905` on): 40x18 track, a 14x14 white thumb inset 2 on every side. Off fill `colors.toggleTrackOff` (`#EFEFEF` — close to but distinct from the G-scale, and not a bound variable); on fill `colors.toggleOn` (`#00E585`, a green outside the app's usual accent blue — Figma's own choice for this one control, verified via `get_design_context`, not a mistake to normalize to accent). The thumb's drop shadow flips side with the thumb (`shadows.toggleThumbOff`/`On`); the track's own inset shadow isn't reproduced (RN has no inset shadow, and it isn't visually load-bearing at this size). See `ToggleSwitch.tsx`. |
+| Menu (toggle row)                     | (caller's)        | 8    | —            | Flow 7.1's preference row: a two-line label (title `typography.subtext`/`colors.textStrong` over a subtitle `typography.overline`/`colors.textTertiary`, gap 3) and a `toggle`, `flex:1`/`minHeight:44`. Renders its own content only — Figma reuses the identical row shape both standalone (px16/py12, e.g. "Notifications"/"Monthly Report", node `3198:7563`) and nested with no padding of its own inside the expanded Daily Reminder block (node `3199:8123`), so the padding is the caller's job, not this component's. See `NotificationToggleRow.tsx`. |
+| Modal/Timer                           | 16 (content)      | —    | 24 (`radius.xl`) | Flow 7.1's time picker, opened by turning Daily Reminder on (or tapping its Timer row). The one dark-themed modal in the app: sheet `colors.timerModalBg` (G900) instead of every other modal's white, otherwise the same slide-up-from-bottom shell technique as `ModalSheet.tsx` (built separately, not as a `dark` prop on it, since the content/actions padding genuinely differ — no content top padding, a plain 16-all-around actions panel). Three independent scrolling wheels (hour 1–12, minute 00–59, AM/PM), 56px rows (Figma-exact) with 3 visible — a real `snapToInterval` `ScrollView` per column, not Figma's static three-row "previous/current/next" mock. The selected row is `Inter_600SemiBold` white; the others `Inter_500Medium` `colors.textSecondary` (G600, matching Figma's dimmed rows exactly). Figma's own title text reads "Select Month" — a copy-paste leftover from reusing the month-picker modal's header with the wrong text, corrected here to "Select Time" the same way "alomost" was corrected on the Generating-PDF modal. Node `3199:7894`. See `TimerPickerModal.tsx`. |
 
 When implementing a component not in this table, pull its real spec with
 `get_design_context` on its node in the Design System page — don't
@@ -208,9 +211,12 @@ the wrong glyph.
   `3196:12678` locked / Report-Done `3196:14258`).
   `SettingScreen.tsx` is Flow 7's entry list (Setting-Main, node
   `3198:6348`), reached from Report's ic/setting; its menu rows are inert
-  until each sub-flow (7.1 Notification through 7.6 Delete Account) gets
-  built, per the TODO on each row. "Export to PDF" (7.3) is wired: see the
-  product rule below.
+  until each sub-flow (7.2 Language through 7.6 Delete Account) gets built,
+  per the TODO on each row. "Notifications" (7.1) and "Export to PDF" (7.3)
+  are wired: see the product rules below.
+  `NotificationScreen.tsx` is Flow 7.1 (section `3199:8210`) — three
+  `NotificationToggleRow`s, the middle one expanding to show a real picked
+  time once Daily Reminder is on.
   `ExportToPdfScreen.tsx` is the real Export to PDF list (Setting-Export to
   PDF-2, node `3201:5947`); `PdfPreviewScreen.tsx` shows a generated file
   (Setting-Export to PDF-6, node `3267:6006`) as a scroll of shadowed white
@@ -228,7 +234,7 @@ the wrong glyph.
   it isn't simply a screenshot of the live screen.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
   stack
-  (Login/Home/HomeList/PostSearch/Report/Setting/ExportToPdf/PdfPreview/Add/PostDetail/Recording).
+  (Login/Home/HomeList/PostSearch/Report/Setting/Notification/ExportToPdf/PdfPreview/Add/PostDetail/Recording).
   `initialRouteName` is temporarily `"Home"` since sign-in has no real auth
   yet; flip it back to `"Login"` once that's wired up. Every route pushes as
   an ordinary page — Add is a full Figma frame with its own back button, not
@@ -240,7 +246,11 @@ the wrong glyph.
   rule; screens should go through its functions rather than touching
   AsyncStorage directly. `exports.ts` is the same pattern for generated PDF
   file metadata, with real files under `documentDirectory/exports/` — see
-  the Export to PDF product rule below.
+  the Export to PDF product rule below. `notificationSettings.ts` is the
+  same pattern for Daily Reminder / Monthly Report: `saveNotificationSettings`
+  is the only path a screen should use to change either, since it persists
+  the preference *and* (re)schedules the real `expo-notifications` local
+  trigger in one call — see the Notification product rule below.
 - `src/pdf/` — `postPageTemplate.ts` holds the shared page size
   (`PAGE_WIDTH`/`PAGE_HEIGHT`) and the export filename helper;
   `buildPdf.ts`'s `buildPdfFromJpegPages` writes a PDF's actual bytes
@@ -424,6 +434,53 @@ Note them here so they don't get re-derived (or quietly dropped) later.
       one-line content stream (`q W 0 0 H 0 0 cm /Im0 Do Q`) that scales that
       image to exactly fill the page. There is no layout engine left to
       disagree with the capture, because there is no layout engine at all.
+- **Notification (Flow 7.1) is a real device feature**, per explicit product
+  direction, not three cosmetic toggles. Daily Reminder and Monthly Report
+  are real `expo-notifications` local triggers
+  (`src/data/notificationSettings.ts`), and the master "Notifications"
+  toggle reflects the OS's actual permission state rather than being an
+  app-level preference of its own:
+  - **The master toggle can't really be "toggled."** Its own Figma subtitle
+    says outright that it mirrors Settings ("Enable notifications in
+    Settings."), and no app can flip OS notification permission directly
+    once the user has answered the first prompt. It reads
+    `Notifications.getPermissionsAsync()`; tapping it calls
+    `requestPermissionsAsync()` only the first time (`canAskAgain`), and
+    otherwise opens the device's real Settings app
+    (`Linking.openSettings()`) — there's nothing else a tap on it could
+    honestly do.
+  - **Turning on Daily Reminder or Monthly Report first ensures that same
+    permission** (requesting it, or routing to Settings via an `Alert` if
+    it's already been permanently denied) before anything is scheduled —
+    a toggle that "succeeds" with nothing actually able to fire would be a
+    silent lie.
+  - **Daily Reminder's flow matches what the Monthly reminder-1 frame
+    actually shows**, not just its label: the screenshot has the toggle
+    already green *underneath* the open time-picker modal, so turning it on
+    shows it as on immediately and opens `TimerPickerModal` in the same
+    gesture, rather than waiting for Apply. Backing out of that *first*
+    open without applying reverts the toggle — nothing was ever actually
+    scheduled, so it shouldn't read as on. Re-opening the picker later from
+    the already-set Timer row (to change the time) behaves differently on
+    cancel: it just closes, since there a real reminder stays active either
+    way. `NotificationScreen.tsx` tracks which case is which with one piece
+    of state (`timerModalMode`) rather than trying to infer it from other
+    state.
+  - **Monthly Report's fixed notification time (9:00 AM) is the
+    implementer's own reading of "the morning of the 1st"** — Figma's copy
+    promises that but draws no picker for it, unlike Daily Reminder.
+  - Figma's Modal/Timer literally titles itself "Select Month" — a
+    copy-paste leftover from reusing the month-picker modal's own header
+    component with the wrong text still in it, not a real second
+    month-selection flow (the modal's content is unambiguously a time
+    picker: hour, minute, AM/PM wheels). Read as an authoring mistake and
+    corrected to "Select Time" in `TimerPickerModal.tsx`, the same way
+    "alomost" was corrected on the Generating-PDF modal.
+  - `expo-notifications`' remote push features aren't available in Expo Go
+    on SDK 53+, but this project only ever uses its local scheduling API
+    (`scheduleNotificationAsync` with a `DAILY`/`MONTHLY` calendar trigger),
+    which still works there — DayOne never needs a push token or a remote
+    server for either reminder.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.

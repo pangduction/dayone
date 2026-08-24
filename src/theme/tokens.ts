@@ -64,6 +64,8 @@ export const palette = {
   overlayAccent: 'rgba(0, 132, 255, 0.3)', // Figma: Accent at 30% opacity — tint over today's photo calendar cell (node 3184:3185)
   lockPaper: 'rgba(255, 255, 255, 0.7)', // Figma: white at 70% over a background blur — the Report's Lock Paper (node 3196:14417)
   emptyStateText: '#929DAD', // Figma: local fill on Home-List-Default's "You haven't written anything yet." (node 3192:9215) — get_variable_defs shows it binds no colour variable, and it is NOT G400 (#9EA4AA)
+  toggleTrackOff: '#EFEFEF', // Figma: the "toggle" switch's off-state track fill (node 9:6902) — not a bound variable, and distinct from G50/G100
+  toggleOn: '#00E585', // Figma: the "toggle" switch's on-state track fill (node 9:6905) — not a bound variable
 
   // iOS-style system color set (color picker / palette swatch components).
   systemRed: '#FF3B30',
@@ -118,6 +120,9 @@ export const colors = {
   lockPaper: palette.lockPaper, // the veil over an unfinished month's report (node 3196:14417)
   textFaint: palette.g200, // Setting screen's section eyebrow labels (APP/SUPPORT/ACCOUNT, node 3198:7120) — lighter than textPlaceholder (G400)
   monthLabel: palette.neutral700, // Figma "Neutral/700" — the Export-to-PDF date range picker's month label (node 3201:5617), verified via get_variable_defs
+  toggleTrackOff: palette.toggleTrackOff,
+  toggleOn: palette.toggleOn,
+  timerModalBg: palette.g900, // Figma G900 — Modal/Timer's dark sheet (node 3199:7894), the one dark-themed modal in the app
 };
 
 // ---------------------------------------------------------------------------
@@ -324,6 +329,24 @@ export const shadows = {
     shadowRadius: 16,
     elevation: 8,
   },
+  toggleThumbOff: {
+    // Figma "Switch-in shadow" on the off-state thumb: #00000040 offset(2, 1) blur 6.
+    // The track's own inset shadow (Figma "Switch - in shadow") isn't reproduced —
+    // RN has no inset shadow, and at 40x18 it's not visually load-bearing.
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  toggleThumbOn: {
+    // Figma "Switch-out shadow" on the on-state thumb: #00000040 offset(-2, 1) blur 6 — the same shadow, flipped, since the thumb sits on the opposite side.
+    shadowColor: '#000000',
+    shadowOffset: { width: -2, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
 } as const;
 
 /** Fonts to load with `useFonts` before rendering any screen. */
@@ -332,6 +355,7 @@ export const fontAssets = {
   Inter_400Regular: require('@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf'),
   Inter_500Medium: require('@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf'),
   Inter_500Medium_Italic: require('@expo-google-fonts/inter/500Medium_Italic/Inter_500Medium_Italic.ttf'),
+  Inter_600SemiBold: require('@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf'),
   Inter_700Bold: require('@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf'),
   Raleway_800ExtraBold: require('@expo-google-fonts/raleway/800ExtraBold/Raleway_800ExtraBold.ttf'),
   Poppins_700Bold: require('@expo-google-fonts/poppins/700Bold/Poppins_700Bold.ttf'),

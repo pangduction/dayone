@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
-import { useNavigation } from '@react-navigation/native';
+import * as Notifications from 'expo-notifications';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderX from '../components/HeaderX';
@@ -10,6 +11,7 @@ import SettingMenuRow from '../components/SettingMenuRow';
 import SettingDivider from '../components/SettingDivider';
 import DateRangeModal from '../components/DateRangeModal';
 import { dateKey } from '../data/posts';
+import { getNotificationSettings } from '../data/notificationSettings';
 import { colors, spacing } from '../theme/tokens';
 
 /** "최근 7일" (last 7 days) — the product's chosen default range when the date picker first opens from Setting. */
@@ -29,7 +31,12 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  *
  * Rows that lead to a sub-flow not yet built are inert (no `onPress`) with a
  * TODO — this screen was asked for first, on its own, so each row is wired up
- * as its own flow (7.1 Notification, 7.2 Language, etc.) gets built next.
+ * as its own flow (7.2 Language, etc.) gets built next.
+ *
+ * "Notifications" (Flow 7.1) is wired to `NotificationScreen`; its value
+ * reads "On" only when the OS permission is actually granted *and* at least
+ * one of Daily Reminder / Monthly Report is on — matching what the two
+ * sub-toggles being off would otherwise silently contradict.
  *
  * "Export to PDF" (Flow 7.3) is wired: per Figma node 3199:8735, tapping it
  * opens the date-range modal directly over this screen rather than pushing a
@@ -41,6 +48,23 @@ export default function SettingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [exportRangeVisible, setExportRangeVisible] = useState(false);
   const [exportRange, setExportRange] = useState(lastSevenDaysRange);
+  const [notificationsOn, setNotificationsOn] = useState(false);
+
+  // Refreshed on every focus, since this reflects state that can change
+  // from the Notification screen itself, or from the device's real Settings
+  // app the user may have just come back from.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      Promise.all([getNotificationSettings(), Notifications.getPermissionsAsync()]).then(([settings, permission]) => {
+        if (cancelled) return;
+        setNotificationsOn(permission.granted && (settings.dailyReminderEnabled || settings.monthlyReportEnabled));
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
 
   return (
     <View style={styles.container}>
@@ -48,10 +72,11 @@ export default function SettingScreen() {
 
       <ScrollView style={styles.menu} contentContainerStyle={styles.menuContent}>
         <SettingSection title="APP">
-          {/* TODO: wire once Flow 7.1 Notification exists. "Off" matches
-              Figma's default; it should read the real scheduled-reminder
-              state once that flow is built. */}
-          <SettingMenuRow label="Notifications" value="Off" />
+          <SettingMenuRow
+            label="Notifications"
+            value={notificationsOn ? 'On' : 'Off'}
+            onPress={() => navigation.navigate('Notification')}
+          />
           {/* TODO: wire once Flow 7.2 Language exists. */}
           <SettingMenuRow label="Language" value="English" />
           <SettingMenuRow label="Export to PDF" onPress={() => setExportRangeVisible(true)} />
