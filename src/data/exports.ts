@@ -5,12 +5,12 @@ import { Directory, File, Paths } from 'expo-file-system';
  * Local metadata for a generated Export-to-PDF file (Figma "Setting-Export to
  * PDF-2", node 3201:5947 — the "Files" section's rows). Export to PDF is a
  * real device feature (explicit product requirement), so this is a genuine
- * file on disk, not a mock row: `saveExportFile` moves the PDF `expo-print`
- * just wrote out of the cache directory into a stable, named home in
- * `documentDirectory` (the cache isn't guaranteed to survive), and every read
- * here prunes anything past its "Valid until" date — deleting the row *and*
- * the bytes, per the product decision that expiry is real deletion rather
- * than a stale label.
+ * file on disk, not a mock row: `saveExportFile` writes the PDF's own bytes
+ * (`buildPdf.ts` — no `expo-print` or WebView rendering involved) into a
+ * stable, named home in `documentDirectory` (the cache isn't guaranteed to
+ * survive), and every read here prunes anything past its "Valid until" date
+ * — deleting the row *and* the bytes, per the product decision that expiry
+ * is real deletion rather than a stale label.
  */
 export type ExportFile = {
   id: string;
@@ -19,11 +19,11 @@ export type ExportFile = {
   /** Real `file://` URI of the generated PDF. */
   uri: string;
   /**
-   * Real `file://` URIs of each page's own PNG, one per post, in the same
-   * order they were captured and printed. `PdfPreviewScreen` shows *these*
-   * directly rather than re-rendering the posts live — the same pixels that
-   * are actually inside the PDF, not a second, separately-rendered copy that
-   * can (and did) drift from what the file really contains.
+   * Real `file://` URIs of each page's own JPEG, one per post, in the same
+   * order they were captured and embedded into the PDF. `PdfPreviewScreen`
+   * shows *these* directly rather than re-rendering the posts live — the
+   * exact bytes the PDF was built from, not a second, separately-rendered
+   * copy that can (and did) drift from what the file really contains.
    */
   pageUris: string[];
   /** The export's date range, 'YYYY-MM-DD'. */
@@ -100,16 +100,17 @@ export async function getExportFile(id: string): Promise<ExportFile | null> {
 }
 
 /**
- * Moves a freshly `printToFileAsync`'d PDF (which lands in the cache
- * directory under a generated name) into `documentDirectory/exports/` under
- * its real filename, and records its metadata with a 30-day expiry from now.
- * `pageImages` are each page's own captured PNG (base64, no data URI prefix)
- * — written alongside the PDF so the preview screen has real files to show.
+ * Writes the PDF's own bytes (`buildPdfFromJpegPages`) into
+ * `documentDirectory/exports/` under its real filename, moves each page's
+ * own captured JPEG (`react-native-view-shot`'s real temp file, one per
+ * post) alongside it, and records the whole thing's metadata with a 30-day
+ * expiry from now.
  */
 export async function saveExportFile(input: {
-  sourceUri: string;
+  pdfBytes: Uint8Array;
+  /** Real temp-file URIs from `captureRef({ result: 'tmpfile' })`, one per page, in print order. */
+  pageSourceUris: string[];
   filename: string;
-  pageImages: string[];
   startDate: string;
   endDate: string;
 }): Promise<ExportFile> {
@@ -118,15 +119,16 @@ export async function saveExportFile(input: {
 
   const destination = new File(dir, input.filename);
   if (destination.exists) destination.delete();
-  await new File(input.sourceUri).move(destination);
+  destination.write(input.pdfBytes);
 
   const baseName = input.filename.replace(/\.pdf$/i, '');
-  const pageUris = input.pageImages.map((base64, index) => {
-    const pageFile = new File(dir, `${baseName}-page-${index + 1}.png`);
+  const pageUris: string[] = [];
+  for (let index = 0; index < input.pageSourceUris.length; index += 1) {
+    const pageFile = new File(dir, `${baseName}-page-${index + 1}.jpg`);
     if (pageFile.exists) pageFile.delete();
-    pageFile.write(base64, { encoding: 'base64' });
-    return pageFile.uri;
-  });
+    await new File(input.pageSourceUris[index]).move(pageFile);
+    pageUris.push(pageFile.uri);
+  }
 
   const now = new Date();
   const expiresAt = new Date(now.getTime() + VALIDITY_DAYS * 24 * 60 * 60 * 1000);

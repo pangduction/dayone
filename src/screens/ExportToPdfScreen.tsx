@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { printToFileAsync } from 'expo-print';
+import { File } from 'expo-file-system';
 import { captureRef } from 'react-native-view-shot';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -19,7 +19,8 @@ import { getPostsInRange, parseDateKey } from '../data/posts';
 import type { Post } from '../data/posts';
 import { getExportFiles, saveExportFile } from '../data/exports';
 import type { ExportFile } from '../data/exports';
-import { buildExportFilename, buildImagePagesHtml, PAGE_HEIGHT, PAGE_WIDTH } from '../pdf/postPageTemplate';
+import { buildExportFilename, PAGE_HEIGHT, PAGE_WIDTH } from '../pdf/postPageTemplate';
+import { buildPdfFromJpegPages } from '../pdf/buildPdf';
 import { colors, spacing, typography } from '../theme/tokens';
 
 /** "Aug 6 - 13, 2026" within one month; "Aug 6 - Sep 3, 2026" across months (Figma only shows the former, node 3201:6515). */
@@ -41,13 +42,13 @@ function formatRangeLabel(startDate: string, endDate: string): string {
  * leaving the screen.
  *
  * "Generate PDF" is a real device feature. Each post's `PdfPagePreview` is
- * rendered off-screen and captured with `react-native-view-shot`; those same
- * screenshots both become the real multi-page PDF (via
- * `buildImagePagesHtml` + `expo-print`'s `printToFileAsync`) *and* get saved
- * as their own PNG files (`saveExportFile`'s `pageImages`) for
- * `PdfPreviewScreen` to show directly. That's what makes the preview and the
- * printed file identical — not a design goal a second render has to keep up
- * with, but the same bytes read twice. `saveExportFile`
+ * rendered off-screen and captured with `react-native-view-shot` as a real
+ * temp JPEG file; those exact files both get embedded directly into the PDF
+ * (`buildPdfFromJpegPages` — no HTML, no WebView, no `expo-print`) *and*
+ * moved into permanent storage (`saveExportFile`'s `pageSourceUris`) for
+ * `PdfPreviewScreen` to show. That's what makes the preview and the printed
+ * file identical — not a design goal a second render has to keep up with,
+ * but the exact same bytes read twice. `saveExportFile`
  * (`src/data/exports.ts`) also prunes anything past its 30-day "Valid
  * until" — so the Files list below only ever shows what's still real and
  * still valid.
@@ -114,33 +115,33 @@ export default function ExportToPdfScreen() {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
-      const pageImages: string[] = [];
+      // `result: 'tmpfile'` — a real JPEG on disk for each page, pinned to
+      // the exact print page size rather than left at the view's native
+      // (device-pixel-ratio-scaled) resolution. Its bytes go straight into
+      // the PDF (buildPdfFromJpegPages), and the file itself gets moved into
+      // permanent storage below for the preview screen — no base64, no
+      // WebView, no intermediate rendering step for either use.
+      const pageTmpUris: string[] = [];
+      const pageJpegBytes: Uint8Array[] = [];
       for (const post of posts) {
         const ref = captureRefs.current[post.date];
         if (!ref) continue;
-        // Pinned to the exact print page size rather than left at the
-        // view's native (device-pixel-ratio-scaled) resolution — otherwise
-        // the captured PNG's own pixel dimensions and the print page's
-        // declared 390x844 only agree on *ratio*, and any DPI/rounding
-        // mismatch between react-native-view-shot's capture and
-        // expo-print's WebView renderer becomes a real scale difference.
-        // `result: 'base64'` (not `'data-uri'`) because this same string
-        // needs to become both an <img> src (as a data URI) and a real .png
-        // file on disk (as raw base64) below.
-        const base64 = await captureRef(ref, {
-          format: 'png',
+        const tmpUri = await captureRef(ref, {
+          format: 'jpg',
           quality: 1,
-          result: 'base64',
+          result: 'tmpfile',
           width: PAGE_WIDTH,
           height: PAGE_HEIGHT,
         });
-        pageImages.push(base64);
+        pageTmpUris.push(tmpUri);
+        pageJpegBytes.push(await new File(tmpUri).bytes());
       }
 
-      const html = buildImagePagesHtml(pageImages.map((base64) => `data:image/png;base64,${base64}`));
-      const { uri } = await printToFileAsync({ html, width: PAGE_WIDTH, height: PAGE_HEIGHT });
+      const pdfBytes = buildPdfFromJpegPages(
+        pageJpegBytes.map((jpegBytes) => ({ jpegBytes, width: PAGE_WIDTH, height: PAGE_HEIGHT })),
+      );
       const filename = buildExportFilename(startDate, endDate);
-      await saveExportFile({ sourceUri: uri, filename, pageImages, startDate, endDate });
+      await saveExportFile({ pdfBytes, pageSourceUris: pageTmpUris, filename, startDate, endDate });
       setFiles(await getExportFiles());
     } catch {
       Alert.alert('Couldn’t generate PDF', 'Something went wrong while creating your file. Please try again.');

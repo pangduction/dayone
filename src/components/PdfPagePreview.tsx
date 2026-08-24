@@ -13,10 +13,11 @@ type Props = {
 /**
  * One post rendered as a print-page-shaped card, used only off-screen by
  * `ExportToPdfScreen.tsx`'s "Generate PDF" — `react-native-view-shot`
- * captures this per post, and that capture becomes both the real PDF page
- * (via `expo-print`) and the saved PNG `PdfPreviewScreen` shows directly.
+ * captures this per post as a real JPEG file, and those exact bytes become
+ * both a page of the real PDF (`buildPdf.ts`, embedded directly — no HTML,
+ * no WebView) and the saved file `PdfPreviewScreen` shows directly.
  * (`PdfPreviewScreen` itself no longer renders this component: it shows
- * those saved PNGs, which is what keeps the preview and the printed file
+ * those saved files, which is what keeps the preview and the printed file
  * from ever drifting apart.)
  *
  * The card is locked to the real PDF page's own aspect ratio
@@ -53,6 +54,6 @@ const styles = StyleSheet.create({
     ...shadows.xl,
   },
   topInset: {
-    height: 47, // matches PAGE_TOP_INSET in postPageTemplate.ts — the real PDF's own top inset
+    height: 47, // Figma-exact: Post Detail sits at y=47 even with no header drawn (see "PDF Image", node 3267:6263)
   },
 });
