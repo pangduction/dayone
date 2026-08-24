@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useIsFocused } from '@react-navigation/native';
+import { Animated, Easing, PanResponder, StyleSheet, View } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import PostReportThumbnail, { REPORT_THUMBNAIL_WIDTH } from './PostReportThumbnail';
 import type { Post } from '../data/posts';
 import { spacing } from '../theme/tokens';
@@ -25,8 +25,8 @@ const SECTION_GAP = spacing.md;
  * read a thumbnail as it goes by.
  */
 const DRIFT_POINTS_PER_SECOND = 15;
-/** Roughly a frame; the drift is applied unanimated at this cadence. */
-const DRIFT_INTERVAL_MS = 16;
+/** How far a finger must travel before it counts as a drag rather than a tap. */
+const DRAG_SLOP = 4;
 
 /**
  * Figma "Post Thumbnail Rows" (node 3196:14205 on Report-Default, 3196:14377
@@ -41,44 +41,58 @@ const DRIFT_INTERVAL_MS = 16;
  * (0,180) (140,180) — every even one topped out at 0, every odd one bottomed
  * out at 320.
  *
- * The strip drifts left to right on its own and can be dragged. A drag hands
- * it over for good, so the drift never fights the reader. A tap is different:
- * it holds the drift only while the finger is down, so a thumbnail can be
- * opened mid-drift — without that hold the scroll view reads the touch as the
- * start of a gesture and swallows it. The hold is a ref rather than state so
- * it takes effect on the very next tick.
+ * The strip is deliberately not a ScrollView, and that is what lets a
+ * thumbnail be tapped while it drifts. A scroll view being scrolled — even
+ * programmatically, as a drift must — cancels touches that land on its
+ * content, so the press died before it could fire. Pausing the drift once JS
+ * heard about the touch was never early enough, because the cancelling
+ * happens natively.
+ *
+ * So the row is translated instead, and dragging is a PanResponder that only
+ * claims the gesture once a finger has travelled DRAG_SLOP. A tap never moves
+ * that far, so it stays with the thumbnail underneath and fires normally; a
+ * drag takes the strip over and stops the drift for the rest of the visit.
  *
  * The drift also stops while the screen is not focused, which is what lets a
  * post opened from here come back to the strip where it was left rather than
- * to wherever it would have crept to in the meantime. Coming back counts as a
- * new visit, so the drift resumes — from that same spot, not from the start.
- * A drag therefore holds the strip for the rest of that visit, not forever.
+ * to wherever it would have crept meanwhile. Coming back counts as a new
+ * visit, so it resumes — from that same spot, not from the start.
  *
  * It stops on reaching the end rather than looping, since a jump back to the
  * start would be more jarring.
  */
 export default function PostThumbnailRows({ posts, onPressPost, autoScroll = true }: Props) {
-  const scrollRef = useRef<ScrollView>(null);
+  const isFocused = useIsFocused();
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  /** How far the strip has advanced, in points, always >= 0. */
   const offset = useRef(0);
   const maxOffset = useRef(0);
-  // Whether the drift is allowed at all: switched off for good by a drag, by
-  // reaching the end, or by the Lock Paper.
-  const [drifting, setDrifting] = useState(autoScroll);
-  // Set once the reader actually drags, which hands the strip over for good.
-  const tookOver = useRef(false);
-  // A momentary hold while a finger is down. A ref, not state, so a touch
-  // stops the next tick immediately instead of waiting for a re-render —
-  // that latency is the difference between a tap landing and being swallowed.
-  const driftPaused = useRef(false);
-  // The strip must not creep along while a post's detail page is on top of it.
-  const isFocused = useIsFocused();
-
-  // Measurements needed to know where the end is.
   const viewportWidth = useRef(0);
   const contentWidth = useRef(0);
 
+  /** Whether the drift is allowed at all — a drag or the end switches it off. */
+  const [drifting, setDrifting] = useState(autoScroll);
+  /** Bumped when a measurement lands, so the drift can start once sizes are known. */
+  const [measureTick, setMeasureTick] = useState(0);
+  /** True while a finger rests on the strip, so it holds still under the touch. */
+  const touchHeld = useRef(false);
+
+  // The animation is JS-driven on purpose: a native-driven value doesn't
+  // report back to JS, and the drag needs to know exactly where the strip is
+  // at the moment it takes over.
+  useEffect(() => {
+    const id = translateX.addListener(({ value }) => {
+      offset.current = -value;
+    });
+    return () => translateX.removeListener(id);
+  }, [translateX]);
+
   const recomputeMax = useCallback(() => {
-    maxOffset.current = Math.max(0, contentWidth.current - viewportWidth.current);
+    const next = Math.max(0, contentWidth.current - viewportWidth.current);
+    if (next === maxOffset.current) return;
+    maxOffset.current = next;
+    setMeasureTick((tick) => tick + 1);
   }, []);
 
   const onViewportLayout = (event: LayoutChangeEvent) => {
@@ -86,10 +100,27 @@ export default function PostThumbnailRows({ posts, onPressPost, autoScroll = tru
     recomputeMax();
   };
 
-  const onContentSizeChange = (width: number) => {
-    contentWidth.current = width;
+  const onContentLayout = (event: LayoutChangeEvent) => {
+    contentWidth.current = event.nativeEvent.layout.width;
     recomputeMax();
   };
+
+  const stopDrift = useCallback(() => {
+    translateX.stopAnimation();
+  }, [translateX]);
+
+  const startDrift = useCallback(() => {
+    const remaining = maxOffset.current - offset.current;
+    if (remaining <= 0) return;
+    Animated.timing(translateX, {
+      toValue: -maxOffset.current,
+      duration: (remaining / DRIFT_POINTS_PER_SECOND) * 1000,
+      easing: Easing.linear,
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (finished) setDrifting(false); // reached the end; no loop back
+    });
+  }, [translateX]);
 
   // Arriving at the screen starts the drift again — from wherever the strip
   // currently sits, since nothing here touches the offset. Handing the strip
@@ -97,97 +128,105 @@ export default function PostThumbnailRows({ posts, onPressPost, autoScroll = tru
   // one, and the drift picks up where it was left.
   useEffect(() => {
     if (!isFocused) return;
-    tookOver.current = false;
-    driftPaused.current = false;
     setDrifting(autoScroll);
   }, [autoScroll, isFocused]);
+
+  useEffect(() => {
+    if (!drifting || !isFocused || touchHeld.current || posts.length === 0) return;
+    startDrift();
+    return stopDrift;
+  }, [drifting, isFocused, posts.length, measureTick, startDrift, stopDrift]);
 
   // A new month means a new strip; start it from the left again. Keyed on the
   // month rather than the array, because coming back from a post reloads the
   // same posts into a new array and the strip should stay where it was.
   const monthKey = posts.length > 0 ? posts[0].date.slice(0, 7) : '';
   useEffect(() => {
+    translateX.stopAnimation();
     offset.current = 0;
-    tookOver.current = false;
-    scrollRef.current?.scrollTo({ x: 0, animated: false });
-  }, [monthKey]);
+    translateX.setValue(0);
+  }, [monthKey, translateX]);
 
-  useEffect(() => {
-    if (!drifting || !isFocused || posts.length === 0) return;
-    const step = (DRIFT_POINTS_PER_SECOND * DRIFT_INTERVAL_MS) / 1000;
-    const timer = setInterval(() => {
-      if (driftPaused.current || maxOffset.current <= 0) return;
-      const next = Math.min(offset.current + step, maxOffset.current);
-      if (next === offset.current) {
-        setDrifting(false); // reached the end
-        return;
-      }
-      offset.current = next;
-      scrollRef.current?.scrollTo({ x: next, animated: false });
-    }, DRIFT_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [drifting, isFocused, posts.length]);
+  /** Where the strip stood when the current drag began. */
+  const dragOrigin = useRef(0);
 
-  // A tap cannot land while the strip is moving under the finger: the scroll
-  // view reads the touch as the start of a gesture and swallows it. So the
-  // drift holds from the moment a finger touches down — not from the moment
-  // it drags, which a tap never does — and picks up again when it lifts.
-  const pauseForTouch = () => {
-    driftPaused.current = true;
+  const pan = useRef(
+    PanResponder.create({
+      // Deliberately not claiming on touch-down: that is what leaves a tap
+      // with the thumbnail underneath. Only a real sideways drag takes over.
+      onMoveShouldSetPanResponder: (_event, gesture) =>
+        Math.abs(gesture.dx) > DRAG_SLOP && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+      onPanResponderGrant: () => {
+        translateX.stopAnimation();
+        dragOrigin.current = offset.current;
+      },
+      onPanResponderMove: (_event, gesture) => {
+        const next = Math.min(Math.max(dragOrigin.current - gesture.dx, 0), maxOffset.current);
+        offset.current = next;
+        translateX.setValue(-next);
+      },
+      // A drag hands the strip over for the rest of this visit.
+      onPanResponderRelease: () => setDrifting(false),
+      onPanResponderTerminate: () => setDrifting(false),
+    }),
+  ).current;
+
+  // While a finger rests on a thumbnail the strip holds still, so the tile
+  // being pressed doesn't slide out from under it.
+  const holdForTouch = () => {
+    touchHeld.current = true;
+    stopDrift();
   };
-  const resumeAfterTouch = () => {
-    driftPaused.current = false;
+  const releaseAfterTouch = () => {
+    touchHeld.current = false;
+    if (drifting && isFocused) startDrift();
   };
 
   return (
-    <ScrollView
-      ref={scrollRef}
-      horizontal
-      style={styles.strip}
-      contentContainerStyle={styles.content}
-      showsHorizontalScrollIndicator={false}
-      onLayout={onViewportLayout}
-      onContentSizeChange={onContentSizeChange}
-      scrollEventThrottle={16}
-      onScroll={(event) => {
-        offset.current = event.nativeEvent.contentOffset.x;
-      }}
-      onTouchStart={pauseForTouch}
-      onTouchEnd={resumeAfterTouch}
-      onTouchCancel={resumeAfterTouch}
-      onScrollBeginDrag={() => {
-        tookOver.current = true;
-        setDrifting(false);
-      }}
-    >
-      {posts.map((post, index) => {
-        // Even sections top-align and put the label under the image; odd ones
-        // bottom-align and put it above.
-        const bottomAligned = index % 2 === 1;
-        return (
-          <View
-            key={post.date}
-            style={[styles.section, bottomAligned ? styles.sectionBottom : styles.sectionTop]}
-          >
-            <PostReportThumbnail
-              post={post}
-              dateUp={bottomAligned}
-              onPress={onPressPost ? () => onPressPost(post) : undefined}
-            />
-          </View>
-        );
-      })}
-    </ScrollView>
+    <View style={styles.strip} onLayout={onViewportLayout} {...pan.panHandlers}>
+      <Animated.View
+        style={[styles.content, { transform: [{ translateX }] }]}
+        onLayout={onContentLayout}
+      >
+        {posts.map((post, index) => {
+          // Even sections top-align and put the label under the image; odd ones
+          // bottom-align and put it above.
+          const bottomAligned = index % 2 === 1;
+          return (
+            <View
+              key={post.date}
+              style={[styles.section, bottomAligned ? styles.sectionBottom : styles.sectionTop]}
+            >
+              <PostReportThumbnail
+                post={post}
+                dateUp={bottomAligned}
+                onPress={onPressPost ? () => onPressPost(post) : undefined}
+                onPressIn={holdForTouch}
+                onPressOut={releaseAfterTouch}
+              />
+            </View>
+          );
+        })}
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   strip: {
     width: '100%',
+    height: SECTION_HEIGHT,
+    // The row is wider than the screen by design (Figma's is 800 across a 390
+    // frame), so it has to be clipped at the edges.
+    overflow: 'hidden',
   },
   content: {
-    gap: SECTION_GAP,
+    flexDirection: 'row',
     alignItems: 'center',
+    // Sized by its children rather than stretched to the strip, so the row can
+    // run past the screen edge.
+    alignSelf: 'flex-start',
+    gap: SECTION_GAP,
     paddingHorizontal: spacing.md,
   },
   section: {

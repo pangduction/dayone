@@ -284,15 +284,23 @@ Note them here so they don't get re-derived (or quietly dropped) later.
 - **The report montage runs oldest first.** Figma numbers the strip from 1
   left to right, the opposite of the Home list's newest-first order. It
   drifts left to right on its own and stops at the end rather than looping —
-  a jump back to the start would be more jarring than stopping. A drag
-  hands the strip over for the rest of that visit. A **tap** only holds the
-  drift while the finger is down, which is what lets a thumbnail be opened
-  mid-drift: without the hold the scroll view reads the touch as the start
-  of a gesture and swallows it. The drift is also frozen while the screen
-  is not focused, so a post opened from the strip returns to it exactly
-  where it was left — and arriving back counts as a new visit, so it starts
-  moving again from that same spot. The speed and all of that hand-off are
-  ours; Figma says only that the strip moves.
+  a jump back to the start would be more jarring than stopping. **The strip
+  is not a ScrollView**, and that is what makes a thumbnail tappable while
+  it moves: a scroll view being scrolled, even programmatically, cancels
+  touches landing on its content natively, so the press died before JS
+  could hear about it. The row is translated instead, and a PanResponder
+  claims the gesture only after a finger travels 4pt — a tap never does, so
+  it stays with the thumbnail. A drag hands the strip over for the rest of
+  that visit. The drift is also frozen while the screen is not focused, so
+  a post opened from the strip returns to it exactly where it was left, and
+  arriving back counts as a new visit, so it moves again from that spot.
+  The speed and all of that hand-off are ours; Figma says only that the
+  strip moves.
+- **A recording's duration counts down while it plays.** A six second clip
+  reads 0:06, 0:05, 0:04, rounded up so it starts on its full length rather
+  than dropping a second in, and returns to the full length once the clip
+  ends and the player rewinds. Figma only draws the idle label, so the
+  countdown is ours — without it nothing on the row moves during playback.
 - **No writing ahead.** DayOne records the day you are living, so calendar
   days after today are inert: they don't open Add and don't open a post.
   Today and past days both stay writable. The month picker follows the same

@@ -30,6 +30,11 @@ type Props = {
  * Playback is real: the play button toggles an `expo-audio` player over the
  * stored file, and the glyph follows what the player is actually doing rather
  * than a local flag, so reaching the end resets it on its own.
+ *
+ * The duration counts down while playing — a six second clip reads 0:06, then
+ * 0:05, 0:04 — so there is something moving to show the audio is running. It
+ * goes back to the full length once the clip finishes and the player is
+ * rewound. Figma only ever draws the idle label, so the countdown is ours.
  */
 export default function RecordRow({ recording, variant, onRemove }: Props) {
   const player = useAudioPlayer({ uri: recording.uri });
@@ -45,6 +50,17 @@ export default function RecordRow({ recording, variant, onRemove }: Props) {
     if (isPlaying) player.pause();
     else player.play();
   };
+
+  // The stored length is the authority rather than `status.duration`, which
+  // reads 0 until the file has loaded and would flash a wrong total.
+  const elapsedMs = Math.max(0, status.currentTime * 1000);
+  const remainingMs = Math.max(0, recording.durationMs - elapsedMs);
+  // Rounded up, so a clip starts on its full length and ticks 6, 5, 4 rather
+  // than dropping to 5 a fraction of a second in.
+  const countdownMs = Math.ceil(remainingMs / 1000) * 1000;
+  // Idle — and after the end, where didJustFinish has rewound it — shows the
+  // whole length; anything part-way through shows what is left.
+  const label = formatDuration(elapsedMs > 0 ? countdownMs : recording.durationMs);
 
   return (
     <View style={[styles.row, variant === 'edit' ? styles.edit : styles.view]}>
@@ -65,7 +81,7 @@ export default function RecordRow({ recording, variant, onRemove }: Props) {
             variant === 'edit' ? styles.durationEdit : styles.durationView,
           ]}
         >
-          {formatDuration(recording.durationMs)}
+          {label}
         </Text>
         {variant === 'edit' && onRemove ? (
           <IconButton accessibilityLabel="Remove recording" onPress={onRemove}>

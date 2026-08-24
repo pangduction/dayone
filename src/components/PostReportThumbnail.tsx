@@ -18,6 +18,13 @@ type Props = {
    */
   dateUp: boolean;
   onPress?: () => void;
+  /**
+   * Fired the instant the finger lands, before any press is decided. The
+   * strip uses it to hold its drift, which it must do or the scroll view
+   * cancels the press before it fires.
+   */
+  onPressIn?: () => void;
+  onPressOut?: () => void;
 };
 
 /**
@@ -46,7 +53,7 @@ type Props = {
  * Figma's Record/View: the waveform over the duration in white (node
  * 3196:13914). Over a photo it sits on `colors.photoScrim`.
  */
-export default function PostReportThumbnail({ post, dateUp, onPress }: Props) {
+export default function PostReportThumbnail({ post, dateUp, onPress, onPressIn, onPressOut }: Props) {
   const date = parseDateKey(post.date);
   const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
   // Figma writes the day in brackets before the weekday: "(31), Sat".
@@ -112,6 +119,8 @@ export default function PostReportThumbnail({ post, dateUp, onPress }: Props) {
   return (
     <Container
       onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={onPress ? `Open the post for ${post.date}` : undefined}
       style={styles.column}
