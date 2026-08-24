@@ -562,14 +562,19 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     client at the deployed function's URL. Until both exist,
     `submitContactRequest` throws with a message naming the missing env var
     rather than silently pretending to send.
-  - **Success doesn't clear the form or navigate away.** Per
-    Setting-Help & Support-6 (node `3202:5200`), the screenshot is exactly
-    the filled-in form with an `AlertBanner` ("Feedback sent. Thank you for
-    sharing!") over the header — the same 3s transient-banner pattern
-    `HomeScreen`'s post-delete flash and Language's "Not supported yet."
-    both already use. A failed send (missing config, network error, a
-    non-2xx from the function) shows a native `Alert` instead, the same
-    failure-reporting pattern `ExportToPdfScreen`'s "Generate PDF" uses.
+  - **Success pops back to Setting-Main, not a "sent" state of this screen
+    itself.** Node `3202:5200` ("Setting-Help & Support-6") first read as
+    the form staying filled-in with a banner over its own header — but the
+    section's real sixth frame, node `3269:6332`, is Setting-Main again
+    with the identical `AlertBanner` ("Feedback sent. Thank you for
+    sharing!") over *its* header. `handleSubmit` navigates back with
+    `navigation.navigate('Setting', { flash: '...' })` on success — the
+    same `flash` route-param pattern `HomeScreen`'s post-delete flash
+    already uses — rather than this screen showing the banner and staying
+    put. A failed send (missing config, network error, a non-2xx from the
+    function) shows a native `Alert` instead and stays on this screen,
+    the same failure-reporting pattern `ExportToPdfScreen`'s "Generate PDF"
+    uses, since nothing was actually sent.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.

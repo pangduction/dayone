@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderX from '../components/HeaderX';
@@ -10,6 +11,7 @@ import SettingSection from '../components/SettingSection';
 import SettingMenuRow from '../components/SettingMenuRow';
 import SettingDivider from '../components/SettingDivider';
 import LanguageModal from '../components/LanguageModal';
+import AlertBanner from '../components/AlertBanner';
 import { dateKey } from '../data/posts';
 import { getNotificationSettings } from '../data/notificationSettings';
 import { colors, spacing } from '../theme/tokens';
@@ -62,13 +64,35 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  * "Help & Support" (Flow 7.4) is wired to `HelpSupportScreen` — a real
  * contact form, not a mailto placeholder: submitting it actually sends an
  * email to the product owner (see that screen's own doc comment and
- * `src/data/contact.ts` / `api/contact.ts` for the send path).
+ * `src/data/contact.ts` / `api/contact.ts` for the send path). Per
+ * Setting-Main's own "sent" state (node 3269:6332), a successful send pops
+ * back to *this* screen and flashes the confirmation here — the same
+ * `flash` route-param pattern `HomeScreen` uses after a post delete — rather
+ * than showing it on `HelpSupportScreen` itself.
  */
 export default function SettingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { params } = useRoute<RouteProp<RootStackParamList, 'Setting'>>();
   const [notificationsOn, setNotificationsOn] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [languageAlert, setLanguageAlert] = useState<string | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
+
+  // A screen hands the banner over as a route param on its way back here.
+  // Clearing the param immediately means it shows once rather than again
+  // every time this screen regains focus.
+  useEffect(() => {
+    if (!params?.flash) return;
+    setFlash(params.flash);
+    navigation.setParams({ flash: undefined });
+  }, [params?.flash, navigation]);
+
+  useEffect(() => {
+    if (flash === null) return;
+    // Figma doesn't say how long the banner stays; matches HomeScreen's flash.
+    const timer = setTimeout(() => setFlash(null), 3000);
+    return () => clearTimeout(timer);
+  }, [flash]);
 
   // Refreshed on every focus, since this reflects state that can change
   // from the Notification screen itself, or from the device's real Settings
@@ -144,6 +168,12 @@ export default function SettingScreen() {
         onUnsupportedLanguagePress={() => setLanguageAlert('Not supported yet.')}
         alertMessage={languageAlert}
       />
+
+      {flash !== null ? (
+        <View style={styles.flash} pointerEvents="none">
+          <AlertBanner message={flash} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -162,5 +192,14 @@ const styles = StyleSheet.create({
   },
   menuContent: {
     gap: spacing.md,
+  },
+  flash: {
+    // Matches HomeScreen's own flash placement — pinned to the screen's top,
+    // over the header.
+    position: 'absolute',
+    top: 47,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.md,
   },
 });

@@ -33,8 +33,12 @@ export type RootStackParamList = {
   PostSearch: { year: number; month: number };
   /** The month-as-a-montage screen (Figma Report-Default, node 3196:12678). */
   Report: undefined;
-  /** Reached from Report's ic/setting (Figma Setting-Main, node 3198:6348). */
-  Setting: undefined;
+  /**
+   * Reached from Report's ic/setting (Figma Setting-Main, node 3198:6348).
+   * `flash` shows a one-off Alert banner over it, same as Home's — used by
+   * Help & Support's "Done" once the real send succeeds.
+   */
+  Setting: { flash?: string } | undefined;
   /** Flow 7.1 Notification (section 3199:8210), reached from Setting-Main's "Notifications" row. */
   Notification: undefined;
   /** Flow 7.4 Help & Support (section 3201:7418), reached from Setting-Main's "Help & Support" row. */
