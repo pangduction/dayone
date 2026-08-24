@@ -50,12 +50,19 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  * All screens render their own custom header (per Figma), so the native
  * stack header is turned off everywhere.
  *
- * Report has no transition at all. Home and Report are peers reached from the
+ * Home and Report both have no transition. They are peers reached from the
  * same bottom bar, not one pushed out of the other, so a slide reads as
  * "deeper into the same thing" — and a cross-fade, tried first, still put an
- * animation between two screens that should simply swap. A native stack
- * animates a pop with the animation of the screen being removed, so setting
- * it on Report alone covers both directions.
+ * animation between two screens that should simply swap.
+ *
+ * Both need the option, not just Report. Tapping Report pushes it, which its
+ * own `animation` governs; tapping Home from there pops back to a Home that
+ * is already in the stack, and that transition follows Home's option rather
+ * than the departing screen's. Setting only one left the two directions
+ * looking different.
+ *
+ * The one thing this also changes is the return to Home after deleting a
+ * post, which is the same pop — it now swaps rather than sliding.
  *
  * "Add" pushes as an ordinary page rather than a modal sheet: its Figma
  * frame (node 3184:5508) is a full screen with a Header/Add whose
@@ -67,7 +74,11 @@ export default function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ animation: 'none' }}
+        />
         <Stack.Screen name="HomeList" component={HomeListScreen} />
         <Stack.Screen name="PostSearch" component={PostSearchScreen} />
         <Stack.Screen

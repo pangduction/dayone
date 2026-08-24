@@ -263,9 +263,12 @@ Note them here so they don't get re-derived (or quietly dropped) later.
 - **Switching between Home and Report has no transition.** They are peers
   on the same bottom bar, not one pushed out of the other; a slide reads as
   going deeper, and a cross-fade still animates a swap that should just
-  happen. A native stack animates a pop with the animation of the screen
-  being removed, so `animation: 'none'` on Report alone covers both
-  directions.
+  happen. **Both** screens carry `animation: 'none'`: tapping Report pushes
+  it, which Report's own option governs, but tapping Home pops back to a
+  Home already in the stack, and that follows Home's option rather than the
+  departing screen's. Setting one alone leaves the two directions looking
+  different. The same pop returns to Home after a post is deleted, so that
+  swaps rather than slides too.
 - **A month's report exists only once the month is over.** The Lock Paper
   says so outright ("Catch it on the morning of the 1st"), so the current
   month is covered by the veil rather than shown, and its strip does not
