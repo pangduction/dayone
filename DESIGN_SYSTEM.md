@@ -252,6 +252,20 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   List Thumbnails, which carry a weekday and a day but no month — across
   months, two rows reading "Sat 15" would be indistinguishable. Figma draws
   no "no matches" state, so a query that finds nothing lists nothing.
+- **Home and Report put the Calendar Title on the same line.** Figma does
+  not: Home's title sits at y 135.58 (node `3184:4121`) and Report's at
+  143.87 (node `3196:13480`), 8.29 apart, which reads as the title jumping
+  when the tab changes. Both use Home's figure, kept as
+  `layout.headerToTitle` (16.58 below a header that ends at 119). Home
+  reaches it by grouping its header and calendar so that gap is fixed
+  rather than whatever `space-between` distributes — otherwise the title's
+  position would shift with the screen height and could never match.
+- **Switching between Home and Report has no transition.** They are peers
+  on the same bottom bar, not one pushed out of the other; a slide reads as
+  going deeper, and a cross-fade still animates a swap that should just
+  happen. A native stack animates a pop with the animation of the screen
+  being removed, so `animation: 'none'` on Report alone covers both
+  directions.
 - **A month's report exists only once the month is over.** The Lock Paper
   says so outright ("Catch it on the morning of the 1st"), so the current
   month is covered by the veil rather than shown, and its strip does not

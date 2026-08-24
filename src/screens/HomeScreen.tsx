@@ -14,7 +14,7 @@ import CalendarDateCell from '../components/CalendarDateCell';
 import { dateKey, getPostsForMonth } from '../data/posts';
 import type { Post } from '../data/posts';
 import { WEEKDAY_LABELS, daysInMonth, getCalendarWeeks } from '../utils/calendar';
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 /**
  * Figma: "Home-Calendar-Default" (node 3184:4117) — the first screen after
@@ -94,64 +94,66 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <IconButton
-          accessibilityLabel="Show this month as a list"
-          onPress={() => navigation.navigate('HomeList', { year, month })}
-        >
-          <IcRows size={24} color={colors.textPrimary} />
-        </IconButton>
-        <IconButtonContained accessibilityLabel="Share">
-          <IcShare size={24} color={colors.textPrimary} />
-        </IconButtonContained>
-      </View>
+      <View style={styles.topGroup}>
+        <View style={styles.header}>
+          <IconButton
+            accessibilityLabel="Show this month as a list"
+            onPress={() => navigation.navigate('HomeList', { year, month })}
+          >
+            <IcRows size={24} color={colors.textPrimary} />
+          </IconButton>
+          <IconButtonContained accessibilityLabel="Share">
+            <IcShare size={24} color={colors.textPrimary} />
+          </IconButtonContained>
+        </View>
 
-      <View style={styles.calendar}>
-        <Pressable
-          style={styles.titleRow}
-          onPress={() => setPickerOpen(true)}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Change month"
-        >
-          <Text style={[typography.calendarTitle, styles.titleText]}>
-            {new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' })}
-          </Text>
-          <Text style={[typography.calendarTitle, styles.titleText]}>{year}</Text>
-          <IcArrowDown size={20} color={colors.textPrimary} />
-        </Pressable>
+        <View style={styles.calendar}>
+          <Pressable
+            style={styles.titleRow}
+            onPress={() => setPickerOpen(true)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Change month"
+          >
+            <Text style={[typography.calendarTitle, styles.titleText]}>
+              {new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' })}
+            </Text>
+            <Text style={[typography.calendarTitle, styles.titleText]}>{year}</Text>
+            <IcArrowDown size={20} color={colors.textPrimary} />
+          </Pressable>
 
-        <View style={styles.calendarBody}>
-          <View style={styles.weekdayRow}>
-            {WEEKDAY_LABELS.map((label) => (
-              <Text key={label} style={[typography.calendarDay, styles.weekdayLabel]}>
-                {label}
-              </Text>
-            ))}
-          </View>
+          <View style={styles.calendarBody}>
+            <View style={styles.weekdayRow}>
+              {WEEKDAY_LABELS.map((label) => (
+                <Text key={label} style={[typography.calendarDay, styles.weekdayLabel]}>
+                  {label}
+                </Text>
+              ))}
+            </View>
 
-          <View style={styles.weeksColumn}>
-            {weeks.map((week, weekIndex) => (
-              <View key={weekIndex} style={styles.weekRow}>
-                {week.map((day, dayIndex) => {
-                  const key = day === null ? null : dateKey(new Date(year, month, day));
-                  // DayOne records the day you are living, so a day after today
-                  // can't be written and is left inert. Both keys are
-                  // zero-padded 'YYYY-MM-DD', so a string compare is a date
-                  // compare.
-                  const isFuture = key !== null && key > todayKey;
-                  return (
-                    <CalendarDateCell
-                      key={dayIndex}
-                      day={day}
-                      isToday={key === todayKey}
-                      post={key === null ? null : postsByDate[key]}
-                      onPress={key === null || isFuture ? undefined : () => handleDayPress(key)}
-                    />
-                  );
-                })}
-              </View>
-            ))}
+            <View style={styles.weeksColumn}>
+              {weeks.map((week, weekIndex) => (
+                <View key={weekIndex} style={styles.weekRow}>
+                  {week.map((day, dayIndex) => {
+                    const key = day === null ? null : dateKey(new Date(year, month, day));
+                    // DayOne records the day you are living, so a day after today
+                    // can't be written and is left inert. Both keys are
+                    // zero-padded 'YYYY-MM-DD', so a string compare is a date
+                    // compare.
+                    const isFuture = key !== null && key > todayKey;
+                    return (
+                      <CalendarDateCell
+                        key={dayIndex}
+                        day={day}
+                        isToday={key === todayKey}
+                        post={key === null ? null : postsByDate[key]}
+                        onPress={key === null || isFuture ? undefined : () => handleDayPress(key)}
+                      />
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       </View>
@@ -216,6 +218,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: spacing.md,
+  },
+  topGroup: {
+    // Header and calendar are one block so the gap between them is a fixed
+    // `layout.headerToTitle` rather than whatever space-between happens to
+    // distribute. That pins the title to Figma's 135.58 on every device — and
+    // lets the Report screen land its own title on exactly the same line.
+    // The free space still spreads below, across the two gaps that remain.
+    width: '100%',
+    gap: layout.headerToTitle,
   },
   header: {
     flexDirection: 'row',

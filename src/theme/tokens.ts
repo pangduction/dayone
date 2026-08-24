@@ -143,6 +143,24 @@ export const spacing = {
 } as const;
 
 // ---------------------------------------------------------------------------
+// Layout — screen-level offsets that aren't part of the visual language, but
+// have to agree between screens. Not design tokens; they live here so two
+// screens can't drift apart.
+// ---------------------------------------------------------------------------
+export const layout = {
+  /**
+   * Figma: the gap between a screen's header and the Calendar Title under it.
+   * Home's header ends at y 119 and its Calendar starts at 135.58 (nodes
+   * 3184:5500 / 3184:4121), so 16.58.
+   *
+   * Report's own frame puts its title 8.29 lower (Report Content at 119 with
+   * the title at 24.87 inside it, node 3196:13480). That difference reads as a
+   * jump when switching tabs, so both screens use Home's figure.
+   */
+  headerToTitle: 16.58,
+} as const;
+
+// ---------------------------------------------------------------------------
 // Corner radius
 // ---------------------------------------------------------------------------
 export const radius = {

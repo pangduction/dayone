@@ -12,7 +12,7 @@ import { IcArrowDown } from '../components/icons/HomeIcons';
 import { IcPresent, IcSetting } from '../components/icons/ReportIcons';
 import { getMonthsWithPosts, getPostsForMonth } from '../data/posts';
 import type { Post } from '../data/posts';
-import { colors, spacing, typography } from '../theme/tokens';
+import { colors, layout, spacing, typography } from '../theme/tokens';
 
 /**
  * Figma: "Report-Default" (node 3196:12678, this month, locked) and
@@ -184,14 +184,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   titleRow: {
-    // Figma "Calendar Title" — the same block as Home's, at y 24.87 inside
-    // Report Content (node 3196:13480).
+    // Figma "Calendar Title" — the same block Home has. Report's own frame
+    // puts it 8.29 lower than Home's (Report Content at y 119 with the title
+    // at 24.87 inside it, node 3196:13480, against Home's 135.58), which reads
+    // as the title jumping when you switch tabs. Both screens use Home's
+    // offset instead.
     flexDirection: 'row',
     gap: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
-    paddingTop: 24.87, // Figma-exact offset, not on the spacing scale
+    paddingTop: layout.headerToTitle,
     width: '100%',
   },
   titleText: {

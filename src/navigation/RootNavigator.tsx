@@ -50,11 +50,12 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  * All screens render their own custom header (per Figma), so the native
  * stack header is turned off everywhere.
  *
- * Report cross-fades rather than sliding. Home and Report are peers reached
- * from the same bottom bar, not one pushed out of the other, and a slide
- * reads as "deeper into the same thing". A native stack animates a pop with
- * the animation of the screen being removed, so setting it on Report alone
- * gives the fade in both directions.
+ * Report has no transition at all. Home and Report are peers reached from the
+ * same bottom bar, not one pushed out of the other, so a slide reads as
+ * "deeper into the same thing" — and a cross-fade, tried first, still put an
+ * animation between two screens that should simply swap. A native stack
+ * animates a pop with the animation of the screen being removed, so setting
+ * it on Report alone covers both directions.
  *
  * "Add" pushes as an ordinary page rather than a modal sheet: its Figma
  * frame (node 3184:5508) is a full screen with a Header/Add whose
@@ -72,7 +73,7 @@ export default function RootNavigator() {
         <Stack.Screen
           name="Report"
           component={ReportScreen}
-          options={{ animation: 'fade' }}
+          options={{ animation: 'none' }}
         />
         <Stack.Screen name="Add" component={AddScreen} />
         <Stack.Screen name="PostDetail" component={PostDetailScreen} />
