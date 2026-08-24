@@ -240,11 +240,10 @@ the wrong glyph.
   AsyncStorage directly. `exports.ts` is the same pattern for generated PDF
   file metadata, with real files under `documentDirectory/exports/` — see
   the Export to PDF product rule below.
-- `src/pdf/postPageTemplate.ts` — builds the static HTML `expo-print` turns
-  into the real exported PDF, one page per post mirroring
-  `PostDetailScreen.tsx`'s own conditional section logic exactly (Figma's
-  "PDF Image" node `3267:6263` is the same eight post shapes as Post Detail,
-  just as print pages).
+- `src/pdf/postPageTemplate.ts` — wraps page screenshots (captured off-screen
+  from `PdfPagePreview.tsx`, one per post) into the HTML `expo-print` turns
+  into the real exported PDF. It no longer reconstructs a post's layout
+  itself — see the Export to PDF product rule below for why.
 - `src/utils/calendar.ts` — pure date-math helpers (days in month, weekday
   grid) shared by any screen that renders a calendar. `getDateRangeGrid` is
   a second, Monday-start grid for `DateRangeModal` that (unlike
@@ -358,10 +357,9 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   its interactive chrome is never what leaves the app.
 - **Export to PDF is a real device feature**, not a mock list, per explicit
   product direction. "Generate PDF" reads the actual posts in the chosen
-  range (`getPostsInRange`), renders them with `src/pdf/postPageTemplate.ts`,
-  and hands that HTML to `expo-print`'s `printToFileAsync` — a real PDF file,
-  not a placeholder row. The three behaviors a static Figma mock can't show
-  were product decisions rather than reads:
+  range (`getPostsInRange`) and hands `expo-print`'s `printToFileAsync` a
+  real, multi-page PDF file — not a placeholder row. The three behaviors a
+  static Figma mock can't show were product decisions rather than reads:
   - **Entry flow**: tapping "Export to PDF" on Setting-Main opens the
     date-range modal (`DateRangeModal`) *directly over* Setting-Main, per a
     re-fetch of node `3199:8735` (its backdrop is the blurred Setting-Main
@@ -376,13 +374,22 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     `expiresAt` on every read, deleting both the metadata row and the PDF's
     actual bytes (`documentDirectory/exports/<filename>.pdf`), so an expired
     file is genuinely gone rather than just hidden.
-  A photo embeds as a base64 data URI rather than a `file://` reference,
-  because `printToFileAsync`'s iOS WebView can't resolve local asset paths
-  (a documented WKWebView limitation) — see `postPageTemplate.ts`'s own doc
-  comment. The template's fonts fall back to the system sans-serif stack
-  rather than embedding Inter/Poppins as base64 `@font-face` data, the same
-  trade-off already made for unreachable Figma assets elsewhere (§5) — colour,
-  spacing, and radius still come from `tokens.ts`.
+  - **The printed file and the in-app preview are pixel-identical, by
+    construction rather than by two implementations being kept in sync.**
+    An earlier version built the PDF from a hand-authored HTML
+    reconstruction of each post — its own font fallback (`printToFileAsync`
+    renders through a platform WebView with no access to the app's bundled
+    Inter/Poppins), its own approximation of `PhotoSection`'s fit/filled
+    logic, its own redrawn waveform — and it inevitably drifted from what
+    `PdfPagePreview` actually showed on screen. `ExportToPdfScreen.tsx` now
+    renders each post's real `PdfPagePreview` off-screen (same component the
+    preview screen uses) and captures it with `react-native-view-shot` —
+    exactly the pattern `ShareableCalendarCard` already uses for Home's
+    Share button. `src/pdf/postPageTemplate.ts` only wraps those captured
+    images into print-ready HTML now; it no longer reconstructs any layout
+    itself. A photo post's capture waits on `PhotoSection`'s own
+    `onLoadSettled` callback (its real-size read is async) before the
+    screenshot is taken, so a page is never captured half-loaded.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.

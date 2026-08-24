@@ -8,6 +8,14 @@ type Props = {
   fitMode: PhotoFit;
   /** Overlays drawn on top of the photo, e.g. the Add screen's Fit/Filled toggle. */
   children?: ReactNode;
+  /**
+   * Fires once the photo's real size has been read (or reading it failed) —
+   * i.e. once this section has settled into its final aspect ratio and has
+   * nothing left to wait on. The Export-to-PDF capture flow
+   * (`ExportToPdfScreen.tsx`) uses this to know when an off-screen page is
+   * actually safe to screenshot, rather than capturing mid-layout.
+   */
+  onLoadSettled?: () => void;
 };
 
 /**
@@ -28,7 +36,7 @@ type Props = {
  *     section shorter than the square rather than padding it out.
  *   - Filled: always the square, with the photo cropped to fill it.
  */
-export default function PhotoSection({ uri, fitMode, children }: Props) {
+export default function PhotoSection({ uri, fitMode, children, onLoadSettled }: Props) {
   // Width over height. 1 until the real size is known, so the first paint is
   // the square Figma draws rather than a jump from some other shape.
   const [photoAspect, setPhotoAspect] = useState(1);
@@ -38,15 +46,20 @@ export default function PhotoSection({ uri, fitMode, children }: Props) {
     Image.getSize(
       uri,
       (width, height) => {
-        if (!cancelled && height > 0) setPhotoAspect(width / height);
+        if (cancelled) return;
+        if (height > 0) setPhotoAspect(width / height);
+        onLoadSettled?.();
       },
       () => {
-        if (!cancelled) setPhotoAspect(1);
+        if (cancelled) return;
+        setPhotoAspect(1);
+        onLoadSettled?.();
       },
     );
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uri]);
 
   // Never taller than the square: a portrait keeps Figma's framing.

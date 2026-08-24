@@ -8,15 +8,10 @@ type Props = {
   color?: string;
 };
 
-/**
- * How many bars fill the track, whatever the recording's length. Exported so
- * the Export-to-PDF template (`src/pdf/postPageTemplate.ts`) can draw the
- * exact same bar geometry as static HTML for a post's Record/View — the PDF
- * has no player to animate, but it still reads as the same waveform.
- */
-export const BAR_COUNT = 64;
-export const BAR_WIDTH = 2;
-export const MIN_BAR = 2;
+/** How many bars fill the track, whatever the recording's length. */
+const BAR_COUNT = 64;
+const BAR_WIDTH = 2;
+const MIN_BAR = 2;
 
 /**
  * Figma's "music track" (nodes 3184:7867, 3192:12490, 3192:12561) — the
@@ -53,7 +48,7 @@ export default function Waveform({ samples, height, color = colors.textPlacehold
 }
 
 /** Averages `samples` into exactly `count` buckets. */
-export function resample(samples: number[], count: number): number[] {
+function resample(samples: number[], count: number): number[] {
   if (samples.length === 0) return new Array(count).fill(0);
   if (samples.length === count) return samples;
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import PhotoSection from './PhotoSection';
 import RecordRow from './RecordRow';
@@ -9,6 +9,13 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
 
 type Props = {
   post: Post;
+  /**
+   * Fires once the body has nothing left to settle asynchronously — a photo
+   * post waits on `PhotoSection`'s own real-size read, a photo-less post
+   * fires immediately. The Export-to-PDF capture flow uses this to know when
+   * an off-screen page is actually safe to screenshot.
+   */
+  onReady?: () => void;
 };
 
 /**
@@ -20,11 +27,18 @@ type Props = {
  * Detail, just drawn as pages) instead of a second, hand-copied version that
  * could drift from the live screen.
  */
-export default function PostDetailBody({ post }: Props) {
+export default function PostDetailBody({ post, onReady }: Props) {
   const written = useMemo(() => parseDateKey(post.date), [post.date]);
   // Same formatting the live screen has always used for its own Date Written block.
   const dateLabel = written.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const dayLabel = written.toLocaleDateString('en-US', { weekday: 'long' });
+
+  // A photo-less post has nothing async to wait on — PhotoSection's own
+  // onLoadSettled covers the other case.
+  useEffect(() => {
+    if (!post.photoUri) onReady?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.photoUri]);
 
   return (
     <View style={styles.detail}>
@@ -34,7 +48,9 @@ export default function PostDetailBody({ post }: Props) {
         <Text style={[typography.overline, styles.dayLabel]}>{dayLabel}</Text>
       </View>
 
-      {post.photoUri ? <PhotoSection uri={post.photoUri} fitMode={post.fitMode} /> : null}
+      {post.photoUri ? (
+        <PhotoSection uri={post.photoUri} fitMode={post.fitMode} onLoadSettled={onReady} />
+      ) : null}
 
       {post.recording ? <RecordRow recording={post.recording} variant="view" /> : null}
 
