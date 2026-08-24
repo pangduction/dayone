@@ -104,7 +104,12 @@ export default function ReportScreen() {
           <PostThumbnailRows
             posts={posts}
             autoScroll={!locked}
-            onPressPost={(post) => navigation.navigate('PostDetail', { date: post.date })}
+            // A locked month's strip is behind the Lock Paper, which swallows
+            // every touch anyway. Withholding the handler says so outright
+            // rather than leaving thumbnails that look tappable but aren't.
+            onPressPost={
+              locked ? undefined : (post) => navigation.navigate('PostDetail', { date: post.date })
+            }
           />
 
           {locked ? (

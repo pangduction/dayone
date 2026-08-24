@@ -40,16 +40,22 @@ const DRIFT_INTERVAL_MS = 16;
  * (0,180) (140,180) — every even one topped out at 0, every odd one bottomed
  * out at 320.
  *
- * The strip drifts left to right on its own and can be dragged. Dragging
- * takes over: the drift stops on touch and does not resume, so it never
- * fights the reader. It also stops on reaching the end rather than looping,
- * since a jump back to the start would be more jarring than stopping.
+ * The strip drifts left to right on its own and can be dragged. A drag hands
+ * it over for good, so the drift never fights the reader. A tap is different:
+ * it only pauses the drift while the finger is down, then the drift resumes.
+ * That distinction is not cosmetic — a thumbnail cannot be tapped while the
+ * strip is moving under the finger, because the scroll view reads the touch
+ * as the start of a gesture. It also stops on reaching the end rather than
+ * looping, since a jump back to the start would be more jarring.
  */
 export default function PostThumbnailRows({ posts, onPressPost, autoScroll = true }: Props) {
   const scrollRef = useRef<ScrollView>(null);
   const offset = useRef(0);
   const maxOffset = useRef(0);
   const [drifting, setDrifting] = useState(autoScroll);
+  // Set once the reader actually drags. A tap is not a drag, so it only
+  // pauses the drift for as long as the finger is down.
+  const tookOver = useRef(false);
 
   // Measurements needed to know where the end is.
   const viewportWidth = useRef(0);
@@ -70,14 +76,19 @@ export default function PostThumbnailRows({ posts, onPressPost, autoScroll = tru
   };
 
   useEffect(() => {
+    tookOver.current = false;
     setDrifting(autoScroll);
   }, [autoScroll]);
 
-  // A new month means a new strip; start it from the left again.
+  // A new month means a new strip; start it from the left again. Keyed on the
+  // month rather than the array, because coming back from a post reloads the
+  // same posts into a new array and the strip should stay where it was.
+  const monthKey = posts.length > 0 ? posts[0].date.slice(0, 7) : '';
   useEffect(() => {
     offset.current = 0;
+    tookOver.current = false;
     scrollRef.current?.scrollTo({ x: 0, animated: false });
-  }, [posts]);
+  }, [monthKey]);
 
   useEffect(() => {
     if (!drifting || posts.length === 0) return;
@@ -95,6 +106,15 @@ export default function PostThumbnailRows({ posts, onPressPost, autoScroll = tru
     return () => clearInterval(timer);
   }, [drifting, posts.length]);
 
+  // A tap cannot land while the strip is moving under the finger: the scroll
+  // view reads the touch as the start of a gesture and swallows it. Pausing
+  // the drift on touch-down — rather than on drag, which a tap never
+  // produces — is what makes a thumbnail tappable at all.
+  const pauseForTouch = () => setDrifting(false);
+  const resumeAfterTouch = () => {
+    if (!tookOver.current && autoScroll) setDrifting(true);
+  };
+
   return (
     <ScrollView
       ref={scrollRef}
@@ -108,7 +128,13 @@ export default function PostThumbnailRows({ posts, onPressPost, autoScroll = tru
       onScroll={(event) => {
         offset.current = event.nativeEvent.contentOffset.x;
       }}
-      onScrollBeginDrag={() => setDrifting(false)}
+      onTouchStart={pauseForTouch}
+      onTouchEnd={resumeAfterTouch}
+      onTouchCancel={resumeAfterTouch}
+      onScrollBeginDrag={() => {
+        tookOver.current = true;
+        setDrifting(false);
+      }}
     >
       {posts.map((post, index) => {
         // Even sections top-align and put the label under the image; odd ones
