@@ -9,7 +9,7 @@ import PostListThumbnail from '../components/PostListThumbnail';
 import { IcSearch } from '../components/icons/ListIcons';
 import { getPostsForMonth } from '../data/posts';
 import type { Post } from '../data/posts';
-import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
  * Figma: "Home-List-Search-1" (node 3192:10548, nothing typed) and
@@ -65,9 +65,13 @@ export default function PostSearchScreen() {
 
       <View style={styles.body}>
         <View style={styles.searchField}>
-          <IcSearch size={16} color={colors.textPrimary} />
+          {/* The magnifier is G900 while the field is empty and Accent once
+              something has been typed (nodes 3192:10554 vs 3192:11131). Both
+              Figma frames show a caret, so the trigger is the query, not
+              focus. */}
+          <IcSearch size={16} color={query === '' ? colors.textPrimary : colors.accent} />
           <TextInput
-            style={[typography.body, styles.input]}
+            style={styles.input}
             value={query}
             onChangeText={setQuery}
             placeholder="What are you looking for?"
@@ -114,25 +118,40 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   searchField: {
-    // Figma "Search input field" (node 3192:10553): 358 x 47 — padding 12 all
-    // round over one Body line — gap 8, radius.sm, 1px G100.
+    // Figma "Search input field" (node 3192:10553): 358 x 47, gap 8,
+    // radius.sm, 1px G100, and **no shadow** — unlike the plain Input field,
+    // this one carries none.
+    //
+    // The 47 is Figma's 12 + a 23pt line + 12. Set as a height with only the
+    // horizontal padding, so the 1px border doesn't push the box to 49 and
+    // the line still has 45pt to sit in — the trap that cut the month chips'
+    // descenders when a fixed height and vertical padding were combined.
     width: '100%',
+    height: 47,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    padding: spacing[5],
+    paddingHorizontal: spacing[5],
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
     backgroundColor: colors.background,
-    ...shadows.xs,
   },
   input: {
     flex: 1,
+    height: '100%',
     color: colors.textPrimary,
-    // RN gives a TextInput its own default padding on Android; the field's
-    // own 12 is the spec, so zero it out.
+    // RN gives a TextInput its own default padding; the field's own box is
+    // the spec, so zero it out.
     padding: 0,
+    // Body's fields are listed out rather than spread, which is the one place
+    // DESIGN_SYSTEM.md §3's "spread the whole style" rule doesn't apply: the
+    // style's 22.5 lineHeight shifts the text off centre on a single-line iOS
+    // TextInput. Everything else about Body is kept; the field's own height
+    // does the centring.
+    fontFamily: typography.body.fontFamily,
+    fontSize: typography.body.fontSize,
+    letterSpacing: typography.body.letterSpacing,
   },
   results: {
     flex: 1,
