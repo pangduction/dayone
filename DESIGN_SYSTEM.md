@@ -125,6 +125,8 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Modal/Date-Report                    | 16 (content)      | 16   | —            | **structurally identical to Modal/Date-Default** — same shell, year stepper, divider, twelve chips, Done. Only which chips are enabled differs, so it reuses `MonthPickerModal` through its `isSelectable` prop rather than being a second component. Node `3198:4736`, in context `3198:4740`. |
 | Modal/Delete-Post                    | —                 | 8    | —            | fills the shell above: two body lines in `typography.body` / `colors.textSecondary`, then "Delete" (Primary, **warning** tone) over "Cancel" (White). Raised by the post detail header's Delete. Node `3233:4928`, in context `3233:4929`. See `DeletePostModal.tsx`. |
 
+| Share Image                          | 47 top / 34 bottom (card) | space-between | — | the picture actually shared from Home's Share button, not a screenshot of the live screen: Figma draws its own frame (node `3198:5765`) at a fixed 390x844, with Header/Calendar and Navigation present but at **opacity 0** — kept only to reserve their height so the calendar lands on the same spot it does on Home. The Calendar Title drops `ic/arrow-down` and isn't a button, since nothing on a shared image can be tapped. The Processing block gains a second line: a solid `colors.textPrimary` "Created by Dayone" pill (`typography.overline` "Created by" + `typography.caption` "Dayone", both `colors.textOnDark`, gap **3** — Figma-exact, not on the spacing scale) under "This month's record", at the same tight 3pt gap. See `ShareableCalendarCard.tsx`, captured off-screen by `react-native-view-shot` and handed to `expo-sharing`'s OS share sheet from `HomeScreen.tsx`. |
+
 When implementing a component not in this table, pull its real spec with
 `get_design_context` on its node in the Design System page — don't
 extrapolate from a similar-looking row above.
@@ -197,8 +199,13 @@ the wrong glyph.
   `3192:10548` / -2 `3192:11125`), opened from Header/List's ic/search.
   `ReportScreen.tsx` is Flow 5's month-as-a-montage (Report-Default
   `3196:12678` locked / Report-Done `3196:14258`).
+  `HomeScreen.tsx`'s Share button (Flow 6, section `3198:4811`) renders
+  `ShareableCalendarCard.tsx` off-screen, captures it with
+  `react-native-view-shot`, and hands the resulting PNG to `expo-sharing`'s
+  OS share sheet — see `ShareableCalendarCard.tsx`'s own doc comment for why
+  it isn't simply a screenshot of the live screen.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
-  stack (Login/Home/HomeList/PostSearch/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
+  stack (Login/Home/HomeList/PostSearch/Report/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
   sign-in has no real auth yet; flip it back to `"Login"` once that's wired
   up. Every route pushes as an ordinary page — Add is a full Figma frame
   with its own back button, not a modal sheet. The only modal in the app so
@@ -308,6 +315,13 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   year arrow stops at the current year, since a later year would have nothing
   selectable in it. (Figma greys the months; the arrow's stop follows from the
   rule rather than being drawn.)
+- **Home's Share button shares a rendered picture, not a screenshot.** Figma's
+  "Share Image" (node `3198:5765`) is its own frame, not Home-Calendar-Done
+  captured live: no arrow icon on the title (nothing shared can be tapped), and
+  a "Created by Dayone" pill added under the record count that Home itself
+  never shows. Pressing Share renders that frame off-screen, captures it as a
+  PNG, and opens the OS share sheet on the result — the live Home screen with
+  its interactive chrome is never what leaves the app.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.

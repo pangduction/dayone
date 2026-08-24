@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { IcArrowDown, IcRows, IcShare } from '../components/icons/HomeIcons';
 import IconButton from '../components/IconButton';
@@ -11,6 +13,7 @@ import BottomNavigation from '../components/BottomNavigation';
 import AlertBanner from '../components/AlertBanner';
 import MonthPickerModal from '../components/MonthPickerModal';
 import CalendarDateCell from '../components/CalendarDateCell';
+import ShareableCalendarCard from '../components/ShareableCalendarCard';
 import { dateKey, getPostsForMonth } from '../data/posts';
 import type { Post } from '../data/posts';
 import { WEEKDAY_LABELS, daysInMonth, getCalendarWeeks } from '../utils/calendar';
@@ -92,6 +95,34 @@ export default function HomeScreen() {
   const postCount = Object.keys(postsByDate).length;
   const progressPercent = totalDays > 0 ? Math.min((postCount / totalDays) * 100, 100) : 0;
 
+  // Figma "Flow 6. Home-Share" (section 3198:4811): the Share button opens the
+  // OS share sheet over a picture of the month, not the calendar itself. That
+  // picture is ShareableCalendarCard, held here only to be captured — it
+  // never appears on screen. A ref guard rather than disabling the button:
+  // there's no Figma loading state for this, and a stray second tap while a
+  // capture is already in flight should just do nothing rather than queue a
+  // second share sheet.
+  const shareCardRef = useRef<View>(null);
+  const isSharing = useRef(false);
+
+  const handleShare = useCallback(async () => {
+    if (isSharing.current) return;
+    isSharing.current = true;
+    try {
+      const uri = await captureRef(shareCardRef, { format: 'png', quality: 1 });
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert('Sharing isn’t available', 'This device can’t open the share sheet.');
+        return;
+      }
+      await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png' });
+    } catch {
+      Alert.alert('Couldn’t share', 'Something went wrong while preparing the image.');
+    } finally {
+      isSharing.current = false;
+    }
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.topGroup}>
@@ -102,7 +133,7 @@ export default function HomeScreen() {
           >
             <IcRows size={24} color={colors.textPrimary} />
           </IconButton>
-          <IconButtonContained accessibilityLabel="Share">
+          <IconButtonContained accessibilityLabel="Share" onPress={handleShare}>
             <IcShare size={24} color={colors.textPrimary} />
           </IconButtonContained>
         </View>
@@ -198,11 +229,24 @@ export default function HomeScreen() {
         onAdd={() => navigation.navigate('Add')}
         onReport={() => navigation.navigate('Report')}
       />
+
+      {/* Off-screen on purpose: positioned outside the visible frame rather
+          than hidden with opacity 0, because an alpha-0 layer can capture as
+          blank on iOS — the native snapshot draws the layer as it actually
+          renders, transparency included. */}
+      <View style={styles.shareCardHost} pointerEvents="none">
+        <ShareableCalendarCard ref={shareCardRef} year={year} month={month} postsByDate={postsByDate} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  shareCardHost: {
+    position: 'absolute',
+    top: 0,
+    left: -1000,
+  },
   container: {
     flex: 1,
     width: '100%',
