@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import HomeListScreen from '../screens/HomeListScreen';
+import PostSearchScreen from '../screens/PostSearchScreen';
 import AddScreen from '../screens/AddScreen';
 import PostDetailScreen from '../screens/PostDetailScreen';
 import RecordingScreen from '../screens/RecordingScreen';
@@ -19,6 +20,11 @@ export type RootStackParamList = {
    * `month` is 0-indexed, matching `Date#getMonth()`.
    */
   HomeList: { year: number; month: number };
+  /**
+   * Post search, opened from Header/List's ic/search (Figma Home-List-Search,
+   * node 3192:10548). Scoped to the same month the list is showing.
+   */
+  PostSearch: { year: number; month: number };
   /** Omit `date` to write today's post; pass one to edit that day's. */
   Add: { date?: string } | undefined;
   PostDetail: { date: string };
@@ -53,6 +59,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="HomeList" component={HomeListScreen} />
+        <Stack.Screen name="PostSearch" component={PostSearchScreen} />
         <Stack.Screen name="Add" component={AddScreen} />
         <Stack.Screen name="PostDetail" component={PostDetailScreen} />
         <Stack.Screen name="Recording" component={RecordingScreen} />

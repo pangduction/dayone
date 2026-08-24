@@ -83,9 +83,10 @@ export default function HomeListScreen() {
         <IconButton accessibilityLabel="Back" onPress={() => navigation.goBack()}>
           <IcArrowLeft size={24} color={colors.textPrimary} />
         </IconButton>
-        {/* TODO: Flow 3's search screen isn't built yet — Figma only gives
-            Header/List's ic/search button, not what it opens. */}
-        <IconButton accessibilityLabel="Search">
+        <IconButton
+          accessibilityLabel="Search posts"
+          onPress={() => navigation.navigate('PostSearch', { year, month })}
+        >
           <IcSearch size={24} color={colors.textPrimary} />
         </IconButton>
         <View style={styles.headerCentre} pointerEvents="none">

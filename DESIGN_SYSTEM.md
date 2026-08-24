@@ -93,7 +93,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Alert                                | 20 / 8            | 8    | 8 (`radius.sm`)  | `colors.success` bg, 24pt white `ic/check`, then the message in `typography.alert` (white). The screen showing it does the positioning — Figma pins it at top 47 with 16 of horizontal padding, over the header (node `3233:5182`). Node `3233:5183`. See `AlertBanner.tsx`, named that way so it can't be confused with React Native's own `Alert`. |
 | Input (text field)                   | 12 / 10           | —    | 8 (`radius.sm`)  | white bg, `border` 1px, `shadows.xs`, placeholder in `colors.textPlaceholder` |
 | Input with label                     | —                 | 8    | —            | label uses `typography.subtext` in `colors.textSecondary`, 8px above the input |
-| Search input field                   | 12 / 12           | 8    | 8 (`radius.sm`)  | `border` 1px, `colors.accent` text cursor |
+| Search input field                   | 12 / 12           | 8    | 8 (`radius.sm`)  | 358x47 (12 + one Body line + 12), white bg, 1px **`colors.borderSubtle`** (G100 `#E9E9E9` — the node binds G100, not the G200 this row previously implied by saying `border`), `shadows.xs`. A 16pt `ic/search` — not the header's 24 — then the query in `typography.body`, placeholder "What are you looking for?" in `colors.textPlaceholder`, caret in `colors.accent`. Node `3192:10553`. See `PostSearchScreen.tsx`. |
 | Button / M / Header Action (e.g. "Done") | 12 / 8        | —    | 16 (`radius.lg`) | height 40; off = `colors.surface` bg / `colors.border` text (node `3184:5701`), on = `colors.accent` bg / `colors.textOnDark` text (node `3184:5903`) — both states verified via `get_design_context`. See `HeaderActionButton.tsx`. |
 | Button/Icon/Plain                    | 8 (all)           | —    | 16 (`radius.lg`) | bare 40×40 tap target, transparent bg. See `IconButton.tsx`. |
 | Button/Icon/Contained                | 8 / 5             | —    | 8 (`radius.sm`)  | the Home header's share button. Figma gives it **exactly Button/Secondary/Default's treatment** — the gradient, the 1px ring and `shadows.secondary` — so `IconButtonContained.tsx` delegates to `SecondaryButton` rather than restating it. (It had been built as a flat `colors.surface` chip with `shadows.xs`, which was wrong on all three counts.) The "5" vertical padding is Figma-exact, not on the spacing scale. Node `3183:2841`. |
@@ -106,7 +106,7 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Header/Add · Header/List (centre)    | 5 (left) / 16 (right) · 16 vertical | — | — | back button left, action(s) right, and a "Date Information" block absolutely centred: the date in `typography.caption`/`colors.textPrimary` over a second line in **`typography.overline`**/`colors.textPlaceholder` — the weekday on Header/Add (node `3184:5701`), the post count on Header/List (node `3192:9263`). The two headers differ in their **first** line too: Header/Add names the day being written, Header/List names the month being listed — "August, 2026" (node `3192:9483`), with a comma no `toLocaleDateString` option set produces. The second line was Caption until Figma changed it; only the first line is Caption now. |
 | Post Detail (column)                 | 16                | 16   | —            | stacks Date Written, then whichever of Image Section / Record/View / Text Section the post has. Date Written: height 40, centered, `typography.subtext` in `colors.textPrimary` over `typography.caption` in `colors.textTertiary` (weekday spelled out in full). Image Section: square, Fit letterboxes / Filled crops. Text Section: min-height 240, gap 8, paddingHorizontal 12, a 1px `colors.borderSubtle` divider above `typography.body` content. Section `3192:11364`. See `PostDetailScreen.tsx`. |
 | Button/Secondary/Default             | 8 / 5             | —    | 8 (`radius.sm`) inline, 16 (`radius.lg`) large | glossy light button carrying a play/pause glyph: a white-to-transparent gradient over `colors.buttonSecondary` with a 1px `colors.buttonSecondaryRing` border and `shadows.secondary`. Inline inside Record/Edit and Record/View (node `3192:12489`); 56×48 on the recording screen (node `3184:7871`). Figma's shadow stacks a drop shadow with a 1px *ring* — RN has no spread, so the ring is a real border. See `SecondaryButton.tsx`. |
-| Header/X                             | 5 (left) / 16 (right) · 16 vertical | — | — | the Add header's shell with a single close button pushed right (`justify-end`) and nothing else. Node `3184:7855`. Used by the recording screen. |
+| Header/X                             | 5 (left) / 16 (right) · 16 vertical | — | — | the Add header's shell with a single close button pushed right (`justify-end`) and nothing else. Node `3184:7855`. Used by the recording screen and by post search, so it lives in `HeaderX.tsx` rather than being restated in each. |
 | Record/Edit · Record/View            | 12 (left) / 3 (right) · 8 vertical — edit; 40 / 8 — view | 16 | 8 (`radius.sm`) | min-height 56: a `Button/Secondary/Default`, the waveform, then the duration in `typography.body`. Edit (node `3192:12499`) has a `colors.surface` background and a trailing remove button; View (node `3192:12570`) is transparent, inset further, and shows the duration in `colors.textPrimary`. See `RecordRow.tsx`. |
 | music track (waveform)               | —                 | —    | —            | 44 tall on the recording screen (node `3184:7867`), 14 inside a Record row. Figma draws it as one decorative vector of a few hundred paths (~100KB in `assets/Record/*.svg`), which would freeze the same squiggle onto every recording — so it is drawn from the recording's own loudness instead. See `Waveform.tsx`. |
 | editor (formatting toolbar)          | 16                | space-between | — | `colors.editorBar` bg, seven 24pt icons (text colour, bold, italic, underline, bullet list, numbered list, horizontal rule) — 56 tall. Opening the palette makes it 112: a `colors.editorPaletteBar` row of nine 24pt swatches at `radius.sm` with a 16pt gap after a 16pt inset, plus a 48x48 top-rounded backdrop behind the text-colour button. Node `13:15150`, whole component exported to `assets/editor.svg`. See `EditorToolbar.tsx`. |
@@ -185,8 +185,10 @@ the wrong glyph.
   the calendar's month as a list (Home-List-Default `3192:8914` empty /
   Home-List-Done `3192:9547` filled); it has **no bottom navigation** —
   Figma gives it only Header/List and the list body.
+  `PostSearchScreen.tsx` is the search over that month (Home-List-Search-1
+  `3192:10548` / -2 `3192:11125`), opened from Header/List's ic/search.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
-  stack (Login/Home/HomeList/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
+  stack (Login/Home/HomeList/PostSearch/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
   sign-in has no real auth yet; flip it back to `"Login"` once that's wired
   up. Every route pushes as an ordinary page — Add is a full Figma frame
   with its own back button, not a modal sheet. The only modal in the app so
@@ -233,6 +235,13 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   written for a month still open, so a past one reads "You didn't write
   anything." instead. (Future months never reach this screen; the month
   picker stops at the current one, per the rule below.)
+- **Search matches a post's plain text, within one month.** The search
+  screen reads `post.text`, not `post.html`, so a query can't match markup;
+  matching is case-insensitive substring. It covers the month the list was
+  showing rather than every post ever written, because the results are Post
+  List Thumbnails, which carry a weekday and a day but no month — across
+  months, two rows reading "Sat 15" would be indistinguishable. Figma draws
+  no "no matches" state, so a query that finds nothing lists nothing.
 - **No writing ahead.** DayOne records the day you are living, so calendar
   days after today are inert: they don't open Add and don't open a post.
   Today and past days both stay writable. The month picker follows the same

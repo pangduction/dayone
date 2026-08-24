@@ -10,10 +10,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import IconButton from '../components/IconButton';
 import SecondaryButton from '../components/SecondaryButton';
 import Waveform from '../components/Waveform';
-import { IcCross } from '../components/icons/AddIcons';
+import HeaderX from '../components/HeaderX';
 import { IcPause, IcPlay } from '../components/icons/CommonIcons';
 import { formatDuration } from '../utils/duration';
 import { colors, spacing, typography } from '../theme/tokens';
@@ -102,11 +101,7 @@ export default function RecordingScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <IconButton accessibilityLabel="Close" onPress={cancel}>
-          <IcCross size={24} color={colors.textPrimary} />
-        </IconButton>
-      </View>
+      <HeaderX onClose={cancel} />
 
       <View style={styles.body}>
         <Text style={[typography.titleLarge, styles.timer]}>{formatDuration(elapsedMs)}</Text>
@@ -148,16 +143,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingTop: 47,
     paddingBottom: 34,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    // Figma's Header/X keeps the Add header's padding but pushes its single
-    // button to the right (node 3184:7855).
-    justifyContent: 'flex-end',
-    paddingLeft: 5,
-    paddingRight: spacing.md,
-    paddingVertical: spacing.md,
   },
   body: {
     flex: 1,
