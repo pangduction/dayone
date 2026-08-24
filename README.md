@@ -1,8 +1,8 @@
-# Daypic (Expo / React Native)
+# DayOne (Expo / React Native)
 
 Figma MCP를 이용해 디자인을 코드로 옮기며 개발하는 프로젝트입니다.
 
-- 디자인: [Daypic 기획 (Figma)](https://www.figma.com/design/Fv2MwZPH1NImXNF16W5cxw/Daypic-기획-)
+- 디자인: [DayOne 기획 (Figma)](https://www.figma.com/design/Fv2MwZPH1NImXNF16W5cxw/Daypic-기획-)
 - 스택: Expo + React Native + TypeScript
 
 ## 실행
