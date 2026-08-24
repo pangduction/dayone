@@ -40,8 +40,6 @@ type Props = {
  * height and fixed children, rather than a hand-set number.
  */
 const ShareableCalendarCard = forwardRef<View, Props>(({ year, month, postsByDate }, ref) => {
-  const today = new Date();
-  const todayKey = dateKey(today);
   const weeks = getCalendarWeeks(year, month);
   const totalDays = daysInMonth(year, month);
   const postCount = Object.keys(postsByDate).length;
@@ -73,10 +71,16 @@ const ShareableCalendarCard = forwardRef<View, Props>(({ year, month, postsByDat
                 {week.map((day, dayIndex) => {
                   const key = day === null ? null : dateKey(new Date(year, month, day));
                   return (
+                    // Figma's Share Image never singles today out — its
+                    // design-context carries no Accent reference at all, and
+                    // today renders with the same solid-fill/photo-tint
+                    // treatment as any other day with a post. A shared image
+                    // reads as a finished picture of the month, so today gets
+                    // no special ring here even though it does on Home.
                     <CalendarDateCell
                       key={dayIndex}
                       day={day}
-                      isToday={key === todayKey}
+                      isToday={false}
                       post={key === null ? null : postsByDate[key]}
                     />
                   );
@@ -216,7 +220,10 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: radius.full,
-    backgroundColor: colors.accent,
+    // Figma binds G900 here (node 3198:6336), not Accent — the live Home
+    // screen's progress bar is correctly Accent; only this exported copy
+    // differs.
+    backgroundColor: colors.textPrimary,
   },
   countsColumn: {
     width: '100%',
