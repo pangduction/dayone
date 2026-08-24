@@ -23,7 +23,11 @@ import { colors, spacing, typography } from '../theme/tokens';
  * Header/List and the list body, and its header leads with a back button.
  *
  * Which month it lists comes from Home rather than always being today's, so
- * that browsing to another month and tapping ic/rows lists that month.
+ * that browsing the calendar to February and tapping ic/rows lists February
+ * — and the header names that month too, rather than today's date.
+ *
+ * The list scrolls: Figma draws the scrolled state as its own frame
+ * (3192:9771), where the thumbnails run past the bottom of the screen.
  */
 export default function HomeListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -48,12 +52,15 @@ export default function HomeListScreen() {
     }, [year, month]),
   );
 
-  // Figma's header reads "August 8, 2026" — today's date, not the listed
-  // month's, the same way Header/Add leads with the day being written.
-  const todayLabel = useMemo(
-    () => new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-    [],
-  );
+  // Figma's header names the month being listed — "August, 2026" (node
+  // 3192:9483), not today's date. Built by hand rather than with a
+  // toLocaleDateString option set, because none of them produces the comma
+  // between month and year that Figma shows ({month:'long', year:'numeric'}
+  // gives "August 2026").
+  const monthLabel = useMemo(() => {
+    const monthName = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' });
+    return `${monthName}, ${year}`;
+  }, [year, month]);
 
   return (
     <View style={styles.container}>
@@ -67,7 +74,7 @@ export default function HomeListScreen() {
           <IcSearch size={24} color={colors.textPrimary} />
         </IconButton>
         <View style={styles.headerCentre} pointerEvents="none">
-          <Text style={[typography.caption, styles.headerDate]}>{todayLabel}</Text>
+          <Text style={[typography.caption, styles.headerMonth]}>{monthLabel}</Text>
           <Text style={[typography.overline, styles.headerCount]}>Post {posts?.length ?? 0}</Text>
         </View>
       </View>
@@ -125,7 +132,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerDate: {
+  headerMonth: {
     color: colors.textPrimary,
   },
   headerCount: {
