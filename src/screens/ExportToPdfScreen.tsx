@@ -40,16 +40,17 @@ function formatRangeLabel(startDate: string, endDate: string): string {
  * "Date Range" row reopens that same modal to change the range without
  * leaving the screen.
  *
- * "Generate PDF" is a real device feature, and its output is guaranteed to
- * match the in-app PDF preview (`PdfPreviewScreen.tsx`) exactly, because it
- * *is* that preview: each post's `PdfPagePreview` is rendered off-screen and
- * captured with `react-native-view-shot`, and those screenshots are what
- * `expo-print`'s `printToFileAsync` turns into the real multi-page PDF
- * (`buildImagePagesHtml`) — not a second, hand-authored HTML reconstruction
- * that could drift from what the preview actually shows. The result is moved
- * into a stable, named file via `saveExportFile` (`src/data/exports.ts`),
- * which also prunes anything past its 30-day "Valid until" — so the Files
- * list below only ever shows what's still real and still valid.
+ * "Generate PDF" is a real device feature. Each post's `PdfPagePreview` is
+ * rendered off-screen and captured with `react-native-view-shot`; those same
+ * screenshots both become the real multi-page PDF (via
+ * `buildImagePagesHtml` + `expo-print`'s `printToFileAsync`) *and* get saved
+ * as their own PNG files (`saveExportFile`'s `pageImages`) for
+ * `PdfPreviewScreen` to show directly. That's what makes the preview and the
+ * printed file identical — not a design goal a second render has to keep up
+ * with, but the same bytes read twice. `saveExportFile`
+ * (`src/data/exports.ts`) also prunes anything past its 30-day "Valid
+ * until" — so the Files list below only ever shows what's still real and
+ * still valid.
  */
 export default function ExportToPdfScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -113,7 +114,7 @@ export default function ExportToPdfScreen() {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
-      const pageDataUris: string[] = [];
+      const pageImages: string[] = [];
       for (const post of posts) {
         const ref = captureRefs.current[post.date];
         if (!ref) continue;
@@ -123,20 +124,23 @@ export default function ExportToPdfScreen() {
         // declared 390x844 only agree on *ratio*, and any DPI/rounding
         // mismatch between react-native-view-shot's capture and
         // expo-print's WebView renderer becomes a real scale difference.
-        const dataUri = await captureRef(ref, {
+        // `result: 'base64'` (not `'data-uri'`) because this same string
+        // needs to become both an <img> src (as a data URI) and a real .png
+        // file on disk (as raw base64) below.
+        const base64 = await captureRef(ref, {
           format: 'png',
           quality: 1,
-          result: 'data-uri',
+          result: 'base64',
           width: PAGE_WIDTH,
           height: PAGE_HEIGHT,
         });
-        pageDataUris.push(dataUri);
+        pageImages.push(base64);
       }
 
-      const html = buildImagePagesHtml(pageDataUris);
+      const html = buildImagePagesHtml(pageImages.map((base64) => `data:image/png;base64,${base64}`));
       const { uri } = await printToFileAsync({ html, width: PAGE_WIDTH, height: PAGE_HEIGHT });
       const filename = buildExportFilename(startDate, endDate);
-      await saveExportFile({ sourceUri: uri, filename, startDate, endDate });
+      await saveExportFile({ sourceUri: uri, filename, pageImages, startDate, endDate });
       setFiles(await getExportFiles());
     } catch {
       Alert.alert('Couldn’t generate PDF', 'Something went wrong while creating your file. Please try again.');

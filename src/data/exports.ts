@@ -18,6 +18,14 @@ export type ExportFile = {
   filename: string;
   /** Real `file://` URI of the generated PDF. */
   uri: string;
+  /**
+   * Real `file://` URIs of each page's own PNG, one per post, in the same
+   * order they were captured and printed. `PdfPreviewScreen` shows *these*
+   * directly rather than re-rendering the posts live — the same pixels that
+   * are actually inside the PDF, not a second, separately-rendered copy that
+   * can (and did) drift from what the file really contains.
+   */
+  pageUris: string[];
   /** The export's date range, 'YYYY-MM-DD'. */
   startDate: string;
   endDate: string;
@@ -39,7 +47,11 @@ async function readAll(): Promise<ExportFile[]> {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as ExportFile[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    // `pageUris` was added after the first exports were written; default
+    // those to an empty list rather than letting the preview screen read
+    // undefined.
+    return parsed.map((file) => ({ ...file, pageUris: file.pageUris ?? [] }) as ExportFile);
   } catch {
     return [];
   }
@@ -49,7 +61,7 @@ async function writeAll(files: ExportFile[]): Promise<void> {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(files));
 }
 
-/** Deletes a PDF's bytes. A file already gone (or never written) isn't an error. */
+/** Deletes a file's bytes. A file already gone (or never written) isn't an error. */
 function deleteFileBytes(uri: string): void {
   try {
     const file = new File(uri);
@@ -59,13 +71,14 @@ function deleteFileBytes(uri: string): void {
   }
 }
 
-/** Drops every row whose `expiresAt` has passed, deleting its PDF too. */
+/** Drops every row whose `expiresAt` has passed, deleting its PDF and page images too. */
 function pruneExpired(files: ExportFile[]): ExportFile[] {
   const now = Date.now();
   const alive: ExportFile[] = [];
   for (const file of files) {
     if (new Date(file.expiresAt).getTime() <= now) {
       deleteFileBytes(file.uri);
+      file.pageUris.forEach(deleteFileBytes);
     } else {
       alive.push(file);
     }
@@ -90,10 +103,13 @@ export async function getExportFile(id: string): Promise<ExportFile | null> {
  * Moves a freshly `printToFileAsync`'d PDF (which lands in the cache
  * directory under a generated name) into `documentDirectory/exports/` under
  * its real filename, and records its metadata with a 30-day expiry from now.
+ * `pageImages` are each page's own captured PNG (base64, no data URI prefix)
+ * — written alongside the PDF so the preview screen has real files to show.
  */
 export async function saveExportFile(input: {
   sourceUri: string;
   filename: string;
+  pageImages: string[];
   startDate: string;
   endDate: string;
 }): Promise<ExportFile> {
@@ -104,12 +120,21 @@ export async function saveExportFile(input: {
   if (destination.exists) destination.delete();
   await new File(input.sourceUri).move(destination);
 
+  const baseName = input.filename.replace(/\.pdf$/i, '');
+  const pageUris = input.pageImages.map((base64, index) => {
+    const pageFile = new File(dir, `${baseName}-page-${index + 1}.png`);
+    if (pageFile.exists) pageFile.delete();
+    pageFile.write(base64, { encoding: 'base64' });
+    return pageFile.uri;
+  });
+
   const now = new Date();
   const expiresAt = new Date(now.getTime() + VALIDITY_DAYS * 24 * 60 * 60 * 1000);
   const created: ExportFile = {
     id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
     filename: input.filename,
     uri: destination.uri,
+    pageUris,
     startDate: input.startDate,
     endDate: input.endDate,
     createdAt: now.toISOString(),
@@ -127,5 +152,6 @@ export async function deleteExportFile(id: string): Promise<void> {
   const target = files.find((file) => file.id === id);
   if (!target) return;
   deleteFileBytes(target.uri);
+  target.pageUris.forEach(deleteFileBytes);
   await writeAll(files.filter((file) => file.id !== id));
 }

@@ -20,8 +20,16 @@ export function buildExportFilename(startDate: string, endDate: string): string 
 
 /**
  * Wraps pre-captured page screenshots (data URIs from `captureRef`) into the
- * HTML `printToFileAsync` prints — a full-bleed image per page, in the same
- * order they were captured (oldest post first).
+ * HTML `printToFileAsync` prints — one image per page, in the same order
+ * they were captured (oldest post first): one post per PDF page.
+ *
+ * Each image is placed at its own natural size — centered horizontally,
+ * pinned to the top rather than stretched to fill the page — instead of a
+ * `width:100%; height:100%` stretch-fill. Every page's capture is already
+ * pinned to `PAGE_WIDTH`x`PAGE_HEIGHT` (`ExportToPdfScreen.tsx`'s
+ * `captureRef` call), so a stretch-fill *should* be a no-op, but explicit
+ * top-anchored centering doesn't depend on that holding exactly and reads
+ * the same way Figma's own "PDF Image" pages do.
  *
  * The `<meta name="viewport">` tag matters more than it looks: without it,
  * `printToFileAsync`'s WebView laid the document out against its own default
@@ -29,10 +37,9 @@ export function buildExportFilename(startDate: string, endDate: string): string 
  * the usual mobile-WebView default), so each `.page` div rendered pinned to
  * the *left edge* of that wider canvas rather than filling it — and then got
  * scaled down as a whole into the actual PDF page size, carrying that
- * left-alignment with it. That's what made an in-app-perfectly-centered
- * photo come out shifted left in the exported file. Pinning the viewport
- * width to `PAGE_WIDTH` makes our CSS page width the *actual* rendering
- * width, not a box floating inside a wider one.
+ * left-alignment with it. Pinning the viewport width to `PAGE_WIDTH` makes
+ * our CSS page width the *actual* rendering width, not a box floating inside
+ * a wider one.
  */
 export function buildImagePagesHtml(pageDataUris: string[]): string {
   const pages = pageDataUris
@@ -54,14 +61,17 @@ export function buildImagePagesHtml(pageDataUris: string[]): string {
   .page {
     width: ${PAGE_WIDTH}px;
     height: ${PAGE_HEIGHT}px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
     page-break-after: always;
     overflow: hidden;
   }
   .page:last-child { page-break-after: auto; }
   .page img {
     display: block;
-    width: 100%;
-    height: 100%;
+    width: ${PAGE_WIDTH}px;
+    height: ${PAGE_HEIGHT}px;
   }
 </style>
 </head>

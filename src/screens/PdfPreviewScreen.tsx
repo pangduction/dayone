@@ -1,48 +1,38 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import * as Sharing from 'expo-sharing';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderPdfPage from '../components/HeaderPdfPage';
-import PdfPagePreview from '../components/PdfPagePreview';
 import { getExportFile } from '../data/exports';
 import type { ExportFile } from '../data/exports';
-import { getPostsInRange } from '../data/posts';
-import type { Post } from '../data/posts';
-import { colors, spacing } from '../theme/tokens';
+import { PAGE_HEIGHT, PAGE_WIDTH } from '../pdf/postPageTemplate';
+import { colors, radius, shadows, spacing } from '../theme/tokens';
 
 /**
  * Figma "Setting-Export to PDF-6" (node 3267:6006) — opened by tapping a
  * generated file in the Export to PDF screen's Files list. Figma's own mock
  * shows a scroll of shadowed page images over a grey (`colors.surface`)
- * background, so that's what this renders: each post in the file's range as
- * a `PdfPagePreview` — live-rendered, not a WebView on the real PDF file
- * (that pulls in the platform's own PDF-viewer chrome, which isn't part of
- * this design at all). The real, shareable multi-page PDF still exists on
- * disk (`ExportFile.uri`, built by `postPageTemplate.ts` +
- * `expo-print`) — Share hands out that actual file, this screen just doesn't
- * render *through* it.
+ * background, so that's exactly what this renders: `file.pageUris`, the same
+ * PNGs `ExportToPdfScreen`'s "Generate PDF" captured and both (a) printed
+ * into the real multi-page PDF and (b) saved here as their own files. This
+ * screen just displays them — it doesn't re-render the posts live, so there
+ * is no second render path that could ever drift from what the actual file
+ * contains. The real, shareable PDF still exists on disk (`ExportFile.uri`)
+ * for Share to hand out; this is only ever how it's *previewed*.
  */
 export default function PdfPreviewScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'PdfPreview'>>();
 
   const [file, setFile] = useState<ExportFile | null>(null);
-  const [posts, setPosts] = useState<Post[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    getExportFile(params.fileId).then(async (found) => {
-      if (cancelled) return;
-      setFile(found);
-      if (!found) {
-        setPosts([]);
-        return;
-      }
-      const inRange = await getPostsInRange(found.startDate, found.endDate);
-      if (!cancelled) setPosts(inRange);
+    getExportFile(params.fileId).then((found) => {
+      if (!cancelled) setFile(found);
     });
     return () => {
       cancelled = true;
@@ -60,8 +50,10 @@ export default function PdfPreviewScreen() {
     <View style={styles.container}>
       <HeaderPdfPage title={file?.filename ?? 'PDF'} onBack={() => navigation.goBack()} onShare={handleShare} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.pages}>
-        {posts?.map((post) => (
-          <PdfPagePreview key={post.date} post={post} />
+        {file?.pageUris.map((uri) => (
+          <View key={uri} style={styles.page}>
+            <Image source={{ uri }} style={styles.pageImage} resizeMode="contain" />
+          </View>
         ))}
       </ScrollView>
     </View>
@@ -84,5 +76,17 @@ const styles = StyleSheet.create({
   pages: {
     padding: spacing.md,
     gap: spacing.sm,
+  },
+  page: {
+    width: '100%',
+    aspectRatio: PAGE_WIDTH / PAGE_HEIGHT,
+    backgroundColor: colors.background,
+    borderRadius: radius.xs,
+    overflow: 'hidden',
+    ...shadows.xl,
+  },
+  pageImage: {
+    width: '100%',
+    height: '100%',
   },
 });

@@ -213,13 +213,14 @@ the wrong glyph.
   product rule below.
   `ExportToPdfScreen.tsx` is the real Export to PDF list (Setting-Export to
   PDF-2, node `3201:5947`); `PdfPreviewScreen.tsx` shows a generated file
-  (Setting-Export to PDF-6, node `3267:6006`) as a scroll of `PdfPagePreview`
-  cards — `PostDetailBody` (extracted out of `PostDetailScreen.tsx`)
-  live-rendered per post inside a shadowed white page, matching Figma's own
-  stack of page images — rather than a WebView on the real PDF file, whose
-  platform PDF-viewer chrome (a page-navigator gear button, "1 of N") isn't
-  part of this design at all. The real multi-page file still exists on disk
-  and is what Share hands out; this screen just doesn't render through it.
+  (Setting-Export to PDF-6, node `3267:6006`) as a scroll of shadowed white
+  page cards, matching Figma's own stack of page images — each one is
+  `ExportFile.pageUris[n]`, the *actual saved PNG* for that page, not a live
+  re-render. Neither this nor a WebView on the real PDF file (whose platform
+  PDF-viewer chrome — a page-navigator gear button, "1 of N" — isn't part of
+  this design at all): the real multi-page file still exists on disk and is
+  what Share hands out, but this screen shows the same page images that got
+  printed into it, not the file itself.
   `HomeScreen.tsx`'s Share button (Flow 6, section `3198:4811`) renders
   `ShareableCalendarCard.tsx` off-screen, captures it with
   `react-native-view-shot`, and hands the resulting PNG to `expo-sharing`'s
@@ -374,65 +375,48 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     `expiresAt` on every read, deleting both the metadata row and the PDF's
     actual bytes (`documentDirectory/exports/<filename>.pdf`), so an expired
     file is genuinely gone rather than just hidden.
-  - **The printed file and the in-app preview are pixel-identical, by
-    construction rather than by two implementations being kept in sync.**
-    An earlier version built the PDF from a hand-authored HTML
-    reconstruction of each post — its own font fallback (`printToFileAsync`
-    renders through a platform WebView with no access to the app's bundled
-    Inter/Poppins), its own approximation of `PhotoSection`'s fit/filled
-    logic, its own redrawn waveform — and it inevitably drifted from what
-    `PdfPagePreview` actually showed on screen. `ExportToPdfScreen.tsx` now
-    renders each post's real `PdfPagePreview` off-screen (same component the
-    preview screen uses) and captures it with `react-native-view-shot` —
-    exactly the pattern `ShareableCalendarCard` already uses for Home's
-    Share button. `src/pdf/postPageTemplate.ts` only wraps those captured
-    images into print-ready HTML now; it no longer reconstructs any layout
-    itself. A photo post's capture waits on `PhotoSection`'s own
-    `onLoadSettled` callback before the screenshot is taken, and that
-    callback is deliberately strict — it fires only once *both*
-    `Image.getSize` has resolved *and* the `Image` element's own `onLoadEnd`
-    has fired, not at the instant `getSize` returns. `getSize` returning is
-    just a plain async callback; it says nothing about whether the render it
-    triggered (the new `aspectRatio`) has actually committed to native
-    layout yet, or whether the `Image` has finished decoding into that final
-    box. Firing `onLoadSettled` at `getSize`'s callback alone captured pages
-    whose photo hadn't grown into its real size yet — a real bug (the shipped
-    PDF's photo size didn't match the preview's), not a hypothetical one.
-    `ExportToPdfScreen.tsx` also waits two animation frames after every page
-    reports ready, for the same reason: one frame for the last such render to
-    commit, a second for it to actually paint. `captureRef` is also pinned to
-    the exact print page's pixel dimensions (`PAGE_WIDTH`/`PAGE_HEIGHT`)
-    rather than left at the view's native device-pixel-ratio-scaled
-    resolution.
-  - **A photo that was perfectly centered in the captured screenshot still
-    came out shifted left in the exported file** — a separate bug, in
-    `postPageTemplate.ts` rather than the capture itself.
-    `printToFileAsync`'s WebView was laying our HTML out against its own
-    default layout-viewport width (wider than the 390px pages our CSS
-    declares), so each `.page` div rendered pinned to the *left edge* of that
-    wider canvas instead of filling it, and the whole thing then got scaled
-    down as one unit into the actual PDF page — carrying that left-alignment
-    with it. A `<meta name="viewport" content="width=390, …">` tag fixes it:
-    it makes the declared page width the WebView's *actual* rendering width,
-    not a box floating inside a wider default one.
-  - **A post's story text never showed up in the exported file at all**,
-    even though the same text rendered fine in the in-app preview. The
-    culprit was `RichTextEditor` itself: it's a WebView, and a WebView
-    renders on its own native surface rather than synchronously with the
-    rest of the tree, so it being mounted is not the same as it having
-    painted anything — `react-native-view-shot` can only capture what has
-    actually painted. `PostDetailBody`'s readiness tracking (the same
-    mechanism that waits on a photo's real size) now also waits on
-    `RichTextEditor`'s own `onLoadEnd` before reporting a page ready, for
-    exactly this reason.
-  - **A recording showed a real, pressable play button on the Export-to-PDF
-    preview screen.** That screen's whole job is to preview the *file* —
-    it's not a second live post-detail screen — so nothing on it should be
-    able to do something the actual PDF page can't. `RecordRow` (the real,
-    `expo-audio`-backed row `PostDetailScreen` uses) and `StaticRecordRow`
-    (its non-interactive twin, no player, no `onPress`) now split that
-    concern: `PostDetailBody` takes an `interactive` prop, and
-    `PdfPagePreview` always passes `false`.
+  - **The printed file and the in-app preview are the same bytes, read
+    twice — not two renders a design goal has to keep matching.**
+    `ExportToPdfScreen.tsx`'s "Generate PDF" renders each post's
+    `PdfPagePreview` off-screen (a print-page-shaped card, `interactive={false}`
+    so a recording is `StaticRecordRow` rather than a real `expo-audio`
+    player — this is only ever a *picture* of the post) and captures it with
+    `react-native-view-shot`, the same pattern `ShareableCalendarCard`
+    already uses for Home's Share button. Each capture becomes **both** a
+    page of the real PDF (`buildImagePagesHtml` + `expo-print`'s
+    `printToFileAsync`) **and** its own saved PNG (`saveExportFile`'s
+    `pageUris`, alongside the PDF itself under `documentDirectory/exports/`).
+    `PdfPreviewScreen` displays those saved PNGs directly — it doesn't
+    re-render the posts at all, so there is no second implementation left to
+    drift out of sync with the file. An earlier version had the preview
+    screen live-render the posts independently and only *hoped* that matched
+    what got captured; every mismatch bug below came from that gap, which
+    this design removes rather than chasing further:
+    - A capture taken before its content had actually settled could miss a
+      photo's real size, or a `RichTextEditor` (a WebView, which renders on
+      its own native surface rather than synchronously with the rest of the
+      tree — mounting it isn't the same as it having painted) entirely.
+      `PostDetailBody`'s readiness tracking waits on *both* `PhotoSection`'s
+      `onLoadSettled` (itself gated on `Image.getSize` resolving **and** the
+      `Image`'s own `onLoadEnd`, not just `getSize` returning — that alone
+      fires before the resulting `aspectRatio` re-render has committed) and
+      `RichTextEditor`'s `onLoadEnd` before a page reports ready.
+      `ExportToPdfScreen.tsx` also waits two animation frames after every
+      page reports ready (one for that last render to commit, one to
+      paint), and pins `captureRef` to the exact print page's pixel
+      dimensions (`PAGE_WIDTH`/`PAGE_HEIGHT`) rather than the view's native
+      device-pixel-ratio-scaled resolution.
+    - `printToFileAsync`'s WebView laid the printed HTML out against its own
+      default layout-viewport width, wider than the 390px pages the CSS
+      declares — so each `.page` div rendered pinned to the page's left
+      edge instead of filling it, and the whole render then got scaled down
+      as one unit into the actual PDF page, carrying that misalignment with
+      it. A `<meta name="viewport" content="width=390, …">` tag fixes it:
+      390 becomes the WebView's *actual* rendering width, not a box
+      floating inside a wider default one. Each page's image is placed at
+      its own size, centered horizontally and pinned to the top, rather
+      than stretched to fill — one post per page, the way Figma's own "PDF
+      Image" pages (node `3267:6263`) are laid out.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.
