@@ -62,6 +62,7 @@ export const palette = {
   buttonSecondaryFill: '#F2F2F2', // Figma: Button/Secondary/Default's fill (node 3184:7871) — same value as the editor palette row, different role
   buttonSecondaryRing: '#EEEEEE', // Figma: that button's 1px ring, the second half of its shadow stack
   overlayAccent: 'rgba(0, 132, 255, 0.3)', // Figma: Accent at 30% opacity — tint over today's photo calendar cell (node 3184:3185)
+  lockPaper: 'rgba(255, 255, 255, 0.7)', // Figma: white at 70% over a background blur — the Report's Lock Paper (node 3196:14417)
   emptyStateText: '#929DAD', // Figma: local fill on Home-List-Default's "You haven't written anything yet." (node 3192:9215) — get_variable_defs shows it binds no colour variable, and it is NOT G400 (#9EA4AA)
 
   // iOS-style system color set (color picker / palette swatch components).
@@ -114,6 +115,7 @@ export const colors = {
   yearLabel: palette.neutral900, // Figma "Neutral/900" — the month picker's year (node 3229:4220)
   surfaceDark: palette.g600, // Figma G600 — filled tile on a light sheet (Modal/Gallery's camera tile, node 3198:4434)
   textEmpty: palette.emptyStateText, // the empty-list message (node 3192:9215)
+  lockPaper: palette.lockPaper, // the veil over an unfinished month's report (node 3196:14417)
 };
 
 // ---------------------------------------------------------------------------
@@ -234,6 +236,21 @@ export const typography = {
     letterSpacing: -0.22,
     lineHeight: 11,
   },
+  reportDate: {
+    // Figma: "Report/Date" — the day label under a report thumbnail. The only
+    // italic in the system.
+    fontFamily: 'Inter_500Medium_Italic',
+    fontSize: 9,
+    letterSpacing: 0,
+    lineHeight: 9 * 1.3,
+  },
+  reportCaption: {
+    // Figma: "Report/Caption" — a report thumbnail's text excerpt
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
+    letterSpacing: 0,
+    lineHeight: 11 * 1.3,
+  },
   alert: {
     // Not a named Figma text style — a local override on the Alert component
     // (node 3233:5183), which sets Inter Medium at 13/20 rather than reusing
@@ -289,6 +306,7 @@ export const fontAssets = {
   Jura_400Regular: require('@expo-google-fonts/jura/400Regular/Jura_400Regular.ttf'),
   Inter_400Regular: require('@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf'),
   Inter_500Medium: require('@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf'),
+  Inter_500Medium_Italic: require('@expo-google-fonts/inter/500Medium_Italic/Inter_500Medium_Italic.ttf'),
   Inter_700Bold: require('@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf'),
   Raleway_800ExtraBold: require('@expo-google-fonts/raleway/800ExtraBold/Raleway_800ExtraBold.ttf'),
   Poppins_700Bold: require('@expo-google-fonts/poppins/700Bold/Poppins_700Bold.ttf'),

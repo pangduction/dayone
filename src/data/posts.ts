@@ -166,6 +166,15 @@ export async function deletePost(date: string): Promise<void> {
   await writeAll(remaining);
 }
 
+/**
+ * Every month that holds at least one post, as 'YYYY-MM' keys — what the
+ * Report needs to know which months it can show a report for.
+ */
+export async function getMonthsWithPosts(): Promise<Set<string>> {
+  const posts = await readAll();
+  return new Set(posts.map((post) => post.date.slice(0, 7)));
+}
+
 /** Posts whose date falls in the given month. `month` is 0-indexed, matching `Date#getMonth()`. */
 export async function getPostsForMonth(year: number, month: number): Promise<Post[]> {
   const posts = await readAll();

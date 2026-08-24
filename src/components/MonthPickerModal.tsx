@@ -18,6 +18,13 @@ type Props = {
   month: number;
   onClose: () => void;
   onConfirm: (next: { year: number; month: number }) => void;
+  /**
+   * Narrows which chips can be picked, on top of the no-future rule every
+   * caller gets. The Report's copy of this sheet (Figma Modal/Date-Report,
+   * node 3198:4736) uses it to grey the months it has no report for — its
+   * chips are otherwise identical to Modal/Date-Default's.
+   */
+  isSelectable?: (year: number, month: number) => boolean;
 };
 
 /**
@@ -39,7 +46,7 @@ type Props = {
  * The choice is local until Done, so backing out with the X leaves the
  * calendar where it was.
  */
-export default function MonthPickerModal({ visible, year, month, onClose, onConfirm }: Props) {
+export default function MonthPickerModal({ visible, year, month, onClose, onConfirm, isSelectable }: Props) {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
@@ -60,7 +67,14 @@ export default function MonthPickerModal({ visible, year, month, onClose, onConf
 
   const statusFor = (index: number): ChipStatus => {
     if (isFuture(draftYear, index)) return 'disabled';
-    return index === draftMonth ? 'active' : 'enabled';
+    // The draft is active before anything else is considered, so the sheet
+    // always shows exactly one selection and never greys out what is
+    // currently picked. Figma's Modal/Date-Report does the same: August is
+    // active there even though August has no report of its own yet
+    // (node 3198:4740).
+    if (index === draftMonth) return 'active';
+    if (isSelectable && !isSelectable(draftYear, index)) return 'disabled';
+    return 'enabled';
   };
 
   // Stepping to a year where the drafted month would be in the future pulls

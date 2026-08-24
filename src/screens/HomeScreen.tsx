@@ -4,9 +4,10 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import { IcArrowDown, IcCalendar, IcPlus, IcPulse, IcRows, IcShare } from '../components/icons/HomeIcons';
+import { IcArrowDown, IcRows, IcShare } from '../components/icons/HomeIcons';
 import IconButton from '../components/IconButton';
 import IconButtonContained from '../components/IconButtonContained';
+import BottomNavigation from '../components/BottomNavigation';
 import AlertBanner from '../components/AlertBanner';
 import MonthPickerModal from '../components/MonthPickerModal';
 import CalendarDateCell from '../components/CalendarDateCell';
@@ -189,27 +190,12 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
-      <View style={styles.navigation}>
-        <View style={styles.navItem}>
-          <IcCalendar size={24} color={colors.textPrimary} />
-          <View style={styles.navSecondRow}>
-            <View style={styles.navSelectedDot} />
-          </View>
-        </View>
-        <Pressable style={styles.navItem} onPress={() => navigation.navigate('Add')} hitSlop={8}>
-          <IcPlus size={24} color={colors.textPlaceholder} />
-          <View style={styles.navSecondRow}>
-            <Text style={[typography.overline, styles.navLabel]}>Add</Text>
-          </View>
-        </Pressable>
-        {/* TODO: Report screen not implemented yet. */}
-        <Pressable style={styles.navItem} hitSlop={8}>
-          <IcPulse size={24} color={colors.textPlaceholder} />
-          <View style={styles.navSecondRow}>
-            <Text style={[typography.overline, styles.navLabel]}>Report</Text>
-          </View>
-        </Pressable>
-      </View>
+      <BottomNavigation
+        selected="Home"
+        onHome={() => {}}
+        onAdd={() => navigation.navigate('Add')}
+        onReport={() => navigation.navigate('Report')}
+      />
     </View>
   );
 }
@@ -322,44 +308,5 @@ const styles = StyleSheet.create({
   },
   recordLabel: {
     color: colors.textTertiary,
-  },
-  navigation: {
-    flexDirection: 'row',
-    gap: 27,
-    justifyContent: 'center',
-    width: '100%',
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSubtle,
-    backgroundColor: colors.background,
-    paddingHorizontal: 21, // Figma: doesn't land on the spacing scale; exact nav-bar value
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
-  },
-  navItem: {
-    width: 45,
-    height: 45,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navSecondRow: {
-    // Figma "Menu Title" row (nodes 3184:3526/3531/3535): a fixed 45x13
-    // box sitting directly under the icon frame with no gap — verified via
-    // get_metadata's absolute coords (icon y:4 h:24, row y:28 h:13 on all
-    // three tabs). Every tab's label/dot must be centered in this same
-    // 13px row, not placed bare, or the dot (3px) ends up shorter than the
-    // label text and throws off the icon's vertical centering.
-    width: '100%',
-    height: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navSelectedDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: colors.textPrimary, // Figma: G900, verified via get_variable_defs on node 3184:3527 — not accent
-  },
-  navLabel: {
-    color: colors.textPlaceholder,
   },
 });

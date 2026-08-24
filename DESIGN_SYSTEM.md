@@ -64,6 +64,8 @@ reconstruct a style from raw `fontSize`/`fontFamily`:
 | `typography.subtext`      | Subtext       | Button labels, field labels                |
 | `typography.caption`      | Caption       | Small annotations (Poppins Bold)           |
 | `typography.overline`     | Overline      | Eyebrow/overline labels                    |
+| `typography.reportDate`   | Report/Date   | A report thumbnail's day label — the one **italic** in the system (Inter Medium Italic 9) |
+| `typography.reportCaption`| Report/Caption| A report thumbnail's text excerpt (Inter Medium 11)      |
 | `typography.alert`        | (local)       | Alert banner text — Inter Medium 13/20, a local override on the Alert component rather than a named Figma style |
 
 Every style already has `fontFamily`, `fontSize`, `letterSpacing`, and (where
@@ -115,6 +117,12 @@ component; use `spacing.*` / `radius.*` tokens, not the raw numbers below.
 | Modal/Leave                          | —                 | 8    | —            | fills the shell above: body in `typography.body` / `colors.textSecondary`, then "Leave" (Primary, accent tone) over "Keep Editing" (White). Raised when leaving the Add screen with unsaved edits. Node `3233:4557`, in context `3233:4558`. See `LeaveModal.tsx`. |
 | Modal/Date-Default (month picker)    | 16 (content)      | 16   | —            | fills the shell above: a year stepper (two Button / M / Icon / Secondary either side of the year in `typography.titleMedium` / `colors.yearLabel`, gap 24), a 1px `colors.borderSubtle` divider, then twelve Chip Buttons wrapping four to a row at gap 8, and a "Done" primary. Node `3229:4259`, in context `3229:4271`. See `MonthPickerModal.tsx`. |
 | Post List Thumbnail                  | 16 / 24 (content) | 4 (pill) | 8 (`radius.sm`) | the Home-List row: height 88, white bg, a 1px **`colors.borderStrong`** (G600) outline — much darker than `colors.border`. A fixed 72-wide Image block (weekday in `typography.subtext` over the day in `typography.titleSmall`, the latter at lineHeight **29**, not the token's 24 — this instance leaves the leading on auto, which is what makes the Date Field 19 + 29 = 48) then a flexible Content block. Component set `3192:9526` has five variants and which applies follows from the post alone: a photo stays inside the 72 block when there is also text (`Photo and Text`, `3192:9523`) and bleeds across the whole card when there isn't (`Only Photo` `3192:9527`, `Photo and Record` `3192:9655`) — under `colors.photoScrim` either way, with the date white; with no photo the block is white and the date `colors.textStrong` (`Text and Record` `3192:9524`, `Only Record` `3192:9525`). Content shows the text if there is any (2 lines, ellipsised), otherwise the recording pill (20pt `ic/play` + `typography.body` duration, white over a full-bleed photo, else `colors.textPrimary`) — **a recording is never drawn next to text in any variant**. Those five cover all seven shapes a post can take: text-only is `Text and Record` minus the record it never rendered, and photo+text+record is `Photo and Text` for the same reason. See `PostListThumbnail.tsx`. |
+| Header/Report                        | 5 (left) / 16 (right) · 16 vertical | — | — | Header/X's shell — one button pushed right — carrying `ic/setting` instead of `ic/cross`. Node `3196:13123`. |
+| Navigation                           | 21 / 8 top · 16 bottom | 27 | — | the bottom bar, verified in **both** variants: `selected="Home"` (`3184:4123`) and `selected="Report"` (`3196:13233`). The two use the **same** glyphs — only the colour changes, and the selected tab swaps its label for a 3pt G900 dot. (An earlier note here claimed the icons swapped filled/outline; they don't.) Add is never selected. See `BottomNavigation.tsx`. |
+| Post Report Thumbnail                | 4 (image box)     | 8 / 16 | —      | one post in the Report montage: a 120-wide column whose image block is a fixed 120x160. With a photo the block *is* the photo; with none it's an empty box outlined 1px **dashed** `colors.border`, holding the post's text at `typography.reportCaption` / `colors.textStrong`. The day label — `typography.reportDate` / `colors.textSecondary`, reading "(2), Thu" — hugs the image at gap 8; a caption (only when the post has a photo, else the text is already inside the box) sits at the far end at gap 16. `dateUp` mirrors the column, so label and caption swap ends. A recording draws Figma's Record/View pinned to the block's bottom — waveform over duration — on `colors.photoScrim` when over a photo. Nodes `3196:14379`/`14381`/`14383`/`14385`/`14387`/`14389`. See `PostReportThumbnail.tsx`. |
+| Post Thumbnail Rows                  | 16 (ours)         | 16   | —            | the montage strip: each post gets a 120-wide **320-tall** Thumbnail Section, and sections **alternate top- and bottom-aligned**, which also sets each thumbnail's `dateUp` so the day label always falls toward the middle. Verified against Figma's six sections, whose (y, height) are (0,180) (82,238) (0,238) (140,180) (0,180) (140,180) — every even one topped out, every odd one bottomed out at 320. Figma's strip is 800 wide = 6x120 + 5x16, centred so it bleeds past both screen edges. Nodes `3196:14205` / `3196:14377`. See `PostThumbnailRows.tsx`. |
+| Lock Paper                           | 16 / 16 top · 40 bottom | 16 | —     | the veil over a month whose report isn't ready: `colors.lockPaper` (white @ 70%) over a background blur, so the strip stays visible underneath. Centred 40pt `ic/present` over two lines of `typography.subtext` in `colors.textSecondary`. Node `3196:14417`. |
+| Modal/Date-Report                    | 16 (content)      | 16   | —            | **structurally identical to Modal/Date-Default** — same shell, year stepper, divider, twelve chips, Done. Only which chips are enabled differs, so it reuses `MonthPickerModal` through its `isSelectable` prop rather than being a second component. Node `3198:4736`, in context `3198:4740`. |
 | Modal/Delete-Post                    | —                 | 8    | —            | fills the shell above: two body lines in `typography.body` / `colors.textSecondary`, then "Delete" (Primary, **warning** tone) over "Cancel" (White). Raised by the post detail header's Delete. Node `3233:4928`, in context `3233:4929`. See `DeletePostModal.tsx`. |
 
 When implementing a component not in this table, pull its real spec with
@@ -187,6 +195,8 @@ the wrong glyph.
   Figma gives it only Header/List and the list body.
   `PostSearchScreen.tsx` is the search over that month (Home-List-Search-1
   `3192:10548` / -2 `3192:11125`), opened from Header/List's ic/search.
+  `ReportScreen.tsx` is Flow 5's month-as-a-montage (Report-Default
+  `3196:12678` locked / Report-Done `3196:14258`).
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
   stack (Login/Home/HomeList/PostSearch/Add/PostDetail/Recording). `initialRouteName` is temporarily `"Home"` since
   sign-in has no real auth yet; flip it back to `"Login"` once that's wired
@@ -242,6 +252,20 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   List Thumbnails, which carry a weekday and a day but no month — across
   months, two rows reading "Sat 15" would be indistinguishable. Figma draws
   no "no matches" state, so a query that finds nothing lists nothing.
+- **A month's report exists only once the month is over.** The Lock Paper
+  says so outright ("Catch it on the morning of the 1st"), so the current
+  month is covered by the veil rather than shown, and its strip does not
+  drift while hidden. The Report's month picker offers a month when it has
+  a report — a past month with at least one post — plus the current month,
+  which is both where the veil lives and the only way back after moving to
+  an older one. Verified against Figma's Modal/Date-Report (node
+  `3198:4740`), which enables Feb/Mar/May/Jul and marks August active.
+- **The report montage runs oldest first.** Figma numbers the strip from 1
+  left to right, the opposite of the Home list's newest-first order. It
+  drifts left to right on its own; dragging takes over and the drift does
+  not resume, and it stops at the end rather than looping — a jump back to
+  the start would be more jarring than stopping. The speed and that
+  hand-off are ours; Figma says only that the strip moves.
 - **No writing ahead.** DayOne records the day you are living, so calendar
   days after today are inert: they don't open Add and don't open a post.
   Today and past days both stay writable. The month picker follows the same
