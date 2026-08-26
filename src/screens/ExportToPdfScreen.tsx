@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import Text from '../components/Text';
 import { File } from 'expo-file-system';
 import { captureRef } from 'react-native-view-shot';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -21,18 +22,9 @@ import { getExportFiles, saveExportFile } from '../data/exports';
 import type { ExportFile } from '../data/exports';
 import { buildExportFilename, PAGE_HEIGHT, PAGE_WIDTH } from '../pdf/postPageTemplate';
 import { buildPdfFromJpegPages } from '../pdf/buildPdf';
+import { useLanguage } from '../i18n/LanguageContext';
+import { formatDateRangeLabel } from '../i18n/dateFormat';
 import { colors, spacing, typography } from '../theme/tokens';
-
-/** "Aug 6 - 13, 2026" within one month; "Aug 6 - Sep 3, 2026" across months (Figma only shows the former, node 3201:6515). */
-function formatRangeLabel(startDate: string, endDate: string): string {
-  const start = parseDateKey(startDate);
-  const end = parseDateKey(endDate);
-  const sameMonth = start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth();
-  const startLabel = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  if (sameMonth) return `${startLabel} - ${end.getDate()}, ${end.getFullYear()}`;
-  const endLabel = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  return `${startLabel} - ${endLabel}`;
-}
 
 /**
  * Figma "Setting-Export to PDF-2" (node 3201:5947) — the real Export to PDF
@@ -57,6 +49,7 @@ function formatRangeLabel(startDate: string, endDate: string): string {
 export default function ExportToPdfScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'ExportToPdf'>>();
+  const { language, t } = useLanguage();
 
   const [startDate, setStartDate] = useState(params.startDate);
   const [endDate, setEndDate] = useState(params.endDate);
@@ -91,7 +84,7 @@ export default function ExportToPdfScreen() {
     try {
       const posts = await getPostsInRange(startDate, endDate);
       if (posts.length === 0) {
-        Alert.alert('Nothing to export', 'There are no posts in this date range.');
+        Alert.alert(t('exportToPdf.nothingToExportTitle'), t('exportToPdf.nothingToExportBody'));
         return;
       }
 
@@ -145,7 +138,7 @@ export default function ExportToPdfScreen() {
       await saveExportFile({ pdfBytes, pageSourceUris: pageTmpUris, filename, startDate, endDate });
       setFiles(await getExportFiles());
     } catch {
-      Alert.alert('Couldn’t generate PDF', 'Something went wrong while creating your file. Please try again.');
+      Alert.alert(t('exportToPdf.generateFailedTitle'), t('exportToPdf.generateFailedBody'));
     } finally {
       setCaptureBatch(null);
       setGenerating(false);
@@ -154,34 +147,30 @@ export default function ExportToPdfScreen() {
 
   return (
     <View style={styles.container}>
-      <HeaderTitlePage title="Export to PDF" onBack={() => navigation.goBack()} />
+      <HeaderTitlePage title={t('exportToPdf.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.menu} contentContainerStyle={styles.menuContent}>
         <View style={styles.rangeSection}>
           <SettingMenuRow
-            label="Date Range"
-            value={formatRangeLabel(startDate, endDate)}
+            label={t('exportToPdf.dateRange')}
+            value={formatDateRangeLabel(parseDateKey(startDate), parseDateKey(endDate), language)}
             valueColor={colors.accent}
             onPress={() => setRangeModalVisible(true)}
           />
           <View style={styles.rangeBody}>
             <View style={styles.divider} />
             <View style={styles.disclaimer}>
-              <Text style={[typography.body, styles.disclaimerLine]}>
-                •  Exported files are saved locally. Back them up to prevent data loss.
-              </Text>
-              <Text style={[typography.body, styles.disclaimerLine]}>
-                •  Large date ranges may cause crashes. Select a shorter period if needed.
-              </Text>
+              <Text style={[typography.body, styles.disclaimerLine]}>•  {t('exportToPdf.disclaimer1')}</Text>
+              <Text style={[typography.body, styles.disclaimerLine]}>•  {t('exportToPdf.disclaimer2')}</Text>
             </View>
-            <GhostButton label="Generate PDF" onPress={handleGenerate} style={styles.generateButton} />
+            <GhostButton label={t('exportToPdf.generatePdf')} onPress={handleGenerate} style={styles.generateButton} />
           </View>
         </View>
 
         {files && files.length > 0 ? (
           <>
             <SettingDivider />
-            <SettingSection title="Files">
+            <SettingSection title={t('exportToPdf.filesSection')}>
               {files.map((file) => (
                 <ExportFileRow
                   key={file.id}

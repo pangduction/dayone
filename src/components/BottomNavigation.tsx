@@ -1,5 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Text from './Text';
 import { IcCalendar, IcPlus, IcPulse } from './icons/HomeIcons';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, typography } from '../theme/tokens';
 
 export type NavTab = 'Home' | 'Report';
@@ -25,17 +27,23 @@ type Props = {
  * always shows its label.
  */
 export default function BottomNavigation({ selected, onHome, onAdd, onReport }: Props) {
+  const { t } = useLanguage();
   return (
     <View style={styles.navigation}>
       <NavItem
-        label="Home"
+        label={t('bottomNav.home')}
         selected={selected === 'Home'}
         onPress={onHome}
         icon={(color) => <IcCalendar size={24} color={color} />}
       />
-      <NavItem label="Add" selected={false} onPress={onAdd} icon={(color) => <IcPlus size={24} color={color} />} />
       <NavItem
-        label="Report"
+        label={t('bottomNav.add')}
+        selected={false}
+        onPress={onAdd}
+        icon={(color) => <IcPlus size={24} color={color} />}
+      />
+      <NavItem
+        label={t('bottomNav.report')}
         selected={selected === 'Report'}
         onPress={onReport}
         icon={(color) => <IcPulse size={24} color={color} />}

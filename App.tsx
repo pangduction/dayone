@@ -1,7 +1,11 @@
+import { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
 import { View } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import RootNavigator from './src/navigation/RootNavigator';
+import { LanguageProvider } from './src/i18n/LanguageContext';
+import { getLanguage } from './src/data/language';
+import type { Language } from './src/data/language';
 import { fontAssets } from './src/theme/tokens';
 
 // Without a handler, a notification that fires while the app happens to be
@@ -19,10 +23,22 @@ Notifications.setNotificationHandler({
 
 export default function App() {
   const [fontsLoaded] = useFonts(fontAssets);
+  // Loaded once up front, alongside fonts, rather than inside LanguageProvider
+  // itself — a returning Korean-language user should never see a flash of
+  // English while AsyncStorage answers.
+  const [language, setLanguage] = useState<Language | null>(null);
 
-  if (!fontsLoaded) {
+  useEffect(() => {
+    getLanguage().then(setLanguage);
+  }, []);
+
+  if (!fontsLoaded || language === null) {
     return <View style={{ flex: 1, backgroundColor: '#FFFFFF' }} />;
   }
 
-  return <RootNavigator />;
+  return (
+    <LanguageProvider initialLanguage={language}>
+      <RootNavigator />
+    </LanguageProvider>
+  );
 }

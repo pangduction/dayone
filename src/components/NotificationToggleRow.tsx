@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Text from './Text';
 import ToggleSwitch from './ToggleSwitch';
 import { colors, spacing, typography } from '../theme/tokens';
 

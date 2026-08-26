@@ -1,7 +1,9 @@
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
+import Text from './Text';
 import ModalSheet from './ModalSheet';
 import PrimaryButton from './PrimaryButton';
 import WhiteButton from './WhiteButton';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, typography } from '../theme/tokens';
 
 type Props = {
@@ -21,20 +23,21 @@ type Props = {
  * "Cancel" white button.
  */
 export default function DeletePostModal({ visible, onDelete, onCancel }: Props) {
+  const { t } = useLanguage();
   return (
     <ModalSheet
       visible={visible}
-      title="Delete Post?"
+      title={t('deletePostModal.title')}
       onClose={onCancel}
       actions={
         <>
-          <PrimaryButton label="Delete" tone="warning" onPress={onDelete} />
-          <WhiteButton label="Cancel" onPress={onCancel} />
+          <PrimaryButton label={t('deletePostModal.delete')} tone="warning" onPress={onDelete} />
+          <WhiteButton label={t('deletePostModal.cancel')} onPress={onCancel} />
         </>
       }
     >
-      <Text style={[typography.body, styles.body]}>Are you sure you want to delete this post?</Text>
-      <Text style={[typography.body, styles.body]}>This action cannot be undone.</Text>
+      <Text style={[typography.body, styles.body]}>{t('deletePostModal.body1')}</Text>
+      <Text style={[typography.body, styles.body]}>{t('deletePostModal.body2')}</Text>
     </ModalSheet>
   );
 }

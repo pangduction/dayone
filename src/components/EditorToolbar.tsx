@@ -9,6 +9,7 @@ import {
   IcUnderline,
 } from './icons/EditorIcons';
 import type { ActiveFormats, EditorCommand } from './RichTextEditor';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, palette, radius, spacing } from '../theme/tokens';
 
 /**
@@ -66,6 +67,7 @@ export default function EditorToolbar({
   onTogglePalette,
   selectedColor,
 }: Props) {
+  const { t } = useLanguage();
   const iconColor = (active: boolean) => (active ? colors.accent : colors.textPrimary);
 
   return (
@@ -73,14 +75,14 @@ export default function EditorToolbar({
       <View style={styles.bar}>
         {paletteOpen ? <View style={styles.textColorBackdrop} /> : null}
         <View style={styles.row}>
-          <Pressable onPress={onTogglePalette} hitSlop={12} accessibilityRole="button" accessibilityLabel="Text colour">
+          <Pressable onPress={onTogglePalette} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('editorToolbar.textColour')}>
             <IcTextColor size={24} color={paletteOpen ? colors.textPrimary : iconColor(false)} />
           </Pressable>
           <Pressable
             onPress={() => onCommand({ type: 'bold' })}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel="Bold"
+            accessibilityLabel={t('editorToolbar.bold')}
             accessibilityState={{ selected: activeFormats.bold }}
           >
             <IcBold size={24} color={iconColor(activeFormats.bold)} />
@@ -89,7 +91,7 @@ export default function EditorToolbar({
             onPress={() => onCommand({ type: 'italic' })}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel="Italic"
+            accessibilityLabel={t('editorToolbar.italic')}
             accessibilityState={{ selected: activeFormats.italic }}
           >
             <IcItalic size={24} color={iconColor(activeFormats.italic)} />
@@ -98,7 +100,7 @@ export default function EditorToolbar({
             onPress={() => onCommand({ type: 'underline' })}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel="Underline"
+            accessibilityLabel={t('editorToolbar.underline')}
             accessibilityState={{ selected: activeFormats.underline }}
           >
             <IcUnderline size={24} color={iconColor(activeFormats.underline)} />
@@ -107,7 +109,7 @@ export default function EditorToolbar({
             onPress={() => onCommand({ type: 'insertUnorderedList' })}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel="Bulleted list"
+            accessibilityLabel={t('editorToolbar.bulletedList')}
             accessibilityState={{ selected: activeFormats.unorderedList }}
           >
             <IcBulletList size={24} color={iconColor(activeFormats.unorderedList)} />
@@ -116,7 +118,7 @@ export default function EditorToolbar({
             onPress={() => onCommand({ type: 'insertOrderedList' })}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel="Numbered list"
+            accessibilityLabel={t('editorToolbar.numberedList')}
             accessibilityState={{ selected: activeFormats.orderedList }}
           >
             <IcNumberedList size={24} color={iconColor(activeFormats.orderedList)} />
@@ -125,7 +127,7 @@ export default function EditorToolbar({
             onPress={() => onCommand({ type: 'insertHorizontalRule' })}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel="Divider"
+            accessibilityLabel={t('editorToolbar.divider')}
           >
             <IcHorizontalLine size={24} color={colors.textPrimary} />
           </Pressable>
@@ -140,7 +142,7 @@ export default function EditorToolbar({
               onPress={() => onCommand({ type: 'foreColor', color: swatch })}
               style={[styles.swatch, { backgroundColor: swatch }]}
               accessibilityRole="button"
-              accessibilityLabel={`Text colour ${swatch}`}
+              accessibilityLabel={`${t('editorToolbar.textColour')} ${swatch}`}
               accessibilityState={{ selected: swatch === selectedColor }}
             >
               {swatch === selectedColor ? <Check /> : null}

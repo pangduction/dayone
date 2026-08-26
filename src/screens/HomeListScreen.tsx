@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import Text from '../components/Text';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,6 +12,8 @@ import { IcArrowLeft } from '../components/icons/AddIcons';
 import { IcEditAlt, IcSearch } from '../components/icons/ListIcons';
 import { getPostsForMonth } from '../data/posts';
 import type { Post } from '../data/posts';
+import { useLanguage } from '../i18n/LanguageContext';
+import { formatMonthCommaYear } from '../i18n/dateFormat';
 import { colors, spacing, typography } from '../theme/tokens';
 
 /**
@@ -33,6 +36,7 @@ export default function HomeListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'HomeList'>>();
   const { year, month } = params;
+  const { language, t } = useLanguage();
 
   const [posts, setPosts] = useState<Post[] | null>(null);
 
@@ -56,11 +60,12 @@ export default function HomeListScreen() {
   // 3192:9483), not today's date. Built by hand rather than with a
   // toLocaleDateString option set, because none of them produces the comma
   // between month and year that Figma shows ({month:'long', year:'numeric'}
-  // gives "August 2026").
-  const monthLabel = useMemo(() => {
-    const monthName = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' });
-    return `${monthName}, ${year}`;
-  }, [year, month]);
+  // gives "August 2026"). Korean gets its own "2026년 8월" order/format —
+  // see formatMonthCommaYear (src/i18n/dateFormat.ts).
+  const monthLabel = useMemo(
+    () => formatMonthCommaYear(new Date(year, month, 1), language),
+    [year, month, language],
+  );
 
   // Figma only ever drew this screen's empty state for the current month, and
   // two things about it don't survive being looked at from a later one:
@@ -80,18 +85,20 @@ export default function HomeListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <IconButton accessibilityLabel="Back" onPress={() => navigation.goBack()}>
+        <IconButton accessibilityLabel={t('homeList.back')} onPress={() => navigation.goBack()}>
           <IcArrowLeft size={24} color={colors.textPrimary} />
         </IconButton>
         <IconButton
-          accessibilityLabel="Search posts"
+          accessibilityLabel={t('homeList.searchPosts')}
           onPress={() => navigation.navigate('PostSearch', { year, month })}
         >
           <IcSearch size={24} color={colors.textPrimary} />
         </IconButton>
         <View style={styles.headerCentre} pointerEvents="none">
           <Text style={[typography.caption, styles.headerMonth]}>{monthLabel}</Text>
-          <Text style={[typography.overline, styles.headerCount]}>Post {posts?.length ?? 0}</Text>
+          <Text style={[typography.overline, styles.headerCount]}>
+            {t('homeList.postCount')} {posts?.length ?? 0}
+          </Text>
         </View>
       </View>
 
@@ -105,13 +112,13 @@ export default function HomeListScreen() {
           <Text style={[typography.subtext, styles.emptyText]}>
             {isCurrentMonth
               ? // Figma's copy (node 3192:9215), written for the current month.
-                'You haven’t written anything yet.'
+                t('homeList.emptyCurrentMonth')
               : // A past month isn't "yet" any more — it's closed. The header
                 // right above names the month, so this needn't repeat it.
-                'You didn’t write anything.'}
+                t('homeList.emptyPastMonth')}
           </Text>
           {isCurrentMonth ? (
-            <GhostButton label="Add Record" onPress={() => navigation.navigate('Add')} />
+            <GhostButton label={t('homeList.addRecord')} onPress={() => navigation.navigate('Add')} />
           ) : null}
         </View>
       ) : (

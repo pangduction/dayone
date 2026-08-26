@@ -11,6 +11,7 @@ import GhostButton from '../components/GhostButton';
 import FilledFabButton from '../components/FilledFabButton';
 import GalleryModal from '../components/GalleryModal';
 import { submitContactRequest } from '../data/contact';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, radius, spacing } from '../theme/tokens';
 
 const MAX_PHOTOS = 3;
@@ -53,6 +54,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export default function HelpSupportScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState('');
   const [contents, setContents] = useState('');
@@ -70,7 +72,7 @@ export default function HelpSupportScreen() {
   const handleOpenCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Camera access needed', 'Allow camera access to attach a photo.');
+      Alert.alert(t('helpSupport.cameraAccessTitle'), t('helpSupport.cameraAccessBody'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
@@ -80,7 +82,7 @@ export default function HelpSupportScreen() {
   const handleOpenGallery = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Photo access needed', 'Allow photo library access to attach a photo.');
+      Alert.alert(t('helpSupport.photoAccessTitle'), t('helpSupport.photoAccessBody'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -101,9 +103,9 @@ export default function HelpSupportScreen() {
     setSubmitting(true);
     try {
       await submitContactRequest({ email: email.trim(), contents: contents.trim(), photoUris });
-      navigation.navigate('Setting', { flash: 'Feedback sent. Thank you for sharing!' });
+      navigation.navigate('Setting', { flash: t('helpSupport.sentFlash') });
     } catch {
-      Alert.alert('Couldn’t send', 'Something went wrong while sending your feedback. Please try again.');
+      Alert.alert(t('helpSupport.sendFailedTitle'), t('helpSupport.sendFailedBody'));
     } finally {
       setSubmitting(false);
     }
@@ -112,27 +114,32 @@ export default function HelpSupportScreen() {
   return (
     <View style={styles.container}>
       <HeaderTitlePage
-        title="Help & Support"
+        title={t('helpSupport.title')}
         onBack={() => navigation.goBack()}
         action={
-          <HeaderActionButton label="Done" active={canSubmit} disabled={!canSubmit || submitting} onPress={handleSubmit} />
+          <HeaderActionButton
+            label={t('helpSupport.done')}
+            active={canSubmit}
+            disabled={!canSubmit || submitting}
+            onPress={handleSubmit}
+          />
         }
       />
 
       <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} keyboardShouldPersistTaps="handled">
         <LabeledInput
-          label="Email*"
+          label={t('helpSupport.emailLabel')}
           value={email}
           onChangeText={setEmail}
-          placeholder="e.g. name@mail.com"
+          placeholder={t('helpSupport.emailPlaceholder')}
           keyboardType="email-address"
           autoCapitalize="none"
         />
         <LabeledInput
-          label="Contents*"
+          label={t('helpSupport.contentsLabel')}
           value={contents}
           onChangeText={setContents}
-          placeholder="Have feedback? Let us know how we can improve."
+          placeholder={t('helpSupport.contentsPlaceholder')}
           multiline
         />
         <View style={styles.photosField}>
@@ -145,7 +152,7 @@ export default function HelpSupportScreen() {
                     <>
                       <Image source={{ uri }} style={styles.photoImage} resizeMode="cover" />
                       <View style={styles.photoDelete} pointerEvents="box-none">
-                        <FilledFabButton label="Delete" onPress={() => handleRemovePhoto(index)} />
+                        <FilledFabButton label={t('helpSupport.delete')} onPress={() => handleRemovePhoto(index)} />
                       </View>
                     </>
                   ) : null}
@@ -154,7 +161,11 @@ export default function HelpSupportScreen() {
             })}
           </View>
           {photoUris.length < MAX_PHOTOS ? (
-            <GhostButton label="Upload Photo" onPress={() => setGalleryOpen(true)} style={styles.uploadButton} />
+            <GhostButton
+              label={t('helpSupport.uploadPhoto')}
+              onPress={() => setGalleryOpen(true)}
+              style={styles.uploadButton}
+            />
           ) : null}
         </View>
       </ScrollView>

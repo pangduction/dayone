@@ -1,5 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Text from './Text';
 import { IcArrowRightL } from './icons/CommonIcons';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing, typography } from '../theme/tokens';
 import type { ExportFile } from '../data/exports';
 
@@ -41,14 +43,17 @@ function daysLeftLabel(expiresAt: string): string {
  * exists. Implementer's choice, not a Figma read.
  */
 export default function ExportFileRow({ file, onPress }: Props) {
+  const { t } = useLanguage();
   const label = daysLeftLabel(file.expiresAt);
+  const expiryPhrase =
+    label === 'D-DAY' ? t('exportToPdf.expiresToday') : t('exportToPdf.expiresInDays', { n: label.slice(2) });
 
   return (
     <Pressable
       style={styles.row}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${file.filename}, ${label === 'D-DAY' ? 'expires today' : `expires in ${label.slice(2)} days`}`}
+      accessibilityLabel={`${file.filename}, ${expiryPhrase}`}
     >
       <View style={styles.title}>
         <Text style={[typography.body, styles.filename]} numberOfLines={1}>

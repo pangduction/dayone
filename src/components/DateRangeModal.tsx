@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Text from './Text';
 import ModalSheet from './ModalSheet';
 import PrimaryButton from './PrimaryButton';
 import { IcArrowLeftL, IcArrowRightL } from './icons/CommonIcons';
 import { getDateRangeGrid } from '../utils/calendar';
 import type { DateRangeCell } from '../utils/calendar';
 import { dateKey, getPostsInRange, parseDateKey } from '../data/posts';
+import { useLanguage } from '../i18n/LanguageContext';
+import { strings } from '../i18n/strings';
+import { formatMonthYear, formatShortDate } from '../i18n/dateFormat';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
-/** Figma's own row — Mon–Fri as two letters, then "Sat"/"Su" (node 3201:5637…5649). Ported literally, asymmetry and all. */
-const WEEKDAY_HEADER = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sat', 'Su'];
+// Figma's own row (English) is Mon–Fri as two letters, then "Sat"/"Su" (node
+// 3201:5637…5649) — ported literally, asymmetry and all, as
+// `strings.en.calendar.weekdayHeaderMondayStart`; the Korean row
+// (`strings.ko...`) is the regular single-character weekday set instead.
+// `weekdayHeader` below picks whichever the active language calls for.
 
 type Props = {
   visible: boolean;
@@ -44,6 +51,8 @@ type Props = {
  * vector 1:1.
  */
 export default function DateRangeModal({ visible, startDate, endDate, onClose, onApply }: Props) {
+  const { language, t } = useLanguage();
+  const weekdayHeader = strings[language].calendar.weekdayHeaderMondayStart;
   const [draftStart, setDraftStart] = useState(startDate);
   const [draftEnd, setDraftEnd] = useState<string | null>(endDate);
   const [viewYear, setViewYear] = useState(() => parseDateKey(startDate).getFullYear());
@@ -114,27 +123,18 @@ export default function DateRangeModal({ visible, startDate, endDate, onClose, o
     }
   };
 
-  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  });
-  const startLabel = parseDateKey(draftStart).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-  const endLabel = draftEnd
-    ? parseDateKey(draftEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    : '–';
+  const monthLabel = formatMonthYear(new Date(viewYear, viewMonth, 1), language);
+  const startLabel = formatShortDate(parseDateKey(draftStart), language);
+  const endLabel = draftEnd ? formatShortDate(parseDateKey(draftEnd), language) : '–';
 
   return (
     <ModalSheet
       visible={visible}
-      title="Select Date Range"
+      title={t('dateRangeModal.title')}
       onClose={onClose}
       actions={
         <PrimaryButton
-          label="Apply"
+          label={t('dateRangeModal.apply')}
           disabled={draftEnd === null}
           onPress={() => {
             if (draftEnd) onApply({ startDate: draftStart, endDate: draftEnd });
@@ -146,7 +146,7 @@ export default function DateRangeModal({ visible, startDate, endDate, onClose, o
         <View style={styles.monthRow}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Previous month"
+            accessibilityLabel={t('dateRangeModal.previousMonth')}
             onPress={() => stepMonth(-1)}
             style={styles.stepButton}
           >
@@ -155,7 +155,7 @@ export default function DateRangeModal({ visible, startDate, endDate, onClose, o
           <Text style={[typography.body, styles.monthLabel]}>{monthLabel}</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Next month"
+            accessibilityLabel={t('dateRangeModal.nextMonth')}
             onPress={() => stepMonth(1)}
             disabled={viewYear === currentYear && viewMonth === currentMonth}
             style={[
@@ -179,8 +179,8 @@ export default function DateRangeModal({ visible, startDate, endDate, onClose, o
 
         <View style={styles.grid}>
           <View style={styles.weekHeader}>
-            {WEEKDAY_HEADER.map((label) => (
-              <View key={label} style={styles.cell}>
+            {weekdayHeader.map((label, index) => (
+              <View key={index} style={styles.cell}>
                 <Text style={[typography.calendarDay, styles.weekLabel]}>{label}</Text>
               </View>
             ))}

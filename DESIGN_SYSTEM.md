@@ -278,6 +278,13 @@ the wrong glyph.
   a second, Monday-start grid for `DateRangeModal` that (unlike
   `getCalendarWeeks`) fills leading/trailing gaps with real spillover-month
   day numbers, since Figma's date-range picker draws them.
+- `src/i18n/` — the English/Korean localization system: `strings.ts` (the
+  `en`/`ko` string dictionary), `LanguageContext.tsx` (`useLanguage()`/`t()`),
+  and `dateFormat.ts` (hand-written per-language date/weekday/month labels).
+  `src/data/language.ts` persists which language is active, the same
+  AsyncStorage-backed pattern as `notificationSettings.ts`/`exports.ts`.
+  `src/theme/koreanFonts.ts` and `src/components/Text.tsx` are the font
+  half of the same feature. See §8 below for the full picture.
 
 ## 7. Product rules that shape the UI
 
@@ -384,22 +391,17 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   never shows. Pressing Share renders that frame off-screen, captures it as a
   PNG, and opens the OS share sheet on the result — the live Home screen with
   its interactive chrome is never what leaves the app.
-- **Language (Flow 7.2) has exactly one real option.** The app has no
-  Korean strings — no translated copy anywhere — so `LanguageModal` renders
-  한국어 as a real, tappable chip (nothing in Figma marks it `disabled`) but
-  pressing it never selects it. Per Setting-Language-Korea (node
-  `3267:5909`), the modal stays open with English still active and an
-  `AlertBanner` ("Not supported yet.") appears on top of it — not a native
-  `Alert`, and not the modal closing to show it. The banner renders through
-  `ModalSheet`'s `overlay` slot rather than as an ordinary sibling on
-  `SettingScreen`: `Modal` is a native layer painted in front of the whole
-  app, so a banner the screen renders directly would land *behind* the open
-  modal, dimmed by its backdrop blur along with everything else back
-  there — confirmed against Figma's own z-order in that same node, where
-  the Alert frame is the topmost layer. `SettingScreen` still owns the
-  banner's message and its 3-second auto-dismiss timer (Figma doesn't
-  specify a duration; this reuses `HomeScreen`'s post-delete flash timing) —
-  only where it paints moved into the modal.
+- **Language (Flow 7.2) is a real, live switch between English and Korean.**
+  Superseded product direction: Figma's Setting-Language-Korea frame (node
+  `3267:5909`) draws 한국어 as a dead end — tapping it reopens an
+  `AlertBanner` reading "Not supported yet." — because at the time the app
+  had no Korean strings anywhere. That is no longer true. `LanguageModal`
+  now genuinely switches the whole app: picking 한국어 and pressing Done
+  re-renders every screen's copy in Korean and swaps every `Text` node's
+  font to Pretendard, immediately, with nothing left in English chrome. See
+  the **Internationalization (i18n)** section below for how. The row's own
+  value on `SettingScreen` names whichever language is currently active, in
+  that language's own name ("한국어", not "Korean") rather than translated.
 - **Export to PDF is a real device feature**, not a mock list, per explicit
   product direction. "Generate PDF" reads the actual posts in the chosen
   range (`getPostsInRange`) and writes a real, multi-page PDF file — not a
@@ -578,6 +580,85 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     function) shows a native `Alert` instead and stays on this screen,
     the same failure-reporting pattern `ExportToPdfScreen`'s "Generate PDF"
     uses, since nothing was actually sent.
+
+## 8. Internationalization (i18n)
+
+The app ships in English and Korean, switched live from `LanguageModal`
+(Setting → Language) with no restart. Figma itself has zero Korean text
+anywhere in the file — every Korean string here is a first-pass translation
+done directly in this codebase, not a port of a Figma node, so wording fixes
+are expected and don't need a Figma re-check first.
+
+- **`src/data/language.ts`** — `Language = 'en' | 'ko'`, plus
+  `getLanguage()`/`saveLanguage()` backed by AsyncStorage (key
+  `dayone.language.v1`, default `'en'`), the same persisted-settings shape
+  `notificationSettings.ts`/`exports.ts` already use.
+- **`src/i18n/strings.ts`** — the one dictionary of every screen/component
+  string that isn't user data (a post's own text, a filename, a date
+  computed at runtime), namespaced by file (`home`, `add`, `setting`, …)
+  plus a `common` namespace for words repeated verbatim across screens
+  (Done, Cancel, Delete, Apply, Back, Close). `en` is a plain object (not
+  `as const`, so its leaves widen to `string`); `ko: typeof en` is typed
+  against it, which makes a key added to one language and forgotten on the
+  other a compile error instead of a silent runtime fallback.
+- **`src/i18n/LanguageContext.tsx`** — `LanguageProvider`/`useLanguage()`,
+  the app's first React Context (everywhere else in the codebase uses
+  route params, prop-drilling, or a per-screen AsyncStorage read).
+  `useLanguage()` returns `{ language, setLanguage, t }`; `t(path, params?)`
+  does a dot-path lookup into `strings` for the active language and
+  interpolates any `{name}` placeholders (e.g.
+  `exportToPdf.expiresInDays: '{n}일 후 만료'`, called as
+  `t('exportToPdf.expiresInDays', { n: 3 })`).
+- **`src/i18n/dateFormat.ts`** — every date/weekday/month label a screen
+  needs, each `(date: Date, language: Language) => string`. Written by hand
+  rather than delegated to `toLocaleDateString('ko-KR', …)`, because the
+  English formatting this app already committed to (Header/List's "August,
+  2026" with a comma, Post Report Thumbnail's "(2), Thu") isn't something
+  any standard `Intl` option set produces either — both languages' date
+  strings are deliberate, hand-picked formats, not whatever the platform
+  locale defaults to.
+- **Pretendard, a dedicated Korean font.** Bare OS font-fallback for Korean
+  text was ruled out in favor of shipping a real Korean typeface matched to
+  the existing Latin weights. `assets/fonts/Pretendard-{Regular,Medium,
+  SemiBold,Bold,ExtraBold}.ttf` are the five weights actually used
+  (OFL-1.1 licensed, extracted from the `pretendard` npm package's
+  `dist/public/static/alternative/` folder and committed directly — the
+  package itself isn't a dependency, only its font files are needed).
+  Registered in `fontAssets` (`src/theme/tokens.ts`) and loaded via
+  `useFonts` in `App.tsx`, same as every other font in the project.
+  `src/theme/koreanFonts.ts`'s `koreanFontFor(fontFamily)` maps each Latin
+  family already in use to its Pretendard equivalent
+  (`Inter_400Regular → Pretendard-Regular`, `Inter_600SemiBold →
+  Pretendard-SemiBold`, `Poppins_700Bold → Pretendard-Bold`, …). Two
+  families are deliberately excluded from the map: `Jura_400Regular` (the
+  "DayOne" wordmark — a brand mark, not UI copy, and stays Jura in every
+  language) and `Inter_500Medium_Italic` (`typography.reportDate` — no
+  Pretendard italic exists).
+- **`src/components/Text.tsx`**, a drop-in replacement for React Native's
+  `Text`, is what actually applies the swap without touching every
+  `typography.*` call site. Converting `typography` itself into a
+  language-aware hook was considered and rejected: every screen's styles
+  are built once in a module-level `StyleSheet.create()` call that runs at
+  import time, outside any component or hook context, so `typography.body`
+  can't know the active language there. Instead `Text.tsx` inspects
+  `StyleSheet.flatten(style)?.fontFamily` at render time and, only when the
+  active language is Korean and that family has a Pretendard entry, appends
+  `{ fontFamily: koreanFontFamily }` as the *last* element of the style
+  array — React Native merges style arrays left-to-right so the last
+  element wins, which is what lets one override replace whatever font a
+  component's own stylesheet already set without editing that stylesheet.
+  Every screen and component imports this `Text` instead of React Native's
+  own (see `src/components/`, `src/screens/` — the import is `./Text` from
+  a component, `../components/Text` from a screen). Two known gaps: a
+  `TextInput` doesn't run through this wrapper, so typed text in an input
+  field keeps the Latin font even in Korean; and `RichTextEditor`'s
+  WebView-rendered story field has its own separate HTML/CSS font stack,
+  untouched by any of this.
+- **App startup gates on the persisted language, not just fonts.**
+  `App.tsx` already waited on `useFonts` before rendering; it now also
+  waits on `getLanguage()` resolving before mounting `LanguageProvider` /
+  `RootNavigator`, so the very first frame renders in whichever language
+  was last selected rather than flashing English first.
 
 Keep this file in sync: whenever a new token or component spec is pulled
 from Figma, update the relevant section here as well as `tokens.ts`.

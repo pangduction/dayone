@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Text from '../components/Text';
 import { BlurView } from 'expo-blur';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,6 +13,8 @@ import { IcArrowDown } from '../components/icons/HomeIcons';
 import { IcPresent, IcSetting } from '../components/icons/ReportIcons';
 import { getMonthsWithPosts, getPostsForMonth } from '../data/posts';
 import type { Post } from '../data/posts';
+import { useLanguage } from '../i18n/LanguageContext';
+import { formatCalendarTitleParts } from '../i18n/dateFormat';
 import { colors, layout, spacing, typography } from '../theme/tokens';
 
 /**
@@ -30,6 +33,7 @@ import { colors, layout, spacing, typography } from '../theme/tokens';
  */
 export default function ReportScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { language, t } = useLanguage();
   const today = useMemo(() => new Date(), []);
 
   const [year, setYear] = useState(today.getFullYear());
@@ -78,7 +82,7 @@ export default function ReportScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <IconButton accessibilityLabel="Settings" onPress={() => navigation.navigate('Setting')}>
+        <IconButton accessibilityLabel={t('report.settings')} onPress={() => navigation.navigate('Setting')}>
           <IcSetting size={24} color={colors.textPrimary} />
         </IconButton>
       </View>
@@ -89,12 +93,13 @@ export default function ReportScreen() {
           onPress={() => setPickerOpen(true)}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Change month"
+          accessibilityLabel={t('report.changeMonth')}
         >
-          <Text style={[typography.calendarTitle, styles.titleText]}>
-            {new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' })}
-          </Text>
-          <Text style={[typography.calendarTitle, styles.titleText]}>{year}</Text>
+          {formatCalendarTitleParts(new Date(year, month, 1), language).map((part, index) => (
+            <Text key={index} style={[typography.calendarTitle, styles.titleText]}>
+              {part}
+            </Text>
+          ))}
           <IcArrowDown size={20} color={colors.textPrimary} />
         </Pressable>
 
@@ -116,9 +121,7 @@ export default function ReportScreen() {
               <View style={[StyleSheet.absoluteFill, styles.lockVeil]} />
               <View style={styles.lockBody}>
                 <IcPresent size={40} color={colors.textPrimary} />
-                <Text style={[typography.subtext, styles.lockText]}>
-                  We turn your month into a report.{'\n'}Catch it on the morning of the 1st.
-                </Text>
+                <Text style={[typography.subtext, styles.lockText]}>{t('report.lockedBody')}</Text>
               </View>
             </View>
           ) : null}

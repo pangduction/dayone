@@ -14,6 +14,7 @@ import LanguageModal from '../components/LanguageModal';
 import AlertBanner from '../components/AlertBanner';
 import { dateKey } from '../data/posts';
 import { getNotificationSettings } from '../data/notificationSettings';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing } from '../theme/tokens';
 
 /** "최근 7일" (last 7 days) — the product's chosen default range when the date picker first opens from Setting. */
@@ -43,13 +44,11 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  * "Language" (Flow 7.2) is wired to `LanguageModal`, opened directly over
  * this screen per Figma's own Setting-Language (node 3199:8605) — the same
  * "modal over Setting-Main" pattern Export to PDF's date-range picker uses.
- * English is the only real language: per Setting-Language-Korea (node
- * 3267:5909), tapping the 한국어 chip doesn't select it — the modal stays
- * open with English still active, and an `AlertBanner` ("Not supported
- * yet.") appears on top of the modal itself (`LanguageModal`'s `overlay`
- * slot, since a real `Modal` paints in front of anything this screen draws
- * directly). This screen still owns the message and its 3s auto-dismiss —
- * the same transient-banner timing `HomeScreen`'s post-delete flash uses.
+ * Both English and 한국어 are now real, selectable options (see
+ * `LanguageModal`'s own doc comment for why that's no longer the "Not
+ * supported yet." dead end Figma's Setting-Language-Korea frame shows) — the
+ * row's own value names whichever is currently active, in its own language
+ * rather than translated ("한국어", not "Korean").
  *
  * "Export to PDF" (Flow 7.3) is wired: tapping it pushes `ExportToPdfScreen`
  * directly, pre-filled with the last 7 days. Figma's own node 3199:8735
@@ -77,9 +76,9 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
 export default function SettingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Setting'>>();
+  const { language, t } = useLanguage();
   const [notificationsOn, setNotificationsOn] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
-  const [languageAlert, setLanguageAlert] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
 
   // A screen hands the banner over as a route param on its way back here.
@@ -114,63 +113,58 @@ export default function SettingScreen() {
     }, []),
   );
 
-  useEffect(() => {
-    if (languageAlert === null) return;
-    // Figma doesn't say how long the banner stays; matches HomeScreen's flash.
-    const timer = setTimeout(() => setLanguageAlert(null), 3000);
-    return () => clearTimeout(timer);
-  }, [languageAlert]);
-
   return (
     <View style={styles.container}>
       <HeaderX onClose={() => navigation.goBack()} />
 
       <ScrollView style={styles.menu} contentContainerStyle={styles.menuContent}>
-        <SettingSection title="APP">
+        <SettingSection title={t('setting.sectionApp')}>
           <SettingMenuRow
-            label="Notifications"
-            value={notificationsOn ? 'On' : 'Off'}
+            label={t('setting.notifications')}
+            value={notificationsOn ? t('setting.on') : t('setting.off')}
             onPress={() => navigation.navigate('Notification')}
           />
-          <SettingMenuRow label="Language" value="English" onPress={() => setLanguageModalVisible(true)} />
-          <SettingMenuRow label="Export to PDF" onPress={() => navigation.navigate('ExportToPdf', lastSevenDaysRange())} />
+          <SettingMenuRow
+            label={t('setting.language')}
+            value={language === 'ko' ? '한국어' : 'English'}
+            onPress={() => setLanguageModalVisible(true)}
+          />
+          <SettingMenuRow
+            label={t('setting.exportToPdf')}
+            onPress={() => navigation.navigate('ExportToPdf', lastSevenDaysRange())}
+          />
         </SettingSection>
 
         <SettingDivider />
 
-        <SettingSection title="SUPPORT">
+        <SettingSection title={t('setting.sectionSupport')}>
           {/* TODO: Figma gives this row a chevron but no destination screen
               anywhere in the file. */}
-          <SettingMenuRow label="FAQ" />
-          <SettingMenuRow label="Help & Support" onPress={() => navigation.navigate('HelpSupport')} />
-          <SettingMenuRow label="Terms of Service" onPress={() => navigation.navigate('TermsOfService')} />
+          <SettingMenuRow label={t('setting.faq')} />
+          <SettingMenuRow label={t('setting.helpSupport')} onPress={() => navigation.navigate('HelpSupport')} />
+          <SettingMenuRow label={t('setting.termsOfService')} onPress={() => navigation.navigate('TermsOfService')} />
           {/* TODO: no screen in Figma for this either — eventually a store
               review deep link (Linking.openURL), not an in-app screen. */}
-          <SettingMenuRow label="App review" />
-          <SettingMenuRow label="App version" value={Constants.expoConfig?.version ?? '—'} chevron={false} />
+          <SettingMenuRow label={t('setting.appReview')} />
+          <SettingMenuRow label={t('setting.appVersion')} value={Constants.expoConfig?.version ?? '—'} chevron={false} />
         </SettingSection>
 
         <SettingDivider />
 
-        <SettingSection title="ACCOUNT">
+        <SettingSection title={t('setting.sectionAccount')}>
           {/* Figma mocks this as a static row (no chevron) — there's no real
               account system yet, so "Log in" plus a placeholder email is
               exactly what's shown, not a stand-in for something else. */}
-          <SettingMenuRow label="Log in" value="hello@mail.com" chevron={false} />
+          <SettingMenuRow label={t('setting.logIn')} value="hello@mail.com" chevron={false} />
           {/* TODO: no screen/modal for this in Figma, and nothing to log out
               of without real auth. */}
-          <SettingMenuRow label="Log out" />
+          <SettingMenuRow label={t('setting.logOut')} />
           {/* TODO: wire once Flow 7.6 Delete Account exists. */}
-          <SettingMenuRow label="Delete Account" />
+          <SettingMenuRow label={t('setting.deleteAccount')} />
         </SettingSection>
       </ScrollView>
 
-      <LanguageModal
-        visible={languageModalVisible}
-        onClose={() => setLanguageModalVisible(false)}
-        onUnsupportedLanguagePress={() => setLanguageAlert('Not supported yet.')}
-        alertMessage={languageAlert}
-      />
+      <LanguageModal visible={languageModalVisible} onClose={() => setLanguageModalVisible(false)} />
 
       {flash !== null ? (
         <View style={styles.flash} pointerEvents="none">

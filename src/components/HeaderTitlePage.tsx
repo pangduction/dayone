@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Text from './Text';
 import IconButton from './IconButton';
 import { IcArrowLeft } from './icons/AddIcons';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing, typography } from '../theme/tokens';
 
 type Props = {
@@ -22,9 +24,10 @@ type Props = {
  * left edge regardless of title length.
  */
 export default function HeaderTitlePage({ title, onBack, action }: Props) {
+  const { t } = useLanguage();
   return (
     <View style={styles.header}>
-      <IconButton accessibilityLabel="Back" onPress={onBack}>
+      <IconButton accessibilityLabel={t('common.back')} onPress={onBack}>
         <IcArrowLeft size={24} color={colors.textPrimary} />
       </IconButton>
       {action}

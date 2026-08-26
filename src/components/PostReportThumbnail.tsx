@@ -1,8 +1,11 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+import Text from './Text';
 import type { Post } from '../data/posts';
 import { parseDateKey } from '../data/posts';
 import { formatDuration } from '../utils/duration';
 import Waveform from './Waveform';
+import { useLanguage } from '../i18n/LanguageContext';
+import { formatWeekdayShort } from '../i18n/dateFormat';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 /** Figma: the thumbnail column is a fixed 120 wide (node 3196:14379). */
@@ -54,8 +57,9 @@ type Props = {
  * 3196:13914). Over a photo it sits on `colors.photoScrim`.
  */
 export default function PostReportThumbnail({ post, dateUp, onPress, onPressIn, onPressOut }: Props) {
+  const { language, t } = useLanguage();
   const date = parseDateKey(post.date);
-  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
+  const weekday = formatWeekdayShort(date, language);
   // Figma writes the day in brackets before the weekday: "(31), Sat".
   const dateLabel = `(${date.getDate()}), ${weekday}`;
 
@@ -122,7 +126,7 @@ export default function PostReportThumbnail({ post, dateUp, onPress, onPressIn, 
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={onPress ? `Open the post for ${post.date}` : undefined}
+      accessibilityLabel={onPress ? t('homeList.openPostFor', { date: post.date }) : undefined}
       style={styles.column}
     >
       {dateUp ? (

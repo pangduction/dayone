@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Text from './Text';
 import ModalSheet from './ModalSheet';
 import PrimaryButton from './PrimaryButton';
 import GhostIconButton from './GhostIconButton';
 import ChipButton from './ChipButton';
 import type { ChipStatus } from './ChipButton';
 import { IcArrowLeftL, IcArrowRightL } from './icons/CommonIcons';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing, typography } from '../theme/tokens';
 
 /** Short month labels, the form Figma's chips use. */
@@ -47,6 +49,7 @@ type Props = {
  * calendar where it was.
  */
 export default function MonthPickerModal({ visible, year, month, onClose, onConfirm, isSelectable }: Props) {
+  const { language, t } = useLanguage();
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
@@ -89,25 +92,25 @@ export default function MonthPickerModal({ visible, year, month, onClose, onConf
   return (
     <ModalSheet
       visible={visible}
-      title="Select Month"
+      title={t('monthPickerModal.selectMonth')}
       onClose={onClose}
       actions={
         <PrimaryButton
-          label="Done"
+          label={t('monthPickerModal.done')}
           onPress={() => onConfirm({ year: draftYear, month: draftMonth })}
         />
       }
     >
       <View style={styles.content}>
         <View style={styles.yearRow}>
-          <GhostIconButton accessibilityLabel="Previous year" onPress={() => stepYear(-1)}>
+          <GhostIconButton accessibilityLabel={t('monthPickerModal.previousYear')} onPress={() => stepYear(-1)}>
             <IcArrowLeftL size={20} color={colors.textPrimary} />
           </GhostIconButton>
 
           <Text style={[typography.titleMedium, styles.year]}>{draftYear}</Text>
 
           <GhostIconButton
-            accessibilityLabel="Next year"
+            accessibilityLabel={t('monthPickerModal.nextYear')}
             onPress={() => stepYear(1)}
             disabled={draftYear >= currentYear}
           >
@@ -121,7 +124,7 @@ export default function MonthPickerModal({ visible, year, month, onClose, onConf
           {MONTHS.map((label, index) => (
             <ChipButton
               key={label}
-              label={label}
+              label={language === 'ko' ? `${index + 1}월` : label}
               status={statusFor(index)}
               onPress={() => setDraftMonth(index)}
             />

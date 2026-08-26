@@ -1,10 +1,12 @@
-import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Modal, Pressable, StyleSheet, View } from 'react-native';
+import Text from './Text';
 import { useEffect, useRef, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import type { ReactNode } from 'react';
 import { BlurView } from 'expo-blur';
 import IconButton from './IconButton';
 import { IcCross } from './icons/AddIcons';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
 
 type Props = {
@@ -56,6 +58,7 @@ type Props = {
  * reuses `IconButton`.
  */
 export default function ModalSheet({ visible, title, onClose, children, actions, overlay }: Props) {
+  const { t } = useLanguage();
   // Kept mounted across the closing animation so the sheet can slide out.
   const [mounted, setMounted] = useState(visible);
   const progress = useRef(new Animated.Value(0)).current;
@@ -101,7 +104,7 @@ export default function ModalSheet({ visible, title, onClose, children, actions,
           <View style={[StyleSheet.absoluteFill, styles.scrim]} />
         </Animated.View>
 
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={`Close ${title}`}>
+        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={`${t('common.close')} ${title}`}>
           {/* Taps inside the sheet must not fall through to the backdrop. */}
           <Animated.View style={[styles.sheetWrap, { transform: [{ translateY }] }]}>
             <Pressable style={styles.sheet} onPress={() => {}} onLayout={measureSheet}>
@@ -110,7 +113,7 @@ export default function ModalSheet({ visible, title, onClose, children, actions,
                   <Text style={[typography.subtext, styles.title]}>{title}</Text>
                 </View>
                 <View style={styles.headerSpacer} />
-                <IconButton accessibilityLabel="Close" onPress={onClose} style={styles.closeButton}>
+                <IconButton accessibilityLabel={t('common.close')} onPress={onClose} style={styles.closeButton}>
                   <IcCross size={24} color={colors.textPrimary} />
                 </IconButton>
               </View>

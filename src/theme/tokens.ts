@@ -359,4 +359,18 @@ export const fontAssets = {
   Inter_700Bold: require('@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf'),
   Raleway_800ExtraBold: require('@expo-google-fonts/raleway/800ExtraBold/Raleway_800ExtraBold.ttf'),
   Poppins_700Bold: require('@expo-google-fonts/poppins/700Bold/Poppins_700Bold.ttf'),
+  // Korean-only, loaded and used by src/components/Text.tsx: every one of
+  // the Latin fonts above has no Hangul glyphs at all, so once the app's
+  // language is Korean, every `fontFamily` above needs a same-weight
+  // Pretendard stand-in rather than falling back to whatever font the OS
+  // happens to ship — see src/theme/koreanFonts.ts for the actual mapping.
+  // Files are Pretendard's own static TTFs (github.com/orioncactus/pretendard,
+  // OFL-1.1), copied into assets/fonts/ rather than depending on the
+  // `pretendard` npm package at runtime (it ships ~100MB of web-only
+  // formats and variable fonts DayOne never needs).
+  'Pretendard-Regular': require('../../assets/fonts/Pretendard-Regular.ttf'),
+  'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.ttf'),
+  'Pretendard-SemiBold': require('../../assets/fonts/Pretendard-SemiBold.ttf'),
+  'Pretendard-Bold': require('../../assets/fonts/Pretendard-Bold.ttf'),
+  'Pretendard-ExtraBold': require('../../assets/fonts/Pretendard-ExtraBold.ttf'),
 };

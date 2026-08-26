@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Keyboard, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Text from '../components/Text';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NavigationAction, RouteProp } from '@react-navigation/native';
@@ -21,6 +22,8 @@ import EditorToolbar from '../components/EditorToolbar';
 import { palette } from '../theme/tokens';
 import { IcArrowLeft, IcImage, IcMicrophone } from '../components/icons/AddIcons';
 import { colors, radius, spacing, typography } from '../theme/tokens';
+import { useLanguage } from '../i18n/LanguageContext';
+import { formatLongDate, formatWeekdayShort } from '../i18n/dateFormat';
 
 /**
  * Figma flow "Flow 2.1 이미지 삽입하기" (section 3196:14539):
@@ -65,6 +68,7 @@ export default function AddScreen() {
   const today = useMemo(() => new Date(), []);
   const targetKey = params?.date ?? dateKey(today);
   const targetDate = useMemo(() => parseDateKey(targetKey), [targetKey]);
+  const { language, t } = useLanguage();
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [fitMode, setFitMode] = useState<FitMode>('fit');
@@ -211,7 +215,7 @@ export default function AddScreen() {
   const handleOpenCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Camera access needed', 'Allow camera access to take today’s photo.');
+      Alert.alert(t('add.cameraAccessTitle'), t('add.cameraAccessBody'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
@@ -224,7 +228,7 @@ export default function AddScreen() {
   const handleOpenGallery = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Photo access needed', 'Allow photo library access to add a picture to your post.');
+      Alert.alert(t('add.photoAccessTitle'), t('add.photoAccessBody'));
       return;
     }
     // One photo per post: no multi-select.
@@ -253,13 +257,13 @@ export default function AddScreen() {
     navigation.goBack();
   };
 
-  const dateLabel = targetDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  const weekdayLabel = targetDate.toLocaleDateString('en-US', { weekday: 'short' });
+  const dateLabel = formatLongDate(targetDate, language);
+  const weekdayLabel = formatWeekdayShort(targetDate, language);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <IconButton accessibilityLabel="Back" onPress={() => navigation.goBack()}>
+        <IconButton accessibilityLabel={t('add.back')} onPress={() => navigation.goBack()}>
           <IcArrowLeft size={24} color={colors.textPrimary} />
         </IconButton>
 
@@ -270,7 +274,7 @@ export default function AddScreen() {
           <Text style={[typography.overline, styles.weekdayLabel]}>{weekdayLabel}</Text>
         </View>
 
-        <HeaderActionButton label="Done" active={canSave} disabled={!canSave} onPress={handleDone} />
+        <HeaderActionButton label={t('common.done')} active={canSave} disabled={!canSave} onPress={handleDone} />
       </View>
 
       <ScrollView
@@ -287,9 +291,9 @@ export default function AddScreen() {
             buttons still win the touch. */}
         <Pressable style={styles.bodyContent} onPress={dismissEditor} accessible={false}>
         <View style={styles.labelRow}>
-          <Text style={[typography.subtext, styles.storyLabel]}>Today's Story</Text>
+          <Text style={[typography.subtext, styles.storyLabel]}>{t('add.todaysStory')}</Text>
           <IconButton
-            accessibilityLabel="Record voice"
+            accessibilityLabel={t('add.recordVoice')}
             onPress={() => navigation.navigate('Recording', { onFinish: setRecording })}
           >
             <IcMicrophone size={24} color={colors.textPrimary} />
@@ -302,13 +306,13 @@ export default function AddScreen() {
               <SegmentedButton value={fitMode} onChange={setFitMode} />
             </View>
             <View style={styles.photoOverlayBottom} pointerEvents="box-none">
-              <FilledFabButton label="Delete" onPress={() => setPhotoUri(null)} />
+              <FilledFabButton label={t('add.delete')} onPress={() => setPhotoUri(null)} />
             </View>
           </PhotoSection>
         ) : (
           <Pressable onPress={() => setGalleryOpen(true)} style={styles.photoButton}>
             <IcImage size={24} color={colors.accent} />
-            <Text style={[typography.subtext, styles.photoButtonLabel]}>Add Today's Photo</Text>
+            <Text style={[typography.subtext, styles.photoButtonLabel]}>{t('add.addTodaysPhoto')}</Text>
           </Pressable>
         )}
 
@@ -321,7 +325,7 @@ export default function AddScreen() {
             <RichTextEditor
               ref={editorRef}
               initialHtml={initialHtml ?? ''}
-              placeholder="Enter.."
+              placeholder={t('add.storyPlaceholder')}
               onChange={({ html: nextHtml, text: nextText }) => {
                 setHtml(nextHtml);
                 setText(nextText);

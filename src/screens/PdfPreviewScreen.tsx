@@ -9,6 +9,7 @@ import HeaderPdfPage from '../components/HeaderPdfPage';
 import { getExportFile } from '../data/exports';
 import type { ExportFile } from '../data/exports';
 import { PAGE_HEIGHT, PAGE_WIDTH } from '../pdf/postPageTemplate';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, radius, shadows, spacing } from '../theme/tokens';
 
 /**
@@ -26,6 +27,7 @@ import { colors, radius, shadows, spacing } from '../theme/tokens';
 export default function PdfPreviewScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'PdfPreview'>>();
+  const { t } = useLanguage();
 
   const [file, setFile] = useState<ExportFile | null>(null);
 
@@ -48,7 +50,11 @@ export default function PdfPreviewScreen() {
 
   return (
     <View style={styles.container}>
-      <HeaderPdfPage title={file?.filename ?? 'PDF'} onBack={() => navigation.goBack()} onShare={handleShare} />
+      <HeaderPdfPage
+        title={file?.filename ?? t('pdfPreview.fallbackTitle')}
+        onBack={() => navigation.goBack()}
+        onShare={handleShare}
+      />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.pages}>
         {file?.pageUris.map((uri) => (
           <View key={uri} style={styles.page}>

@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Modal, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Modal, StyleSheet, View } from 'react-native';
+import Text from './Text';
 import { BlurView } from 'expo-blur';
 import Svg, { Circle } from 'react-native-svg';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing, typography } from '../theme/tokens';
 
 const SPINNER_SIZE = 60;
@@ -32,6 +34,7 @@ type Props = {
  * typo, not a design value, and corrected here.)
  */
 export default function GeneratingPdfModal({ visible }: Props) {
+  const { t } = useLanguage();
   const rotation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -79,9 +82,7 @@ export default function GeneratingPdfModal({ visible }: Props) {
               />
             </Svg>
           </Animated.View>
-          <Text style={[typography.subtext, styles.label]}>
-            {'You’re almost done!\nWe’re generating your PDF'}
-          </Text>
+          <Text style={[typography.subtext, styles.label]}>{t('generatingPdfModal.body')}</Text>
         </View>
       </View>
     </Modal>

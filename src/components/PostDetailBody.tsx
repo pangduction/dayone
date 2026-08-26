@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Text from './Text';
 import PhotoSection from './PhotoSection';
 import RecordRow from './RecordRow';
 import StaticRecordRow from './StaticRecordRow';
 import RichTextEditor from './RichTextEditor';
 import { parseDateKey } from '../data/posts';
 import type { Post } from '../data/posts';
+import { useLanguage } from '../i18n/LanguageContext';
+import { formatLongDate, formatWeekdayLong } from '../i18n/dateFormat';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 type Props = {
@@ -41,10 +44,11 @@ type Props = {
  * could drift from the live screen.
  */
 export default function PostDetailBody({ post, interactive = true, onReady }: Props) {
+  const { language } = useLanguage();
   const written = useMemo(() => parseDateKey(post.date), [post.date]);
   // Same formatting the live screen has always used for its own Date Written block.
-  const dateLabel = written.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  const dayLabel = written.toLocaleDateString('en-US', { weekday: 'long' });
+  const dateLabel = formatLongDate(written, language);
+  const dayLabel = formatWeekdayLong(written, language);
 
   // Two independent things this body can be waiting on before it's safe to
   // capture — a plain-text-only post (or one with neither) has nothing async

@@ -1,9 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Text from './Text';
 import SecondaryButton from './SecondaryButton';
 import Waveform from './Waveform';
 import { IcPlay } from './icons/CommonIcons';
 import { formatDuration } from '../utils/duration';
 import type { Recording } from '../data/posts';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 type Props = {
@@ -23,9 +25,10 @@ type Props = {
  * duration; no player, no `onPress`.
  */
 export default function StaticRecordRow({ recording }: Props) {
+  const { t } = useLanguage();
   return (
     <View style={styles.row}>
-      <SecondaryButton accessibilityLabel="Recording">
+      <SecondaryButton accessibilityLabel={t('recordRow.recording')}>
         <IcPlay size={24} color={colors.textPrimary} />
       </SecondaryButton>
       <Waveform samples={recording.samples} height={14} />

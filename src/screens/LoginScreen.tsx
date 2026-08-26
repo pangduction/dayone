@@ -1,7 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
+import Text from '../components/Text';
 import SocialLoginButton from '../components/SocialLoginButton';
 import { AppleLogo, GoogleLogo, KakaoLogo } from '../components/icons/SocialLogos';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing, typography } from '../theme/tokens';
 
 /**
@@ -12,12 +14,14 @@ import { colors, spacing, typography } from '../theme/tokens';
  * exported PNG saved at assets/splash-collage.png.
  */
 export default function LoginScreen() {
+  const { t } = useLanguage();
   return (
     <View style={styles.container}>
       <View style={styles.body}>
         <View style={styles.titleBlock}>
+          {/* Brand wordmark: stays "DayOne" and keeps its Jura font in every language. */}
           <Text style={styles.title}>DayOne</Text>
-          <Text style={styles.subtitle}>Collect your daily moments in one page.</Text>
+          <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
         </View>
 
         <Image
@@ -30,19 +34,19 @@ export default function LoginScreen() {
 
       <View style={styles.loginButtons}>
         <SocialLoginButton
-          label="Continue with Google"
+          label={t('login.continueWithGoogle')}
           backgroundColor={colors.buttonLight}
           textColor={colors.buttonDark}
           Logo={GoogleLogo}
         />
         <SocialLoginButton
-          label="Continue with Apple"
+          label={t('login.continueWithApple')}
           backgroundColor={colors.buttonDark}
           textColor={colors.textOnDark}
           Logo={AppleLogo}
         />
         <SocialLoginButton
-          label="Continue with Kakao"
+          label={t('login.continueWithKakao')}
           backgroundColor={colors.kakaoYellow}
           textColor={colors.buttonDark}
           Logo={KakaoLogo}

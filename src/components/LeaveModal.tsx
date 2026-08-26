@@ -1,7 +1,9 @@
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
+import Text from './Text';
 import ModalSheet from './ModalSheet';
 import PrimaryButton from './PrimaryButton';
 import WhiteButton from './WhiteButton';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, typography } from '../theme/tokens';
 
 type Props = {
@@ -22,21 +24,20 @@ type Props = {
  * "Keep Editing" as a Button / L / Filled / White.
  */
 export default function LeaveModal({ visible, onLeave, onKeepEditing }: Props) {
+  const { t } = useLanguage();
   return (
     <ModalSheet
       visible={visible}
-      title="Leave page?"
+      title={t('leaveModal.title')}
       onClose={onKeepEditing}
       actions={
         <>
-          <PrimaryButton label="Leave" tone="accent" onPress={onLeave} />
-          <WhiteButton label="Keep Editing" onPress={onKeepEditing} />
+          <PrimaryButton label={t('leaveModal.leave')} tone="accent" onPress={onLeave} />
+          <WhiteButton label={t('leaveModal.keepEditing')} onPress={onKeepEditing} />
         </>
       }
     >
-      <Text style={[typography.body, styles.body]}>
-        Are you sure you want to leave? Your changes won&rsquo;t be saved.
-      </Text>
+      <Text style={[typography.body, styles.body]}>{t('leaveModal.body')}</Text>
     </ModalSheet>
   );
 }

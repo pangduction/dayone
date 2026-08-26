@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
+import Text from '../components/Text';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -15,6 +16,7 @@ import Waveform from '../components/Waveform';
 import HeaderX from '../components/HeaderX';
 import { IcPause, IcPlay } from '../components/icons/CommonIcons';
 import { formatDuration } from '../utils/duration';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing, typography } from '../theme/tokens';
 
 /** How often the meter is sampled into the waveform. */
@@ -39,6 +41,7 @@ const SILENCE_DB = -50;
 export default function RecordingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Recording'>>();
+  const { t } = useLanguage();
 
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
   const [isRecording, setIsRecording] = useState(false);
@@ -67,7 +70,7 @@ export default function RecordingScreen() {
   const start = useCallback(async () => {
     const permission = await requestRecordingPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Microphone access needed', 'Allow microphone access to record your voice.');
+      Alert.alert(t('recording.micAccessTitle'), t('recording.micAccessBody'));
       return;
     }
     await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
@@ -113,7 +116,7 @@ export default function RecordingScreen() {
         <View style={styles.actionField}>
           <SecondaryButton
             size="large"
-            accessibilityLabel={isRecording ? 'Stop recording' : 'Start recording'}
+            accessibilityLabel={isRecording ? t('recording.stopRecording') : t('recording.startRecording')}
             onPress={isRecording ? stop : start}
           >
             {isRecording ? (
@@ -123,7 +126,7 @@ export default function RecordingScreen() {
             )}
           </SecondaryButton>
           <Text style={[typography.subtext, styles.hint]}>
-            {isRecording ? 'Listening...' : 'Tap to speak'}
+            {isRecording ? t('recording.listening') : t('recording.tapToSpeak')}
           </Text>
         </View>
       </View>

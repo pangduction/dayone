@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import Text from '../components/Text';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,6 +10,7 @@ import PostListThumbnail from '../components/PostListThumbnail';
 import { IcSearch } from '../components/icons/ListIcons';
 import { getPostsForMonth } from '../data/posts';
 import type { Post } from '../data/posts';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 /**
@@ -35,6 +37,7 @@ export default function PostSearchScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'PostSearch'>>();
   const { year, month } = params;
+  const { t } = useLanguage();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [query, setQuery] = useState('');
@@ -61,7 +64,7 @@ export default function PostSearchScreen() {
 
   return (
     <View style={styles.container}>
-      <HeaderX onClose={() => navigation.goBack()} accessibilityLabel="Close search" />
+      <HeaderX onClose={() => navigation.goBack()} accessibilityLabel={t('postSearch.closeSearch')} />
 
       <View style={styles.body}>
         <View style={styles.searchField}>
@@ -74,13 +77,13 @@ export default function PostSearchScreen() {
             style={styles.input}
             value={query}
             onChangeText={setQuery}
-            placeholder="What are you looking for?"
+            placeholder={t('postSearch.placeholder')}
             placeholderTextColor={colors.textPlaceholder}
             selectionColor={colors.accent} // Figma draws the caret in Accent (node 3192:10556)
             autoFocus
             autoCorrect={false}
             returnKeyType="search"
-            accessibilityLabel="Search posts"
+            accessibilityLabel={t('postSearch.searchPosts')}
           />
         </View>
 

@@ -1,8 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Text from './Text';
 import IconButton from './IconButton';
 import IconButtonContained from './IconButtonContained';
 import { IcArrowLeft } from './icons/AddIcons';
 import { IcShare } from './icons/HomeIcons';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing, typography } from '../theme/tokens';
 
 type Props = {
@@ -18,13 +20,14 @@ type Props = {
  * the same way every other title header in the app centers its title.
  */
 export default function HeaderPdfPage({ title, onBack, onShare }: Props) {
+  const { t } = useLanguage();
   return (
     <View style={styles.header}>
       <View style={styles.row}>
-        <IconButton accessibilityLabel="Back" onPress={onBack}>
+        <IconButton accessibilityLabel={t('pdfPreview.back')} onPress={onBack}>
           <IcArrowLeft size={24} color={colors.textPrimary} />
         </IconButton>
-        <IconButtonContained accessibilityLabel="Share PDF" onPress={onShare}>
+        <IconButtonContained accessibilityLabel={t('pdfPreview.sharePdf')} onPress={onShare}>
           <IcShare size={24} color={colors.textPrimary} />
         </IconButtonContained>
       </View>

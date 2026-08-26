@@ -1,7 +1,9 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Text from './Text';
 import { colors, radius, typography } from '../theme/tokens';
 import { IcFilled, IcFit } from './icons/AddIcons';
 import type { PhotoFit } from '../data/posts';
+import { useLanguage } from '../i18n/LanguageContext';
 
 /**
  * Same union as the stored `PhotoFit` — aliased rather than redeclared so the
@@ -23,27 +25,32 @@ type Props = {
  * colors.textPlaceholder icon/label. Verified via get_design_context.
  */
 export default function SegmentedButton({ value, onChange }: Props) {
+  const { t } = useLanguage();
   return (
     <View style={styles.container}>
       <Pressable
         onPress={() => onChange('fit')}
         style={[styles.segment, value === 'fit' && styles.segmentActive]}
         accessibilityRole="button"
-        accessibilityLabel="Fit"
+        accessibilityLabel={t('segmentedButton.fit')}
         accessibilityState={{ selected: value === 'fit' }}
       >
         <IcFit size={12} color={value === 'fit' ? colors.textOnDark : colors.textPlaceholder} />
-        <Text style={[typography.overline, styles.label, value === 'fit' && styles.labelActive]}>Fit</Text>
+        <Text style={[typography.overline, styles.label, value === 'fit' && styles.labelActive]}>
+          {t('segmentedButton.fit')}
+        </Text>
       </Pressable>
       <Pressable
         onPress={() => onChange('filled')}
         style={[styles.segment, value === 'filled' && styles.segmentActive]}
         accessibilityRole="button"
-        accessibilityLabel="Filled"
+        accessibilityLabel={t('segmentedButton.filled')}
         accessibilityState={{ selected: value === 'filled' }}
       >
         <IcFilled size={12} color={value === 'filled' ? colors.textOnDark : colors.textPlaceholder} />
-        <Text style={[typography.overline, styles.label, value === 'filled' && styles.labelActive]}>Filled</Text>
+        <Text style={[typography.overline, styles.label, value === 'filled' && styles.labelActive]}>
+          {t('segmentedButton.filled')}
+        </Text>
       </Pressable>
     </View>
   );

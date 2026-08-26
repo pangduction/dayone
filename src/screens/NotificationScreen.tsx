@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Text from '../components/Text';
 import * as Notifications from 'expo-notifications';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,6 +13,8 @@ import type { PickedTime } from '../components/TimerPickerModal';
 import { IcArrowRightL } from '../components/icons/CommonIcons';
 import { getNotificationSettings, saveNotificationSettings } from '../data/notificationSettings';
 import type { NotificationSettings } from '../data/notificationSettings';
+import { useLanguage } from '../i18n/LanguageContext';
+import type { Language } from '../data/language';
 import { colors, spacing, typography } from '../theme/tokens';
 
 function to24Hour(hour12: number, period: 'AM' | 'PM'): number {
@@ -25,9 +28,12 @@ function to12Hour(hour24: number): { hour: number; period: 'AM' | 'PM' } {
   return { hour: hour === 0 ? 12 : hour, period };
 }
 
-function formatTimeLabel(hour24: number, minute: number): string {
+function formatTimeLabel(hour24: number, minute: number, language: Language): string {
   const { hour, period } = to12Hour(hour24);
-  return `${hour}:${minute.toString().padStart(2, '0')} ${period}`;
+  const periodLabel = language === 'ko' ? (period === 'AM' ? '오전' : '오후') : period;
+  return language === 'ko'
+    ? `${periodLabel} ${hour}:${minute.toString().padStart(2, '0')}`
+    : `${hour}:${minute.toString().padStart(2, '0')} ${periodLabel}`;
 }
 
 /**
@@ -60,6 +66,7 @@ function formatTimeLabel(hour24: number, minute: number): string {
  */
 export default function NotificationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { language, t } = useLanguage();
 
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [permission, setPermission] = useState<{ granted: boolean; canAskAgain: boolean } | null>(null);
@@ -107,9 +114,9 @@ export default function NotificationScreen() {
       setPermission({ granted: result.granted, canAskAgain: result.canAskAgain });
       return result.granted;
     }
-    Alert.alert('Notifications are off', 'Turn on notifications in Settings to receive this reminder.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Open Settings', onPress: () => Linking.openSettings() },
+    Alert.alert(t('notification.offTitle'), t('notification.offBody'), [
+      { text: t('notification.cancel'), style: 'cancel' },
+      { text: t('notification.openSettings'), onPress: () => Linking.openSettings() },
     ]);
     return false;
   };
@@ -171,13 +178,13 @@ export default function NotificationScreen() {
 
   return (
     <View style={styles.container}>
-      <HeaderTitlePage title="Notifications" onBack={() => navigation.goBack()} />
+      <HeaderTitlePage title={t('notification.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.menu} contentContainerStyle={styles.menuContent}>
         <View style={styles.block}>
           <NotificationToggleRow
-            title="Notifications"
-            subtitle="Enable notifications in Settings."
+            title={t('notification.title')}
+            subtitle={t('notification.masterSubtitle')}
             value={!!permission?.granted}
             onValueChange={handleMasterTogglePress}
           />
@@ -187,8 +194,8 @@ export default function NotificationScreen() {
 
         <View style={styles.block}>
           <NotificationToggleRow
-            title="Daily Reminder"
-            subtitle="Set a time to receive a reminder to wrap up your day."
+            title={t('notification.dailyReminderTitle')}
+            subtitle={t('notification.dailyReminderSubtitle')}
             value={settings?.dailyReminderEnabled ?? false}
             onValueChange={handleDailyReminderChange}
           />
@@ -199,11 +206,11 @@ export default function NotificationScreen() {
                 style={styles.timerRow}
                 onPress={handleEditTimer}
                 accessibilityRole="button"
-                accessibilityLabel={`Timer, ${formatTimeLabel(settings.dailyReminderHour, settings.dailyReminderMinute)}`}
+                accessibilityLabel={`${t('notification.timer')}, ${formatTimeLabel(settings.dailyReminderHour, settings.dailyReminderMinute, language)}`}
               >
-                <Text style={[typography.subtext, styles.timerLabel]}>Timer</Text>
+                <Text style={[typography.subtext, styles.timerLabel]}>{t('notification.timer')}</Text>
                 <Text style={[typography.subtext, styles.timerValue]}>
-                  {formatTimeLabel(settings.dailyReminderHour, settings.dailyReminderMinute)}
+                  {formatTimeLabel(settings.dailyReminderHour, settings.dailyReminderMinute, language)}
                 </Text>
                 <IcArrowRightL size={20} color={colors.textSecondary} />
               </Pressable>
@@ -215,8 +222,8 @@ export default function NotificationScreen() {
 
         <View style={styles.block}>
           <NotificationToggleRow
-            title="Monthly Report"
-            subtitle="Get a summary of your month on the morning of the 1st."
+            title={t('notification.monthlyReportTitle')}
+            subtitle={t('notification.monthlyReportSubtitle')}
             value={settings?.monthlyReportEnabled ?? false}
             onValueChange={handleMonthlyReportChange}
           />

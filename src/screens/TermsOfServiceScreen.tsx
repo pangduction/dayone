@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderTitlePage from '../components/HeaderTitlePage';
 import SettingMenuRow from '../components/SettingMenuRow';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors } from '../theme/tokens';
 
 /**
@@ -20,16 +21,17 @@ import { colors } from '../theme/tokens';
  */
 export default function TermsOfServiceScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { t } = useLanguage();
 
   return (
     <View style={styles.container}>
-      <HeaderTitlePage title="Terms of Service" onBack={() => navigation.goBack()} />
+      <HeaderTitlePage title={t('termsOfService.title')} onBack={() => navigation.goBack()} />
 
       <View style={styles.menu}>
         {/* TODO: no frame in Figma for the actual Terms of Use text. */}
-        <SettingMenuRow label="Terms of Use" />
+        <SettingMenuRow label={t('termsOfService.termsOfUse')} />
         {/* TODO: no frame in Figma for the actual Privacy Policy text. */}
-        <SettingMenuRow label="Privacy Policy" />
+        <SettingMenuRow label={t('termsOfService.privacyPolicy')} />
       </View>
     </View>
   );

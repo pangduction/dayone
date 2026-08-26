@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import Text from '../components/Text';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,7 +17,10 @@ import CalendarDateCell from '../components/CalendarDateCell';
 import ShareableCalendarCard from '../components/ShareableCalendarCard';
 import { dateKey, getPostsForMonth } from '../data/posts';
 import type { Post } from '../data/posts';
-import { WEEKDAY_LABELS, daysInMonth, getCalendarWeeks } from '../utils/calendar';
+import { daysInMonth, getCalendarWeeks } from '../utils/calendar';
+import { useLanguage } from '../i18n/LanguageContext';
+import { strings } from '../i18n/strings';
+import { formatCalendarTitleParts } from '../i18n/dateFormat';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 /**
@@ -36,6 +40,8 @@ import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Home'>>();
+  const { language, t } = useLanguage();
+  const weekdayLabels = strings[language].calendar.weekdayShort;
   const today = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => dateKey(today), [today]);
 
@@ -112,12 +118,12 @@ export default function HomeScreen() {
       const uri = await captureRef(shareCardRef, { format: 'png', quality: 1 });
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
-        Alert.alert('Sharing isn’t available', 'This device can’t open the share sheet.');
+        Alert.alert(t('home.sharingUnavailableTitle'), t('home.sharingUnavailableBody'));
         return;
       }
       await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png' });
     } catch {
-      Alert.alert('Couldn’t share', 'Something went wrong while preparing the image.');
+      Alert.alert(t('home.shareFailedTitle'), t('home.shareFailedBody'));
     } finally {
       isSharing.current = false;
     }
@@ -128,12 +134,12 @@ export default function HomeScreen() {
       <View style={styles.topGroup}>
         <View style={styles.header}>
           <IconButton
-            accessibilityLabel="Show this month as a list"
+            accessibilityLabel={t('home.showAsList')}
             onPress={() => navigation.navigate('HomeList', { year, month })}
           >
             <IcRows size={24} color={colors.textPrimary} />
           </IconButton>
-          <IconButtonContained accessibilityLabel="Share" onPress={handleShare}>
+          <IconButtonContained accessibilityLabel={t('home.share')} onPress={handleShare}>
             <IcShare size={24} color={colors.textPrimary} />
           </IconButtonContained>
         </View>
@@ -144,18 +150,19 @@ export default function HomeScreen() {
             onPress={() => setPickerOpen(true)}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Change month"
+            accessibilityLabel={t('home.changeMonth')}
           >
-            <Text style={[typography.calendarTitle, styles.titleText]}>
-              {new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' })}
-            </Text>
-            <Text style={[typography.calendarTitle, styles.titleText]}>{year}</Text>
+            {formatCalendarTitleParts(new Date(year, month, 1), language).map((part, index) => (
+              <Text key={index} style={[typography.calendarTitle, styles.titleText]}>
+                {part}
+              </Text>
+            ))}
             <IcArrowDown size={20} color={colors.textPrimary} />
           </Pressable>
 
           <View style={styles.calendarBody}>
             <View style={styles.weekdayRow}>
-              {WEEKDAY_LABELS.map((label) => (
+              {weekdayLabels.map((label) => (
                 <Text key={label} style={[typography.calendarDay, styles.weekdayLabel]}>
                   {label}
                 </Text>
@@ -192,7 +199,7 @@ export default function HomeScreen() {
       <View style={styles.processing}>
         <View style={styles.processingBar}>
           <View style={styles.processingCountingRow}>
-            <Text style={[typography.caption, styles.processingLabel]}>Processing</Text>
+            <Text style={[typography.caption, styles.processingLabel]}>{t('home.processing')}</Text>
             <Text style={[typography.caption, styles.processingLabel]}>{progressPercent.toFixed(1)}%</Text>
           </View>
           <View style={styles.progressTrack}>
@@ -200,7 +207,7 @@ export default function HomeScreen() {
           </View>
         </View>
         <View style={styles.contentCountingRow}>
-          <Text style={[typography.overline, styles.recordLabel]}>This month&rsquo;s record</Text>
+          <Text style={[typography.overline, styles.recordLabel]}>{t('home.thisMonthsRecord')}</Text>
           <Text style={[typography.overline, styles.recordLabel]}>{postCount}</Text>
         </View>
       </View>

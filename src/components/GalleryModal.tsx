@@ -4,6 +4,7 @@ import * as MediaLibrary from 'expo-media-library/legacy';
 import ModalSheet from './ModalSheet';
 import PrimaryButton from './PrimaryButton';
 import { IcCamera } from './icons/AddIcons';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, radius } from '../theme/tokens';
 
 /** How many recent photos the strip pulls from the device library. */
@@ -55,6 +56,7 @@ type RecentPhoto = { id: string; uri: string };
  * mismatch between the two different `Asset` shapes.
  */
 export default function GalleryModal({ visible, onClose, onPickRecent, onOpenCamera, onOpenGallery }: Props) {
+  const { t } = useLanguage();
   const [recent, setRecent] = useState<RecentPhoto[]>([]);
 
   useEffect(() => {
@@ -88,12 +90,16 @@ export default function GalleryModal({ visible, onClose, onPickRecent, onOpenCam
   return (
     <ModalSheet
       visible={visible}
-      title="Select a Photo"
+      title={t('galleryModal.title')}
       onClose={onClose}
-      actions={<PrimaryButton label="Go to Gallery" onPress={onOpenGallery} />}
+      actions={<PrimaryButton label={t('galleryModal.goToGallery')} onPress={onOpenGallery} />}
     >
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tileRow}>
-        <Pressable style={[styles.tile, styles.cameraTile]} onPress={onOpenCamera} accessibilityLabel="Take a photo">
+        <Pressable
+          style={[styles.tile, styles.cameraTile]}
+          onPress={onOpenCamera}
+          accessibilityLabel={t('galleryModal.takeAPhoto')}
+        >
           <IcCamera size={32} color={colors.textOnDark} />
         </Pressable>
         {recent.map((photo) => (
@@ -101,7 +107,7 @@ export default function GalleryModal({ visible, onClose, onPickRecent, onOpenCam
             key={photo.id}
             style={[styles.tile, styles.photoTile]}
             onPress={() => onPickRecent(photo.uri)}
-            accessibilityLabel="Use this photo"
+            accessibilityLabel={t('galleryModal.useThisPhoto')}
           >
             <Image source={{ uri: photo.uri }} style={styles.photo} resizeMode="cover" />
           </Pressable>

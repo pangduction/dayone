@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Text from './Text';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import IconButton from './IconButton';
 import SecondaryButton from './SecondaryButton';
@@ -8,6 +9,7 @@ import { IcCross } from './icons/AddIcons';
 import { IcPause, IcPlay } from './icons/CommonIcons';
 import { formatDuration } from '../utils/duration';
 import type { Recording } from '../data/posts';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 type Props = {
@@ -37,6 +39,7 @@ type Props = {
  * rewound. Figma only ever draws the idle label, so the countdown is ours.
  */
 export default function RecordRow({ recording, variant, onRemove }: Props) {
+  const { t } = useLanguage();
   const player = useAudioPlayer({ uri: recording.uri });
   const status = useAudioPlayerStatus(player);
   const isPlaying = status.playing;
@@ -64,7 +67,10 @@ export default function RecordRow({ recording, variant, onRemove }: Props) {
 
   return (
     <View style={[styles.row, variant === 'edit' ? styles.edit : styles.view]}>
-      <SecondaryButton accessibilityLabel={isPlaying ? 'Pause recording' : 'Play recording'} onPress={toggle}>
+      <SecondaryButton
+        accessibilityLabel={isPlaying ? t('recordRow.pauseRecording') : t('recordRow.playRecording')}
+        onPress={toggle}
+      >
         {isPlaying ? (
           <IcPause size={24} color={colors.textPrimary} />
         ) : (
@@ -84,7 +90,7 @@ export default function RecordRow({ recording, variant, onRemove }: Props) {
           {label}
         </Text>
         {variant === 'edit' && onRemove ? (
-          <IconButton accessibilityLabel="Remove recording" onPress={onRemove}>
+          <IconButton accessibilityLabel={t('recordRow.removeRecording')} onPress={onRemove}>
             <IcCross size={24} color={colors.textPrimary} />
           </IconButton>
         ) : null}

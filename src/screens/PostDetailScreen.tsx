@@ -11,6 +11,7 @@ import GhostButton from '../components/GhostButton';
 import { IcArrowLeft } from '../components/icons/AddIcons';
 import PostDetailBody from '../components/PostDetailBody';
 import DeletePostModal from '../components/DeletePostModal';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing } from '../theme/tokens';
 
 /**
@@ -45,6 +46,7 @@ export default function PostDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'PostDetail'>>();
   const { date } = params;
+  const { t } = useLanguage();
 
   const [post, setPost] = useState<Post | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -67,18 +69,18 @@ export default function PostDetailScreen() {
     // Back to the calendar — which reloads its posts on focus, so the day's
     // cell drops straight back to its empty state — carrying the banner
     // Figma shows there afterwards (node 3233:5040).
-    navigation.navigate('Home', { flash: 'I deleted my journal entry.' });
+    navigation.navigate('Home', { flash: t('home.deletedFlash') });
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <IconButton accessibilityLabel="Back" onPress={() => navigation.goBack()}>
+        <IconButton accessibilityLabel={t('postDetail.back')} onPress={() => navigation.goBack()}>
           <IcArrowLeft size={24} color={colors.textPrimary} />
         </IconButton>
         <View style={styles.headerActions}>
-          <GhostButton label="Edit" onPress={() => navigation.navigate('Add', { date })} />
-          <GhostButton label="Delete" onPress={() => setDeleteOpen(true)} />
+          <GhostButton label={t('postDetail.edit')} onPress={() => navigation.navigate('Add', { date })} />
+          <GhostButton label={t('postDetail.delete')} onPress={() => setDeleteOpen(true)} />
         </View>
       </View>
 

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Text from './Text';
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { BlurView } from 'expo-blur';
 import IconButton from './IconButton';
 import PrimaryButton from './PrimaryButton';
 import { IcCross } from './icons/AddIcons';
+import { useLanguage } from '../i18n/LanguageContext';
 import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
 
 const ROW_HEIGHT = 56; // Figma-exact: py-16 + a 24pt line = 56 (nodes 3198:7826/7835/7841)
@@ -48,6 +50,11 @@ type Props = {
  * simplification, not a Figma read.
  */
 export default function TimerPickerModal({ visible, value, onClose, onApply }: Props) {
+  const { language, t } = useLanguage();
+  // The wheel's displayed labels only — the value stored in state (and
+  // handed back through onApply) is always the literal 'AM' | 'PM', since
+  // that's what to24Hour/to12Hour (NotificationScreen.tsx) work with.
+  const periodLabels = language === 'ko' ? ['오전', '오후'] : [...PERIODS];
   const [mounted, setMounted] = useState(visible);
   const progress = useRef(new Animated.Value(0)).current;
   const [sheetHeight, setSheetHeight] = useState(400);
@@ -99,12 +106,12 @@ export default function TimerPickerModal({ visible, value, onClose, onApply }: P
           <View style={[StyleSheet.absoluteFill, styles.scrim]} />
         </Animated.View>
 
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close Select Time">
+        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={t('timerPickerModal.closeSelectTime')}>
           <Animated.View style={[styles.sheetWrap, { transform: [{ translateY }] }]}>
             <Pressable style={styles.sheet} onPress={() => {}} onLayout={measureSheet}>
               <View style={styles.header}>
-                <Text style={[typography.subtext, styles.title]}>Select Time</Text>
-                <IconButton accessibilityLabel="Close" onPress={onClose} style={styles.closeButton}>
+                <Text style={[typography.subtext, styles.title]}>{t('timerPickerModal.title')}</Text>
+                <IconButton accessibilityLabel={t('timerPickerModal.close')} onPress={onClose} style={styles.closeButton}>
                   <IcCross size={24} color={colors.textOnDark} />
                 </IconButton>
               </View>
@@ -129,7 +136,7 @@ export default function TimerPickerModal({ visible, value, onClose, onApply }: P
                   <View style={styles.periodGap} />
                   <WheelColumn
                     key={`period-${openId}`}
-                    items={[...PERIODS]}
+                    items={periodLabels}
                     selectedIndex={PERIODS.indexOf(draftPeriod)}
                     onChange={(index) => setDraftPeriod(PERIODS[index])}
                     width={60}
@@ -139,7 +146,7 @@ export default function TimerPickerModal({ visible, value, onClose, onApply }: P
 
               <View style={styles.actions}>
                 <PrimaryButton
-                  label="Apply"
+                  label={t('timerPickerModal.apply')}
                   tone="accent"
                   onPress={() => onApply({ hour: draftHour, minute: draftMinute, period: draftPeriod })}
                 />

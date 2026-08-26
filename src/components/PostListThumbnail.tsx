@@ -1,8 +1,11 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+import Text from './Text';
 import type { Post } from '../data/posts';
 import { parseDateKey } from '../data/posts';
 import { formatDuration } from '../utils/duration';
 import { IcPlay } from './icons/CommonIcons';
+import { useLanguage } from '../i18n/LanguageContext';
+import { formatWeekdayShort } from '../i18n/dateFormat';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 type Props = {
@@ -44,6 +47,7 @@ type Props = {
  * "Photo and Text" for the same reason.
  */
 export default function PostListThumbnail({ post, onPress }: Props) {
+  const { language, t } = useLanguage();
   const hasPhoto = post.photoUri !== null;
   const hasText = post.text.trim().length > 0;
   const recording = post.recording;
@@ -57,7 +61,7 @@ export default function PostListThumbnail({ post, onPress }: Props) {
   const onPhoto = hasPhoto;
 
   const date = parseDateKey(post.date);
-  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
+  const weekday = formatWeekdayShort(date, language);
 
   const Container = onPress ? Pressable : View;
 
@@ -65,7 +69,7 @@ export default function PostListThumbnail({ post, onPress }: Props) {
     <Container
       onPress={onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={onPress ? `Open the post for ${post.date}` : undefined}
+      accessibilityLabel={onPress ? t('homeList.openPostFor', { date: post.date }) : undefined}
       style={styles.card}
     >
       {photoFillsCard ? <Photo uri={post.photoUri!} /> : null}

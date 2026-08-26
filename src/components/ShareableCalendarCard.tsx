@@ -1,9 +1,13 @@
 import { forwardRef } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Text from './Text';
 import CalendarDateCell from './CalendarDateCell';
 import { dateKey } from '../data/posts';
 import type { Post } from '../data/posts';
-import { WEEKDAY_LABELS, daysInMonth, getCalendarWeeks } from '../utils/calendar';
+import { daysInMonth, getCalendarWeeks } from '../utils/calendar';
+import { useLanguage } from '../i18n/LanguageContext';
+import { strings } from '../i18n/strings';
+import { formatCalendarTitleParts } from '../i18n/dateFormat';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 type Props = {
@@ -40,11 +44,12 @@ type Props = {
  * height and fixed children, rather than a hand-set number.
  */
 const ShareableCalendarCard = forwardRef<View, Props>(({ year, month, postsByDate }, ref) => {
+  const { language, t } = useLanguage();
   const weeks = getCalendarWeeks(year, month);
   const totalDays = daysInMonth(year, month);
   const postCount = Object.keys(postsByDate).length;
   const progressPercent = totalDays > 0 ? Math.min((postCount / totalDays) * 100, 100) : 0;
-  const monthName = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' });
+  const weekdayLabels = strings[language].calendar.weekdayShort;
 
   return (
     <View ref={ref} style={styles.card} collapsable={false}>
@@ -52,14 +57,17 @@ const ShareableCalendarCard = forwardRef<View, Props>(({ year, month, postsByDat
 
       <View style={styles.calendar}>
         <View style={styles.titleRow}>
-          <Text style={[typography.calendarTitle, styles.titleText]}>{monthName}</Text>
-          <Text style={[typography.calendarTitle, styles.titleText]}>{year}</Text>
+          {formatCalendarTitleParts(new Date(year, month, 1), language).map((part, index) => (
+            <Text key={index} style={[typography.calendarTitle, styles.titleText]}>
+              {part}
+            </Text>
+          ))}
         </View>
 
         <View style={styles.calendarBody}>
           <View style={styles.weekdayRow}>
-            {WEEKDAY_LABELS.map((label) => (
-              <Text key={label} style={[typography.calendarDay, styles.weekdayLabel]}>
+            {weekdayLabels.map((label, index) => (
+              <Text key={index} style={[typography.calendarDay, styles.weekdayLabel]}>
                 {label}
               </Text>
             ))}
@@ -94,7 +102,7 @@ const ShareableCalendarCard = forwardRef<View, Props>(({ year, month, postsByDat
       <View style={styles.processing}>
         <View style={styles.processingBar}>
           <View style={styles.processingCountingRow}>
-            <Text style={[typography.caption, styles.processingLabel]}>Processing</Text>
+            <Text style={[typography.caption, styles.processingLabel]}>{t('home.processing')}</Text>
             <Text style={[typography.caption, styles.processingLabel]}>{progressPercent.toFixed(1)}%</Text>
           </View>
           <View style={styles.progressTrack}>
@@ -107,12 +115,12 @@ const ShareableCalendarCard = forwardRef<View, Props>(({ year, month, postsByDat
             — a Figma-exact one-off, not on the scale. */}
         <View style={styles.countsColumn}>
           <View style={styles.contentCountingRow}>
-            <Text style={[typography.overline, styles.recordLabel]}>This month&rsquo;s record</Text>
+            <Text style={[typography.overline, styles.recordLabel]}>{t('home.thisMonthsRecord')}</Text>
             <Text style={[typography.overline, styles.recordLabel]}>{postCount}</Text>
           </View>
           <View style={styles.createdByPill}>
-            <Text style={[typography.overline, styles.createdByLabel]}>Created by</Text>
-            <Text style={[typography.caption, styles.createdByLabel]}>Dayone</Text>
+            <Text style={[typography.overline, styles.createdByLabel]}>{t('home.createdBy')}</Text>
+            <Text style={[typography.caption, styles.createdByLabel]}>{t('home.brand')}</Text>
           </View>
         </View>
       </View>
