@@ -7,15 +7,15 @@ import { colors, spacing, typography } from '../theme/tokens';
 type Props = {
   title: string;
   onBack: () => void;
-  /** Figma's own `buttonShow` variant (a trailing "Done" HeaderActionButton) — nothing built so far needs it. */
+  /** Figma's own `buttonShow` variant (a trailing "Done" HeaderActionButton) — used by `HelpSupportScreen`'s own "Done". */
   action?: ReactNode;
 };
 
 /**
  * Figma "Header/Title Page" (node 3198:7683) — a plain back button and a
  * centered title, with room for one trailing action. Used by the Export to
- * PDF list screen (title "Export to PDF") and meant to be reused for Terms
- * of Service later, since both are plain "back + title" pages.
+ * PDF list screen (title "Export to PDF") and `TermsOfServiceScreen`, since
+ * both are plain "back + title" pages.
  *
  * Same centering technique as `HomeListScreen`'s own header: the title lives
  * in an absolutely positioned layer so the back button keeps the row's real

@@ -33,7 +33,7 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  *
  * Rows that lead to a sub-flow not yet built are inert (no `onPress`) with a
  * TODO — this screen was asked for first, on its own, so each row is wired up
- * as its own flow (7.5 Terms of Service, etc.) gets built next.
+ * as its own flow (7.6 Delete Account, etc.) gets built next.
  *
  * "Notifications" (Flow 7.1) is wired to `NotificationScreen`; its value
  * reads "On" only when the OS permission is actually granted *and* at least
@@ -69,6 +69,10 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  * back to *this* screen and flashes the confirmation here — the same
  * `flash` route-param pattern `HomeScreen` uses after a post delete — rather
  * than showing it on `HelpSupportScreen` itself.
+ *
+ * "Terms of Service" (Flow 7.5) is wired to `TermsOfServiceScreen` — a bare
+ * two-row list ("Terms of Use" / "Privacy Policy") that goes nowhere yet,
+ * since Figma has no frame anywhere for what either document actually says.
  */
 export default function SettingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -139,8 +143,7 @@ export default function SettingScreen() {
               anywhere in the file. */}
           <SettingMenuRow label="FAQ" />
           <SettingMenuRow label="Help & Support" onPress={() => navigation.navigate('HelpSupport')} />
-          {/* TODO: wire once Flow 7.5 Terms of Service exists. */}
-          <SettingMenuRow label="Terms of Service" />
+          <SettingMenuRow label="Terms of Service" onPress={() => navigation.navigate('TermsOfService')} />
           {/* TODO: no screen in Figma for this either — eventually a store
               review deep link (Linking.openURL), not an in-app screen. */}
           <SettingMenuRow label="App review" />

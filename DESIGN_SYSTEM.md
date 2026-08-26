@@ -212,16 +212,19 @@ the wrong glyph.
   `3196:12678` locked / Report-Done `3196:14258`).
   `SettingScreen.tsx` is Flow 7's entry list (Setting-Main, node
   `3198:6348`), reached from Report's ic/setting; its menu rows are inert
-  until each sub-flow (7.5 Terms of Service through 7.6 Delete Account) gets
-  built, per the TODO on each row. "Notifications" (7.1), "Language" (7.2),
-  "Export to PDF" (7.3), and "Help & Support" (7.4) are wired: see the
-  product rules below.
+  until each sub-flow (7.6 Delete Account is the one left) gets built, per
+  the TODO on each row. "Notifications" (7.1), "Language" (7.2), "Export to
+  PDF" (7.3), "Help & Support" (7.4), and "Terms of Service" (7.5) are
+  wired: see the product rules below.
   `NotificationScreen.tsx` is Flow 7.1 (section `3199:8210`) — three
   `NotificationToggleRow`s, the middle one expanding to show a real picked
   time once Daily Reminder is on.
   `HelpSupportScreen.tsx` is Flow 7.4 (section `3201:7418`) — a contact form
   whose "Done" actually sends a real email; see the product rule below and
   `LabeledInput.tsx` for the "Email*"/"Contents*" fields it introduces.
+  `TermsOfServiceScreen.tsx` is Flow 7.5 (section `3202:5287`) — a bare
+  "Terms of Use" / "Privacy Policy" list on `HeaderTitlePage`'s shell, both
+  rows inert since Figma has no frame anywhere for what either says.
   `ExportToPdfScreen.tsx` is the real Export to PDF list (Setting-Export to
   PDF-2, node `3201:5947`); `PdfPreviewScreen.tsx` shows a generated file
   (Setting-Export to PDF-6, node `3267:6006`) as a scroll of shadowed white
@@ -239,7 +242,7 @@ the wrong glyph.
   it isn't simply a screenshot of the live screen.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
   stack
-  (Login/Home/HomeList/PostSearch/Report/Setting/Notification/HelpSupport/ExportToPdf/PdfPreview/Add/PostDetail/Recording).
+  (Login/Home/HomeList/PostSearch/Report/Setting/Notification/HelpSupport/TermsOfService/ExportToPdf/PdfPreview/Add/PostDetail/Recording).
   `initialRouteName` is temporarily `"Home"` since sign-in has no real auth
   yet; flip it back to `"Login"` once that's wired up. Every route pushes as
   an ordinary page — Add is a full Figma frame with its own back button, not
