@@ -340,7 +340,7 @@ const ko: typeof en = {
     exportToPdf: 'PDF로 내보내기',
     faq: '자주 묻는 질문',
     helpSupport: '고객센터',
-    termsOfService: '이용약관',
+    termsOfService: '약관 정보',
     appReview: '앱 리뷰 남기기',
     appVersion: '앱 버전',
     logIn: '로그인',
@@ -390,8 +390,8 @@ const ko: typeof en = {
     sentFlash: '피드백을 보냈어요. 소중한 의견 감사합니다!',
   },
   termsOfService: {
-    title: '이용약관',
-    termsOfUse: '이용약관',
+    title: '약관 정보',
+    termsOfUse: '서비스 이용약관',
     privacyPolicy: '개인정보처리방침',
   },
   exportToPdf: {

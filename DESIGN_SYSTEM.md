@@ -616,7 +616,15 @@ are expected and don't need a Figma re-check first.
   2026" with a comma, Post Report Thumbnail's "(2), Thu") isn't something
   any standard `Intl` option set produces either — both languages' date
   strings are deliberate, hand-picked formats, not whatever the platform
-  locale defaults to.
+  locale defaults to. `formatWeekdayShort` deliberately abbreviates only in
+  English ("Thu") — its Korean branch spells the weekday out in full
+  ("목요일"), per explicit product feedback that a bare single character
+  ("목") reads as clipped next to a date in Korean UI, unlike English's
+  familiar "Sat"/"Sun" shorthand. That makes it produce the same string as
+  `formatWeekdayLong` for Korean, which is intentional — Korean has no
+  everyday abbreviated form the way English does. Used by the Add screen's
+  header, `PostListThumbnail`'s date field, and `PostReportThumbnail`'s day
+  label.
 - **Pretendard, a dedicated Korean font.** Bare OS font-fallback for Korean
   text was ruled out in favor of shipping a real Korean typeface matched to
   the existing Latin weights. `assets/fonts/Pretendard-{Regular,Medium,

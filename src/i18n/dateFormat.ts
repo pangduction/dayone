@@ -46,9 +46,17 @@ export function formatLongDate(date: Date, language: Language): string {
 
 const KOREAN_WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-/** A short weekday label ("Thu" / "목"), e.g. the Add screen's header. */
+/**
+ * A short weekday label: abbreviated in English ("Thu"), but spelled out in
+ * full for Korean ("목요일") — a single character (목) reads as clipped/
+ * ambiguous next to a date in Korean UI, where "Sat"/"Sun"-style abbreviation
+ * isn't the natural shorthand English speakers expect. E.g. the Add screen's
+ * header, a Post List Thumbnail's date field, a Post Report Thumbnail's day
+ * label. This makes the Korean output identical to `formatWeekdayLong`'s —
+ * intentional, not a distinction Korean needs the way English does.
+ */
 export function formatWeekdayShort(date: Date, language: Language): string {
-  if (language === 'ko') return KOREAN_WEEKDAYS[date.getDay()];
+  if (language === 'ko') return `${KOREAN_WEEKDAYS[date.getDay()]}요일`;
   return date.toLocaleDateString('en-US', { weekday: 'short' });
 }
 
