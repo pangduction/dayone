@@ -348,9 +348,12 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   thisMonthsRecord` directly rather than through `t()`, and both
   `HomeScreen.tsx` and `ReportScreen.tsx` call `formatCalendarTitleParts`
   with the literal `'en'` rather than the active `language`. `ShareableCalendarCard`
-  (the Share-button image) was left switching with the active language,
-  since this exception was scoped to what's on-screen on Home and Report
-  themselves, not the exported picture.
+  (the Share-button image) follows the same rule and for the same reason —
+  it's a captured picture of exactly Home's Calendar/Processing blocks, so
+  letting it switch to Korean while the live screen it's modeled on stays
+  English would make the shared image disagree with the screen it came from.
+  It reads every one of these strings from `strings.en` directly too, and no
+  longer takes `useLanguage()` at all.
 - **Switching between Home and Report has no transition.** They are peers
   on the same bottom bar, not one pushed out of the other; a slide reads as
   going deeper, and a cross-fade still animates a swap that should just

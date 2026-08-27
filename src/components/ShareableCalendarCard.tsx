@@ -5,7 +5,6 @@ import CalendarDateCell from './CalendarDateCell';
 import { dateKey } from '../data/posts';
 import type { Post } from '../data/posts';
 import { daysInMonth, getCalendarWeeks } from '../utils/calendar';
-import { useLanguage } from '../i18n/LanguageContext';
 import { strings } from '../i18n/strings';
 import { formatCalendarTitleParts } from '../i18n/dateFormat';
 import { colors, radius, spacing, typography } from '../theme/tokens';
@@ -42,14 +41,19 @@ type Props = {
  * are `justifyContent: 'space-between'` doing the same thing Home's own
  * frame does elsewhere: falling out to 16.58 automatically from the fixed
  * height and fixed children, rather than a hand-set number.
+ *
+ * Stays in English regardless of the active language, matching Home's own
+ * Calendar/Processing blocks (see the product rule in DESIGN_SYSTEM.md) —
+ * this card is a captured picture of exactly that part of Home, so switching
+ * it to Korean while the live screen it's modeled on stays English would
+ * make the shared image disagree with the screen it came from.
  */
 const ShareableCalendarCard = forwardRef<View, Props>(({ year, month, postsByDate }, ref) => {
-  const { language, t } = useLanguage();
   const weeks = getCalendarWeeks(year, month);
   const totalDays = daysInMonth(year, month);
   const postCount = Object.keys(postsByDate).length;
   const progressPercent = totalDays > 0 ? Math.min((postCount / totalDays) * 100, 100) : 0;
-  const weekdayLabels = strings[language].calendar.weekdayShort;
+  const weekdayLabels = strings.en.calendar.weekdayShort;
 
   return (
     <View ref={ref} style={styles.card} collapsable={false}>
@@ -57,7 +61,7 @@ const ShareableCalendarCard = forwardRef<View, Props>(({ year, month, postsByDat
 
       <View style={styles.calendar}>
         <View style={styles.titleRow}>
-          {formatCalendarTitleParts(new Date(year, month, 1), language).map((part, index) => (
+          {formatCalendarTitleParts(new Date(year, month, 1), 'en').map((part, index) => (
             <Text key={index} style={[typography.calendarTitle, styles.titleText]}>
               {part}
             </Text>
@@ -102,7 +106,7 @@ const ShareableCalendarCard = forwardRef<View, Props>(({ year, month, postsByDat
       <View style={styles.processing}>
         <View style={styles.processingBar}>
           <View style={styles.processingCountingRow}>
-            <Text style={[typography.caption, styles.processingLabel]}>{t('home.processing')}</Text>
+            <Text style={[typography.caption, styles.processingLabel]}>{strings.en.home.processing}</Text>
             <Text style={[typography.caption, styles.processingLabel]}>{progressPercent.toFixed(1)}%</Text>
           </View>
           <View style={styles.progressTrack}>
@@ -115,12 +119,12 @@ const ShareableCalendarCard = forwardRef<View, Props>(({ year, month, postsByDat
             — a Figma-exact one-off, not on the scale. */}
         <View style={styles.countsColumn}>
           <View style={styles.contentCountingRow}>
-            <Text style={[typography.overline, styles.recordLabel]}>{t('home.thisMonthsRecord')}</Text>
+            <Text style={[typography.overline, styles.recordLabel]}>{strings.en.home.thisMonthsRecord}</Text>
             <Text style={[typography.overline, styles.recordLabel]}>{postCount}</Text>
           </View>
           <View style={styles.createdByPill}>
-            <Text style={[typography.overline, styles.createdByLabel]}>{t('home.createdBy')}</Text>
-            <Text style={[typography.caption, styles.createdByLabel]}>{t('home.brand')}</Text>
+            <Text style={[typography.overline, styles.createdByLabel]}>{strings.en.home.createdBy}</Text>
+            <Text style={[typography.caption, styles.createdByLabel]}>{strings.en.home.brand}</Text>
           </View>
         </View>
       </View>
