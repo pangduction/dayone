@@ -4,6 +4,7 @@ import Text from '../components/Text';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import type { RootStackParamList } from '../navigation/RootNavigator';
@@ -40,6 +41,7 @@ import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Home'>>();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   // The Calendar and Processing blocks stay in English regardless of the
   // active language, per explicit product direction — unlike everything
@@ -133,7 +135,7 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.topGroup}>
         <View style={styles.header}>
           <IconButton
@@ -228,7 +230,7 @@ export default function HomeScreen() {
       />
 
       {flash !== null ? (
-        <View style={styles.flash} pointerEvents="none">
+        <View style={[styles.flash, { top: insets.top }]} pointerEvents="none">
           <AlertBanner message={flash} />
         </View>
       ) : null}
@@ -258,17 +260,20 @@ const styles = StyleSheet.create({
     left: -1000,
   },
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time —
+    // real device insets rather than the iPhone 13 notch/home-indicator
+    // values (47/34) this used to hardcode, which read wrong on any other
+    // device (Android's status bar height varies by manufacturer, and there
+    // is no home-indicator inset to speak of).
     flex: 1,
     width: '100%',
     backgroundColor: colors.background,
     justifyContent: 'space-between',
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   flash: {
-    // Figma pins the banner over the header, not below it (node 3233:5182).
+    // Figma pins the banner over the header, not below it (node 3233:5182);
+    // `top` comes from insets.top at render time, same as the container.
     position: 'absolute',
-    top: 47,
     left: 0,
     right: 0,
     paddingHorizontal: spacing.md,

@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NavigationAction, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { dateKey, getPostByDate, parseDateKey, savePost } from '../data/posts';
 import type { Recording } from '../data/posts';
@@ -68,6 +69,7 @@ export default function AddScreen() {
   const today = useMemo(() => new Date(), []);
   const targetKey = params?.date ?? dateKey(today);
   const targetDate = useMemo(() => parseDateKey(targetKey), [targetKey]);
+  const insets = useSafeAreaInsets();
   const { language, t } = useLanguage();
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -261,7 +263,7 @@ export default function AddScreen() {
   const weekdayLabel = formatWeekdayShort(targetDate, language);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.header}>
         <IconButton accessibilityLabel={t('add.back')} onPress={() => navigation.goBack()}>
           <IcArrowLeft size={24} color={colors.textPrimary} />
@@ -366,10 +368,9 @@ export default function AddScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   header: {
     flexDirection: 'row',

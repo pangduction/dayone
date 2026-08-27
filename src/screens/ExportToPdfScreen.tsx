@@ -6,6 +6,7 @@ import { captureRef } from 'react-native-view-shot';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderTitlePage from '../components/HeaderTitlePage';
 import SettingMenuRow from '../components/SettingMenuRow';
@@ -49,6 +50,7 @@ import { colors, spacing, typography } from '../theme/tokens';
 export default function ExportToPdfScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'ExportToPdf'>>();
+  const insets = useSafeAreaInsets();
   const { language, t } = useLanguage();
 
   const [startDate, setStartDate] = useState(params.startDate);
@@ -146,7 +148,7 @@ export default function ExportToPdfScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <HeaderTitlePage title={t('exportToPdf.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.menu} contentContainerStyle={styles.menuContent}>
@@ -222,11 +224,10 @@ export default function ExportToPdfScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     width: '100%',
     backgroundColor: colors.background,
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   menu: {
     flex: 1,

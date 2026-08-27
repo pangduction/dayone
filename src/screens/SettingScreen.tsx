@@ -5,6 +5,7 @@ import * as Notifications from 'expo-notifications';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderX from '../components/HeaderX';
 import SettingSection from '../components/SettingSection';
@@ -76,6 +77,7 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
 export default function SettingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Setting'>>();
+  const insets = useSafeAreaInsets();
   const { language, t } = useLanguage();
   const [notificationsOn, setNotificationsOn] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
@@ -114,7 +116,7 @@ export default function SettingScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <HeaderX onClose={() => navigation.goBack()} />
 
       <ScrollView style={styles.menu} contentContainerStyle={styles.menuContent}>
@@ -167,7 +169,7 @@ export default function SettingScreen() {
       <LanguageModal visible={languageModalVisible} onClose={() => setLanguageModalVisible(false)} />
 
       {flash !== null ? (
-        <View style={styles.flash} pointerEvents="none">
+        <View style={[styles.flash, { top: insets.top }]} pointerEvents="none">
           <AlertBanner message={flash} />
         </View>
       ) : null}
@@ -177,11 +179,10 @@ export default function SettingScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     width: '100%',
     backgroundColor: colors.background,
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   menu: {
     flex: 1,
@@ -192,9 +193,8 @@ const styles = StyleSheet.create({
   },
   flash: {
     // Matches HomeScreen's own flash placement — pinned to the screen's top,
-    // over the header.
+    // over the header; `top` comes from insets.top at render time.
     position: 'absolute',
-    top: 47,
     left: 0,
     right: 0,
     paddingHorizontal: spacing.md,

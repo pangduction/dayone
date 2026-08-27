@@ -4,6 +4,7 @@ import * as Sharing from 'expo-sharing';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderPdfPage from '../components/HeaderPdfPage';
 import { getExportFile } from '../data/exports';
@@ -27,6 +28,7 @@ import { colors, radius, shadows, spacing } from '../theme/tokens';
 export default function PdfPreviewScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'PdfPreview'>>();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
 
   const [file, setFile] = useState<ExportFile | null>(null);
@@ -49,7 +51,7 @@ export default function PdfPreviewScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <HeaderPdfPage
         title={file?.filename ?? t('pdfPreview.fallbackTitle')}
         onBack={() => navigation.goBack()}
@@ -68,11 +70,10 @@ export default function PdfPreviewScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     width: '100%',
     backgroundColor: colors.background,
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   scroll: {
     flex: 1,

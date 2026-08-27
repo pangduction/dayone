@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import type { ReactNode } from 'react';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import IconButton from './IconButton';
 import { IcCross } from './icons/AddIcons';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -19,7 +20,7 @@ type Props = {
   actions?: ReactNode;
   /**
    * Rendered on top of the backdrop *and* the sheet, pinned to the screen's
-   * top like `HomeScreen`'s own flash banner (`top: 47`) — for a banner that
+   * top like `HomeScreen`'s own flash banner (`insets.top`) — for a banner that
    * has to appear while this modal stays open (e.g. `LanguageModal`'s "Not
    * supported yet."). RN's `Modal` is a native layer painted in front of the
    * whole app; a sibling `AlertBanner` rendered by the screen underneath
@@ -58,6 +59,7 @@ type Props = {
  * reuses `IconButton`.
  */
 export default function ModalSheet({ visible, title, onClose, children, actions, overlay }: Props) {
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   // Kept mounted across the closing animation so the sheet can slide out.
   const [mounted, setMounted] = useState(visible);
@@ -126,7 +128,7 @@ export default function ModalSheet({ visible, title, onClose, children, actions,
         </Pressable>
 
         {overlay ? (
-          <View style={styles.overlay} pointerEvents="none">
+          <View style={[styles.overlay, { top: insets.top }]} pointerEvents="none">
             {overlay}
           </View>
         ) : null}
@@ -152,9 +154,9 @@ const styles = StyleSheet.create({
   },
   overlay: {
     // Matches HomeScreen's own flash placement — pinned to the screen's top
-    // regardless of where the sheet itself has slid to.
+    // regardless of where the sheet itself has slid to; `top` comes from
+    // insets.top at render time.
     position: 'absolute',
-    top: 47,
     left: 0,
     right: 0,
     paddingHorizontal: spacing.md,

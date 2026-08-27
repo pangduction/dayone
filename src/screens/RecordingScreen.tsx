@@ -10,6 +10,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import SecondaryButton from '../components/SecondaryButton';
 import Waveform from '../components/Waveform';
@@ -41,6 +42,7 @@ const SILENCE_DB = -50;
 export default function RecordingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Recording'>>();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
 
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
@@ -103,7 +105,7 @@ export default function RecordingScreen() {
   }, [recorder, isRecording, navigation]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <HeaderX onClose={cancel} />
 
       <View style={styles.body}>
@@ -142,10 +144,9 @@ function normalizeMeter(db: number): number {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   body: {
     flex: 1,

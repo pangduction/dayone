@@ -3,6 +3,7 @@ import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderTitlePage from '../components/HeaderTitlePage';
 import HeaderActionButton from '../components/HeaderActionButton';
@@ -54,6 +55,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export default function HelpSupportScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
 
   const [email, setEmail] = useState('');
@@ -112,7 +114,7 @@ export default function HelpSupportScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <HeaderTitlePage
         title={t('helpSupport.title')}
         onBack={() => navigation.goBack()}
@@ -183,11 +185,10 @@ export default function HelpSupportScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     width: '100%',
     backgroundColor: colors.background,
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   body: {
     flex: 1,

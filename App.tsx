@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
 import { View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import RootNavigator from './src/navigation/RootNavigator';
 import { LanguageProvider } from './src/i18n/LanguageContext';
@@ -37,8 +38,10 @@ export default function App() {
   }
 
   return (
-    <LanguageProvider initialLanguage={language}>
-      <RootNavigator />
-    </LanguageProvider>
+    <SafeAreaProvider>
+      <LanguageProvider initialLanguage={language}>
+        <RootNavigator />
+      </LanguageProvider>
+    </SafeAreaProvider>
   );
 }

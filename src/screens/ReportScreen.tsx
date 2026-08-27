@@ -4,6 +4,7 @@ import Text from '../components/Text';
 import { BlurView } from 'expo-blur';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import IconButton from '../components/IconButton';
 import BottomNavigation from '../components/BottomNavigation';
@@ -33,6 +34,7 @@ import { colors, layout, spacing, typography } from '../theme/tokens';
  */
 export default function ReportScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const today = useMemo(() => new Date(), []);
 
@@ -80,7 +82,7 @@ export default function ReportScreen() {
   const locked = isThisMonth(year, month);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.header}>
         <IconButton accessibilityLabel={t('report.settings')} onPress={() => navigation.navigate('Setting')}>
           <IcSetting size={24} color={colors.textPrimary} />
@@ -165,12 +167,11 @@ const LOCK_BLUR_INTENSITY = 20;
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     width: '100%',
     backgroundColor: colors.background,
     justifyContent: 'space-between',
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   header: {
     // Figma Header/Report (node 3196:13123): the Header/X shell — one button

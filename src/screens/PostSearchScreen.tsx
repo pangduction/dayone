@@ -4,6 +4,7 @@ import Text from '../components/Text';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderX from '../components/HeaderX';
 import PostListThumbnail from '../components/PostListThumbnail';
@@ -37,6 +38,7 @@ export default function PostSearchScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'PostSearch'>>();
   const { year, month } = params;
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -63,7 +65,7 @@ export default function PostSearchScreen() {
   }, [posts, query]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <HeaderX onClose={() => navigation.goBack()} accessibilityLabel={t('postSearch.closeSearch')} />
 
       <View style={styles.body}>
@@ -107,10 +109,10 @@ export default function PostSearchScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop comes from useSafeAreaInsets() at render time.
     flex: 1,
     width: '100%',
     backgroundColor: colors.background,
-    paddingTop: 47,
   },
   body: {
     // Figma "Input field" (node 3192:10552): padding 16, gap 8 between the

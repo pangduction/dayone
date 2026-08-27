@@ -17,10 +17,16 @@ whenever you write or edit a UI component.
   or `get_variable_defs`, add it to `tokens.ts` with a comment noting the
   Figma name, then use the token. Don't guess a value and don't invent a new
   one-off constant in the component file.
-- One-off *layout* numbers that aren't part of the visual language (e.g. a
-  screen's top safe-area padding) are fine as raw numbers — this rule is
-  about colors, type, spacing, and radius, which must all trace back to a
-  token.
+- One-off *layout* numbers that aren't part of the visual language are fine
+  as raw numbers — this rule is about colors, type, spacing, and radius,
+  which must all trace back to a token. **A screen's top/bottom safe-area
+  padding is the one exception even to that**: every screen reads it from
+  `useSafeAreaInsets()` (`react-native-safe-area-context`) at render time
+  rather than a raw number at all — see §6/§7's note on this — because the
+  Figma-exact 47/34 this used to hardcode is specific to the iPhone 13-class
+  device Figma modeled the frame on, and reads wrong on anything else
+  (Android's status bar height varies by manufacturer skin, a Dynamic-Island
+  iPhone's top inset is taller, and an iPhone SE has neither).
 
 ## 2. Color usage
 
@@ -192,6 +198,20 @@ the wrong glyph.
 
 ## 6. Where things live
 
+- **`App.tsx` wraps the whole app in `SafeAreaProvider`** (from
+  `react-native-safe-area-context`, already a dependency), and every screen
+  calls `useSafeAreaInsets()` itself and applies `paddingTop: insets.top` /
+  `paddingBottom: insets.bottom` as an inline style override on its root
+  `View` — `style={[styles.container, { paddingTop: insets.top, ... }]}` —
+  rather than baking those numbers into the screen's own `StyleSheet.create()`
+  (which runs once at import time, outside any component, so it can't call a
+  hook). The three screens with a flash banner or modal overlay pinned to the
+  very top (`HomeScreen`, `SettingScreen`, `ModalSheet`'s `overlay` slot) do
+  the same for that element's `top`. The one deliberate exception is
+  `ShareableCalendarCard` — it isn't a live screen, it's a fixed 390×844
+  export frame captured off-screen for the Share button, so it keeps Figma's
+  literal 47/34 to always reproduce that exact frame regardless of the real
+  device's insets.
 - `src/theme/tokens.ts` — all design tokens (`palette`, `colors`, `spacing`,
   `radius`, `typography`, `shadows`, `fontAssets`). Single source of truth;
   extend it, don't duplicate it.

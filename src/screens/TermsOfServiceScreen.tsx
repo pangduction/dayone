@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderTitlePage from '../components/HeaderTitlePage';
 import SettingMenuRow from '../components/SettingMenuRow';
@@ -21,10 +22,11 @@ import { colors } from '../theme/tokens';
  */
 export default function TermsOfServiceScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <HeaderTitlePage title={t('termsOfService.title')} onBack={() => navigation.goBack()} />
 
       <View style={styles.menu}>
@@ -39,11 +41,10 @@ export default function TermsOfServiceScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     width: '100%',
     backgroundColor: colors.background,
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   menu: {
     width: '100%',

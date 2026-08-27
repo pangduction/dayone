@@ -4,6 +4,7 @@ import Text from '../components/Text';
 import * as Notifications from 'expo-notifications';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import HeaderTitlePage from '../components/HeaderTitlePage';
 import NotificationToggleRow from '../components/NotificationToggleRow';
@@ -66,6 +67,7 @@ function formatTimeLabel(hour24: number, minute: number, language: Language): st
  */
 export default function NotificationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const { language, t } = useLanguage();
 
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
@@ -177,7 +179,7 @@ export default function NotificationScreen() {
     : { hour: 9, minute: 0, period: 'PM' };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <HeaderTitlePage title={t('notification.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.menu} contentContainerStyle={styles.menuContent}>
@@ -242,11 +244,10 @@ export default function NotificationScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     width: '100%',
     backgroundColor: colors.background,
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   menu: {
     flex: 1,

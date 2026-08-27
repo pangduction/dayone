@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { Image, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Text from '../components/Text';
 import SocialLoginButton from '../components/SocialLoginButton';
 import { AppleLogo, GoogleLogo, KakaoLogo } from '../components/icons/SocialLogos';
@@ -14,9 +15,10 @@ import { colors, spacing, typography } from '../theme/tokens';
  * exported PNG saved at assets/splash-collage.png.
  */
 export default function LoginScreen() {
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.body}>
         <View style={styles.titleBlock}>
           {/* Brand wordmark: stays "DayOne" and keeps its Jura font in every language. */}
@@ -60,12 +62,11 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   body: {
     flex: 1,

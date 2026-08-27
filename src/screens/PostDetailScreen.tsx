@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { deletePost, getPostByDate } from '../data/posts';
 import type { Post } from '../data/posts';
@@ -46,6 +47,7 @@ export default function PostDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'PostDetail'>>();
   const { date } = params;
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
 
   const [post, setPost] = useState<Post | null>(null);
@@ -73,7 +75,7 @@ export default function PostDetailScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.header}>
         <IconButton accessibilityLabel={t('postDetail.back')} onPress={() => navigation.goBack()}>
           <IcArrowLeft size={24} color={colors.textPrimary} />
@@ -97,10 +99,9 @@ export default function PostDetailScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    // paddingTop/paddingBottom come from useSafeAreaInsets() at render time.
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: 47,
-    paddingBottom: 34,
   },
   header: {
     flexDirection: 'row',
