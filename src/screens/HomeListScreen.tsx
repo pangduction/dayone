@@ -163,6 +163,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing[1], // Figma: "Date Information" gap, updated from 0 to 2
   },
   headerMonth: {
     color: colors.textPrimary,

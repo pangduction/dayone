@@ -387,6 +387,7 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing[1], // Figma: "Date Information" (node 3184:5695) gap, updated from 0 to 2
   },
   dateLabel: {
     color: colors.textPrimary,
