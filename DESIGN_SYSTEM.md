@@ -340,6 +340,17 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   and calendar so the gap is fixed rather than whatever `space-between`
   distributes — otherwise the title would shift with the screen height and
   could never match Report's.
+- **Home's Calendar/Processing blocks and Report's Calendar Title stay in
+  English regardless of the active language**, per explicit product
+  direction — the one deliberate exception to this app's otherwise-full
+  Korean localization (§8). `HomeScreen.tsx` reads `strings.en.calendar.
+  weekdayShort` / `strings.en.home.processing` / `strings.en.home.
+  thisMonthsRecord` directly rather than through `t()`, and both
+  `HomeScreen.tsx` and `ReportScreen.tsx` call `formatCalendarTitleParts`
+  with the literal `'en'` rather than the active `language`. `ShareableCalendarCard`
+  (the Share-button image) was left switching with the active language,
+  since this exception was scoped to what's on-screen on Home and Report
+  themselves, not the exported picture.
 - **Switching between Home and Report has no transition.** They are peers
   on the same bottom bar, not one pushed out of the other; a slide reads as
   going deeper, and a cross-fade still animates a swap that should just

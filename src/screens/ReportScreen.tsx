@@ -33,7 +33,7 @@ import { colors, layout, spacing, typography } from '../theme/tokens';
  */
 export default function ReportScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const today = useMemo(() => new Date(), []);
 
   const [year, setYear] = useState(today.getFullYear());
@@ -95,7 +95,10 @@ export default function ReportScreen() {
           accessibilityRole="button"
           accessibilityLabel={t('report.changeMonth')}
         >
-          {formatCalendarTitleParts(new Date(year, month, 1), language).map((part, index) => (
+          {/* The Calendar Title stays in English regardless of the active
+              language, per explicit product direction — same as Home's own
+              Calendar/Processing blocks. */}
+          {formatCalendarTitleParts(new Date(year, month, 1), 'en').map((part, index) => (
             <Text key={index} style={[typography.calendarTitle, styles.titleText]}>
               {part}
             </Text>

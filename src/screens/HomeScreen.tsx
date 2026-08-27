@@ -40,8 +40,11 @@ import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Home'>>();
-  const { language, t } = useLanguage();
-  const weekdayLabels = strings[language].calendar.weekdayShort;
+  const { t } = useLanguage();
+  // The Calendar and Processing blocks stay in English regardless of the
+  // active language, per explicit product direction — unlike everything
+  // else on this screen, they don't switch with `language`.
+  const weekdayLabels = strings.en.calendar.weekdayShort;
   const today = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => dateKey(today), [today]);
 
@@ -152,7 +155,7 @@ export default function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel={t('home.changeMonth')}
           >
-            {formatCalendarTitleParts(new Date(year, month, 1), language).map((part, index) => (
+            {formatCalendarTitleParts(new Date(year, month, 1), 'en').map((part, index) => (
               <Text key={index} style={[typography.calendarTitle, styles.titleText]}>
                 {part}
               </Text>
@@ -199,7 +202,7 @@ export default function HomeScreen() {
       <View style={styles.processing}>
         <View style={styles.processingBar}>
           <View style={styles.processingCountingRow}>
-            <Text style={[typography.caption, styles.processingLabel]}>{t('home.processing')}</Text>
+            <Text style={[typography.caption, styles.processingLabel]}>{strings.en.home.processing}</Text>
             <Text style={[typography.caption, styles.processingLabel]}>{progressPercent.toFixed(1)}%</Text>
           </View>
           <View style={styles.progressTrack}>
@@ -207,7 +210,7 @@ export default function HomeScreen() {
           </View>
         </View>
         <View style={styles.contentCountingRow}>
-          <Text style={[typography.overline, styles.recordLabel]}>{t('home.thisMonthsRecord')}</Text>
+          <Text style={[typography.overline, styles.recordLabel]}>{strings.en.home.thisMonthsRecord}</Text>
           <Text style={[typography.overline, styles.recordLabel]}>{postCount}</Text>
         </View>
       </View>
