@@ -14,7 +14,7 @@ import { Directory, File, Paths } from 'expo-file-system';
  */
 export type ExportFile = {
   id: string;
-  /** e.g. "Dayone-260806-260813.pdf" — also the file's real on-disk name. */
+  /** e.g. "DayOne-260806-260813.pdf" — also the file's real on-disk name. */
   filename: string;
   /** Real `file://` URI of the generated PDF. */
   uri: string;

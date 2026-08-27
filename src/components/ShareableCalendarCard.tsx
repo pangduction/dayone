@@ -32,7 +32,7 @@ type Props = {
  *     real header/nav components — the pixels are identical either way, and
  *     nothing this component renders is ever interactive;
  *   - the Processing block gains a second line under "This month's record":
- *     a solid "Created by Dayone" pill, which is Figma's branding on an image
+ *     a solid "Created by DayOne" pill, which is Figma's branding on an image
  *     that leaves the app.
  *
  * Sized to Figma's frame exactly (390x844) rather than filling the screen,

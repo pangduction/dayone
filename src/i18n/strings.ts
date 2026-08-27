@@ -43,7 +43,7 @@ const en = {
     shareFailedBody: 'Something went wrong while preparing the image.',
     deletedFlash: 'I deleted my journal entry.',
     createdBy: 'Created by',
-    brand: 'Dayone',
+    brand: 'DayOne',
   },
   homeList: {
     back: 'Back',
@@ -269,7 +269,7 @@ const ko: typeof en = {
     shareFailedBody: '이미지를 준비하는 중 문제가 발생했어요.',
     deletedFlash: '기록을 삭제했어요.',
     createdBy: 'Created by',
-    brand: 'Dayone',
+    brand: 'DayOne',
   },
   homeList: {
     back: '뒤로',

@@ -33,7 +33,7 @@ function daysLeftLabel(expiresAt: string): string {
  * Figma "File Item" (node 3201:6535) — one row of the Export to PDF screen's
  * Files section: the real filename over its expiry at a tight gap 3
  * (Figma-exact, off the spacing scale — the same gap Share Image's "Created
- * by Dayone" pill uses), then a chevron. Tapping it opens the PDF preview
+ * by DayOne" pill uses), then a chevron. Tapping it opens the PDF preview
  * (Figma node 3267:6006).
  *
  * Figma's own mock reads "Valid until Sep 23, 2026" — an absolute date that
