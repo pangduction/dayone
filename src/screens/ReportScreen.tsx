@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Text from '../components/Text';
-import { BlurView } from 'expo-blur';
+import { BlurTargetView, BlurView } from 'expo-blur';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +37,11 @@ export default function ReportScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const today = useMemo(() => new Date(), []);
+  // The Lock Paper's blur target on Android — expo-blur's Android blur
+  // method has to be told exactly what to blur (there's no automatic
+  // "whatever's behind this view" the way iOS's does), so the strip below
+  // is wrapped in a BlurTargetView this ref points at.
+  const stripRef = useRef<View>(null);
 
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -109,25 +114,29 @@ export default function ReportScreen() {
         </Pressable>
 
         <View style={styles.strip}>
-          <PostThumbnailRows
-            posts={posts}
-            autoScroll={!locked}
-            // A locked month's strip is behind the Lock Paper, which swallows
-            // every touch anyway. Withholding the handler says so outright
-            // rather than leaving thumbnails that look tappable but aren't.
-            onPressPost={
-              locked ? undefined : (post) => navigation.navigate('PostDetail', { date: post.date })
-            }
-          />
+          <BlurTargetView ref={stripRef} style={styles.stripTarget}>
+            <PostThumbnailRows
+              posts={posts}
+              autoScroll={!locked}
+              // A locked month's strip is behind the Lock Paper, which swallows
+              // every touch anyway. Withholding the handler says so outright
+              // rather than leaving thumbnails that look tappable but aren't.
+              onPressPost={
+                locked ? undefined : (post) => navigation.navigate('PostDetail', { date: post.date })
+              }
+            />
+          </BlurTargetView>
 
           {locked ? (
             <View style={styles.lock}>
               <BlurView
                 intensity={LOCK_BLUR_INTENSITY}
                 tint="light"
-                // See ModalSheet's own note: expo-blur's default Android
-                // renderer doesn't produce a real blur without this.
-                experimentalBlurMethod="dimezisBlurView"
+                // Android needs an explicit blur target (see stripRef above);
+                // iOS ignores blurMethod and blurs whatever's behind it the
+                // normal way.
+                blurMethod="dimezisBlurViewSdk31Plus"
+                blurTarget={stripRef}
                 style={StyleSheet.absoluteFill}
               />
               <View style={[StyleSheet.absoluteFill, styles.lockVeil]} />
@@ -215,6 +224,9 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     justifyContent: 'center',
+  },
+  stripTarget: {
+    width: '100%',
   },
   lock: {
     // Figma "Lock Paper" (node 3196:14417) covers the strip, not the title.
