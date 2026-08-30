@@ -142,6 +142,13 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, Props>(function RichText
         keyboardDisplayRequiresUserAction={false}
         automaticallyAdjustContentInsets={false}
         showsVerticalScrollIndicator={false}
+        // Android-only: without this, a WebView nested inside a scrollable
+        // parent (AddScreen's own ScrollView) has its touches swallowed by
+        // that parent before they reach the page — the contenteditable never
+        // gets a tap at all, so it never focuses and the keyboard never
+        // opens. iOS has no such conflict, which is why this only showed up
+        // once the app actually ran on Android.
+        nestedScrollEnabled
       />
     </View>
   );
