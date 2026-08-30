@@ -48,7 +48,8 @@
         {
           "microphonePermission": "DayOne uses your microphone so you can add a voice recording to your daily record."
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ]
   }
 }

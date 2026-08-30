@@ -269,12 +269,29 @@ the wrong glyph.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
   stack
   (Login/Home/HomeList/PostSearch/Report/Setting/Notification/HelpSupport/TermsOfService/Faq/ExportToPdf/PdfPreview/Add/PostDetail/Recording).
-  `initialRouteName` is temporarily `"Home"` since sign-in has no real auth
-  yet; flip it back to `"Login"` once that's wired up. Every route pushes as
-  an ordinary page — Add is a full Figma frame with its own back button, not
-  a modal sheet. The only modals in the app are ones Figma really does draw
-  as an overlay: `GalleryModal`, and `DateRangeModal` (opened directly over
+  Which screens exist is conditional on `useAuth().user` (see `src/auth/`
+  below and the sign-in product rule) rather than a fixed
+  `initialRouteName` — `Login` is the only screen when signed out, the rest
+  of the list when signed in, which is also what lets Log out and Delete
+  Account swap the whole stack back to `Login` with no manual
+  `navigation.reset` call. Every route pushes as an ordinary page — Add is a
+  full Figma frame with its own back button, not a modal sheet. The only
+  modals in the app are ones Figma really does draw as an overlay:
+  `GalleryModal`, and `DateRangeModal` (opened directly over
   `SettingScreen`, per Flow 7.3 below).
+- `src/auth/` — real sign-in (Firebase Authentication): `firebaseAuth.ts`
+  wraps the plain, non-hook operations (`subscribeToAuthState`,
+  `signInWithFirebaseCredential`, `signOutUser`, `deleteFirebaseAccount`);
+  `AuthContext.tsx`'s `AuthProvider`/`useAuth()` is the app's second React
+  Context (`LanguageContext` is the first), holding the current Firebase
+  `User` and the one-time `initializing` flag `RootNavigator` blocks on so a
+  returning signed-in user never flashes `Login` first. `LoginScreen.tsx`
+  itself owns the actual browser/native sign-in flow (`expo-auth-session`
+  for Google, `expo-apple-authentication` for Apple) — this folder only
+  ever receives an already-obtained credential. `src/data/firebase.ts`
+  (kept in `data/` rather than here, alongside every other persisted-store
+  file) initializes the one Firebase project and exports `isFirebaseConfigured` —
+  see the sign-in product rule below for why that flag exists.
 - `src/data/` — mostly local, on-device data stores. `posts.ts`
   is an AsyncStorage-backed store for the one-post-per-day / one-photo-per-post
   rule; screens should go through its functions rather than touching
@@ -624,6 +641,24 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     function) shows a native `Alert` instead and stays on this screen,
     the same failure-reporting pattern `ExportToPdfScreen`'s "Generate PDF"
     uses, since nothing was actually sent.
+- **Sign-in (Login-1) is real Firebase Authentication, gated behind a
+  config flag so an unconfigured dev build never locks anyone out.**
+  Google and Apple both complete with a real Firebase credential exchange
+  (`src/auth/`); Kakao has no Firebase-native provider (it would need its
+  own backend to mint a token Firebase accepts, unlike Google/Apple which
+  Firebase verifies directly), so its button says "coming soon" rather than
+  pretending to sign in. Apple's button explains itself on Android instead
+  of doing nothing, since Sign in with Apple is iOS-only by Apple's own
+  rules. `RootNavigator`'s gate is `user || !isFirebaseConfigured` rather
+  than just `user`: no real Firebase project exists in a fresh clone (an
+  empty `.env` — see `.env.example`), and gating purely on `user` would wall
+  the entire app behind a Login screen nothing could ever get past. Until a
+  real project's config is set, the app works exactly as it did before this
+  feature existed; once it is, signing in is genuinely required, matching
+  Login-1's real intent. Setting's "Log in" row shows the signed-in
+  provider's real email (or an honest "not set up yet" while unconfigured)
+  and "Log out" actually ends the session — both were previously a Figma
+  mock (a hardcoded email, an inert row).
 - **Delete Account (Flow 7.6) is a real, local wipe — there is no other
   "account" to delete.** DayOne has no server-side user record (see
   `src/data/`'s own note above), so Setting → Delete Account's confirm
@@ -631,12 +666,19 @@ Note them here so they don't get re-derived (or quietly dropped) later.
   Figma has no frame for this flow either) permanently deletes every post,
   photo, recording, and exported PDF's actual bytes — not just their
   AsyncStorage rows — via `src/data/account.ts`'s `deleteAllAppData`, then
-  resets the navigation stack back to Home (Report and Setting both hold
-  state built from posts that no longer exist). It deliberately leaves the
-  Language preference alone — that's a device setting, not journal content.
-  This also satisfies Apple's App Store Review Guideline 5.1.1(v), which
-  requires that an app offering account deletion actually delete the data
-  behind it rather than just hiding the account.
+  deletes the signed-in Firebase user too (`deleteFirebaseAccount`,
+  falling back to a plain sign-out if Firebase refuses the delete over an
+  old session). That sign-out/deletion is what returns to `Login` — once a
+  real Firebase project is configured, `RootNavigator`'s own gate does that
+  automatically as soon as `user` goes null, no navigation call needed here;
+  while unconfigured (see the sign-in product rule above) nothing ever
+  signs anyone out, so this screen falls back to manually resetting to Home
+  in that case, the same reset it used before either feature existed. It
+  deliberately leaves the Language preference alone — that's a device
+  setting, not journal content. This also satisfies Apple's App Store
+  Review Guideline 5.1.1(v), which requires that an app offering account
+  deletion actually delete the data behind it rather than just hiding the
+  account.
 - **"App review" triggers the OS's native rate-this-app prompt directly**
   (`expo-store-review`'s `requestReview()`), not a deep link to an App Store
   listing — that API needs no listing to exist yet, unlike

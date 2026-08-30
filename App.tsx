@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import RootNavigator from './src/navigation/RootNavigator';
 import { LanguageProvider } from './src/i18n/LanguageContext';
+import { AuthProvider } from './src/auth/AuthContext';
 import { getLanguage } from './src/data/language';
 import type { Language } from './src/data/language';
 import { fontAssets } from './src/theme/tokens';
@@ -40,7 +41,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <LanguageProvider initialLanguage={language}>
-        <RootNavigator />
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
       </LanguageProvider>
     </SafeAreaProvider>
   );

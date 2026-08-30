@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import * as StoreReview from 'expo-store-review';
@@ -18,6 +18,9 @@ import AlertBanner from '../components/AlertBanner';
 import { dateKey } from '../data/posts';
 import { getNotificationSettings } from '../data/notificationSettings';
 import { deleteAllAppData } from '../data/account';
+import { useAuth } from '../auth/AuthContext';
+import { deleteFirebaseAccount, signOutUser } from '../auth/firebaseAuth';
+import { isFirebaseConfigured } from '../data/firebase';
 import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing } from '../theme/tokens';
 
@@ -36,16 +39,17 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  * separated by `SettingDivider`s, matching Figma's Menu Section / Divider /
  * Menu Section pattern exactly (gap 16 between the five).
  *
- * Every row now leads somewhere real except "Log in"/"Log out", which stay
- * as Figma mocks them (a static "Log in" row, no working "Log out") until
- * there's an actual sign-in backend behind them — see this repo's own
- * launch-readiness notes for that plan. Everything else Figma gave a
- * chevron with no destination now has one: "FAQ" opens `FaqScreen` (real,
- * hand-written content — no Figma frame for this exists), "App review"
- * triggers the OS's native review prompt via `expo-store-review` (no App
- * Store listing to deep-link to yet, and this API needs none), and "Delete
- * Account" (7.6) wipes this device's local data for real — see
- * `src/data/account.ts`.
+ * Every row leads somewhere real now. "Log in"/"Log out" reflect the actual
+ * `useAuth()` state (`src/auth/`) — "Log in" shows the signed-in provider's
+ * real email, "Log out" calls `signOutUser`, and `RootNavigator` swaps the
+ * whole stack back to `Login` on its own once `user` goes null, so this
+ * screen never navigates anywhere on sign-out itself. "FAQ" opens
+ * `FaqScreen` (real, hand-written content — no Figma frame for this
+ * exists), "App review" triggers the OS's native review prompt via
+ * `expo-store-review` (no App Store listing to deep-link to yet, and this
+ * API needs none), and "Delete Account" (7.6) wipes this device's local
+ * data for real — see `src/data/account.ts` — and deletes the Firebase user
+ * alongside it.
  *
  * "Notifications" (Flow 7.1) is wired to `NotificationScreen`; its value
  * reads "On" only when the OS permission is actually granted *and* at least
@@ -89,6 +93,7 @@ export default function SettingScreen() {
   const { params } = useRoute<RouteProp<RootStackParamList, 'Setting'>>();
   const insets = useSafeAreaInsets();
   const { language, t } = useLanguage();
+  const { user } = useAuth();
   const [notificationsOn, setNotificationsOn] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
@@ -137,14 +142,34 @@ export default function SettingScreen() {
     }
   };
 
+  const handleLogOut = () => {
+    signOutUser().catch(() => {
+      // Nothing sensible to show the user for a failed sign-out — retrying
+      // the tap already retries the same call.
+    });
+  };
+
   const handleDeleteAccount = async () => {
     setDeleteAccountModalVisible(false);
     await deleteAllAppData();
-    // Report/Home both hold state built from posts that no longer exist, so
-    // this resets the whole stack back to Home rather than just going back —
-    // the same "no partial state left to go stale" reasoning as HomeScreen's
-    // own post-delete flash, just for the entire account instead of one post.
-    navigation.reset({ index: 0, routes: [{ name: 'Home', params: { flash: t('setting.accountDeletedFlash') } }] });
+    try {
+      await deleteFirebaseAccount();
+    } catch {
+      // Firebase can refuse a delete with `auth/requires-recent-login` on an
+      // old session — fall back to just signing out, since the local data
+      // is already gone either way and the account itself is merely
+      // orphaned rather than lost. A no-op if there's no Firebase user to
+      // begin with (unconfigured project — see RootNavigator's own note).
+      await signOutUser().catch(() => {});
+    }
+    Alert.alert(t('setting.accountDeletedFlash'));
+    if (!isFirebaseConfigured) {
+      // No real sign-in to fall back to yet, so `RootNavigator` won't swap
+      // the stack on its own the way it does once a signed-in user exists —
+      // return to Home manually, the same reset this screen used before
+      // real auth existed.
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+    }
   };
 
   return (
@@ -182,13 +207,19 @@ export default function SettingScreen() {
         <SettingDivider />
 
         <SettingSection title={t('setting.sectionAccount')}>
-          {/* Figma mocks this as a static row (no chevron) — there's no real
-              account system yet, so "Log in" plus a placeholder email is
-              exactly what's shown, not a stand-in for something else. */}
-          <SettingMenuRow label={t('setting.logIn')} value="hello@mail.com" chevron={false} />
-          {/* TODO: no screen/modal for this in Figma, and nothing to log out
-              of without real auth. */}
-          <SettingMenuRow label={t('setting.logOut')} />
+          {/* Figma mocks this as a static row (no chevron) — real now: the
+              signed-in provider's own email, or a plain "not set up" note
+              while running without a real Firebase project configured. */}
+          <SettingMenuRow
+            label={t('setting.logIn')}
+            value={user?.email ?? t('setting.noAccountYet')}
+            chevron={false}
+          />
+          <SettingMenuRow
+            label={t('setting.logOut')}
+            onPress={user ? handleLogOut : undefined}
+            chevron={Boolean(user)}
+          />
           <SettingMenuRow label={t('setting.deleteAccount')} onPress={() => setDeleteAccountModalVisible(true)} />
         </SettingSection>
       </ScrollView>

@@ -1,5 +1,9 @@
+import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useAuth } from '../auth/AuthContext';
+import { isFirebaseConfigured } from '../data/firebase';
+import { colors } from '../theme/tokens';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import HomeListScreen from '../screens/HomeListScreen';
@@ -72,10 +76,25 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /**
- * `initialRouteName` is "Home", not "Login" — sign-in has no real
- * authentication wired up yet (planned last), so starting there would block
- * building/testing every other screen. Switch this back to "Login" once
- * pressing a social login button actually does something.
+ * Which screens exist is conditional on `useAuth().user` rather than a
+ * fixed `initialRouteName` — the standard React Navigation pattern for
+ * auth-gated apps: React swaps the entire `<Stack.Screen>` list when `user`
+ * flips between `null` and set, which resets the stack to whichever group
+ * is now current with no manual `navigation.reset` call needed anywhere
+ * (Setting → Log out and → Delete Account both just end up back at `Login`
+ * this way, for free). While `initializing` is true — the moment before
+ * Firebase's AsyncStorage-persisted session has been read even once — this
+ * renders a blank screen rather than guessing, so a returning signed-in
+ * user never flashes `Login` first.
+ *
+ * The gate is `user || !isFirebaseConfigured` rather than just `user`: no
+ * Firebase project is wired up in every environment yet (a fresh clone with
+ * an empty `.env` has none — see `.env.example`), and `onAuthStateChanged`
+ * on an unconfigured project never resolves to a real user, which would
+ * otherwise wall the entire app behind a Login screen nothing can get past.
+ * Once a real project's config is set, this starts actually requiring
+ * sign-in, matching Figma's real intent for Login-1 (node 3177:2606) rather
+ * than the placeholder-config dev build silently working around it forever.
  *
  * All screens render their own custom header (per Figma), so the native
  * stack header is turned off everywhere.
@@ -100,32 +119,45 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  * modal dismissal.
  */
 export default function RootNavigator() {
+  const { user, initializing } = useAuth();
+
+  if (initializing) {
+    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+  }
+
+  const signedIn = user !== null || !isFirebaseConfigured;
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{ animation: 'none' }}
-        />
-        <Stack.Screen name="HomeList" component={HomeListScreen} />
-        <Stack.Screen name="PostSearch" component={PostSearchScreen} />
-        <Stack.Screen
-          name="Report"
-          component={ReportScreen}
-          options={{ animation: 'none' }}
-        />
-        <Stack.Screen name="Setting" component={SettingScreen} />
-        <Stack.Screen name="Notification" component={NotificationScreen} />
-        <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
-        <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
-        <Stack.Screen name="Faq" component={FaqScreen} />
-        <Stack.Screen name="ExportToPdf" component={ExportToPdfScreen} />
-        <Stack.Screen name="PdfPreview" component={PdfPreviewScreen} />
-        <Stack.Screen name="Add" component={AddScreen} />
-        <Stack.Screen name="PostDetail" component={PostDetailScreen} />
-        <Stack.Screen name="Recording" component={RecordingScreen} />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {signedIn ? (
+          <>
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ animation: 'none' }}
+            />
+            <Stack.Screen name="HomeList" component={HomeListScreen} />
+            <Stack.Screen name="PostSearch" component={PostSearchScreen} />
+            <Stack.Screen
+              name="Report"
+              component={ReportScreen}
+              options={{ animation: 'none' }}
+            />
+            <Stack.Screen name="Setting" component={SettingScreen} />
+            <Stack.Screen name="Notification" component={NotificationScreen} />
+            <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
+            <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+            <Stack.Screen name="Faq" component={FaqScreen} />
+            <Stack.Screen name="ExportToPdf" component={ExportToPdfScreen} />
+            <Stack.Screen name="PdfPreview" component={PdfPreviewScreen} />
+            <Stack.Screen name="Add" component={AddScreen} />
+            <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+            <Stack.Screen name="Recording" component={RecordingScreen} />
+          </>
+        ) : (
+          <Stack.Screen name="Login" component={LoginScreen} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
