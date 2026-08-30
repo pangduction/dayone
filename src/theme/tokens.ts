@@ -14,6 +14,7 @@
  * Extend this file (don't fork it) whenever Figma introduces a token that
  * isn't captured yet.
  */
+import { Platform } from 'react-native';
 
 // ---------------------------------------------------------------------------
 // Palette — raw color values, named the way Figma names them. Prefer the
@@ -222,7 +223,12 @@ export const typography = {
     fontFamily: 'Raleway_800ExtraBold',
     fontSize: 24,
     letterSpacing: 0,
-    lineHeight: 24,
+    // Figma's own line-height is 24 (== fontSize, no leading at all). iOS
+    // renders that fine, but Android's text layout is stricter about
+    // descenders at a 1:1 line-height/font-size ratio and clips the bottom
+    // of "g"/"y"/"p" in words like "August" — bumped only on Android so
+    // iOS keeps the exact Figma-matched metric.
+    lineHeight: Platform.OS === 'android' ? 28 : 24,
   },
   calendarDate: {
     // Figma: "Calendar/Date"
