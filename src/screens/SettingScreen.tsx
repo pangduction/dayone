@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
+import * as StoreReview from 'expo-store-review';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,9 +13,11 @@ import SettingSection from '../components/SettingSection';
 import SettingMenuRow from '../components/SettingMenuRow';
 import SettingDivider from '../components/SettingDivider';
 import LanguageModal from '../components/LanguageModal';
+import DeleteAccountModal from '../components/DeleteAccountModal';
 import AlertBanner from '../components/AlertBanner';
 import { dateKey } from '../data/posts';
 import { getNotificationSettings } from '../data/notificationSettings';
+import { deleteAllAppData } from '../data/account';
 import { useLanguage } from '../i18n/LanguageContext';
 import { colors, spacing } from '../theme/tokens';
 
@@ -33,9 +36,16 @@ function lastSevenDaysRange(): { startDate: string; endDate: string } {
  * separated by `SettingDivider`s, matching Figma's Menu Section / Divider /
  * Menu Section pattern exactly (gap 16 between the five).
  *
- * Rows that lead to a sub-flow not yet built are inert (no `onPress`) with a
- * TODO — this screen was asked for first, on its own, so each row is wired up
- * as its own flow (7.6 Delete Account, etc.) gets built next.
+ * Every row now leads somewhere real except "Log in"/"Log out", which stay
+ * as Figma mocks them (a static "Log in" row, no working "Log out") until
+ * there's an actual sign-in backend behind them — see this repo's own
+ * launch-readiness notes for that plan. Everything else Figma gave a
+ * chevron with no destination now has one: "FAQ" opens `FaqScreen` (real,
+ * hand-written content — no Figma frame for this exists), "App review"
+ * triggers the OS's native review prompt via `expo-store-review` (no App
+ * Store listing to deep-link to yet, and this API needs none), and "Delete
+ * Account" (7.6) wipes this device's local data for real — see
+ * `src/data/account.ts`.
  *
  * "Notifications" (Flow 7.1) is wired to `NotificationScreen`; its value
  * reads "On" only when the OS permission is actually granted *and* at least
@@ -81,6 +91,7 @@ export default function SettingScreen() {
   const { language, t } = useLanguage();
   const [notificationsOn, setNotificationsOn] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
 
   // A screen hands the banner over as a route param on its way back here.
@@ -115,6 +126,27 @@ export default function SettingScreen() {
     }, []),
   );
 
+  // No App Store listing to deep-link to yet, and this API needs none: it
+  // triggers the OS's own native "rate this app" sheet directly, the same
+  // one iOS/Android already show a few times a year on their own. Silently
+  // does nothing if the platform/OS version doesn't support it (e.g. most
+  // Android emulators) rather than erroring the row.
+  const handleAppReview = async () => {
+    if (await StoreReview.isAvailableAsync()) {
+      await StoreReview.requestReview();
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteAccountModalVisible(false);
+    await deleteAllAppData();
+    // Report/Home both hold state built from posts that no longer exist, so
+    // this resets the whole stack back to Home rather than just going back —
+    // the same "no partial state left to go stale" reasoning as HomeScreen's
+    // own post-delete flash, just for the entire account instead of one post.
+    navigation.reset({ index: 0, routes: [{ name: 'Home', params: { flash: t('setting.accountDeletedFlash') } }] });
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <HeaderX onClose={() => navigation.goBack()} />
@@ -140,14 +172,10 @@ export default function SettingScreen() {
         <SettingDivider />
 
         <SettingSection title={t('setting.sectionSupport')}>
-          {/* TODO: Figma gives this row a chevron but no destination screen
-              anywhere in the file. */}
-          <SettingMenuRow label={t('setting.faq')} />
+          <SettingMenuRow label={t('setting.faq')} onPress={() => navigation.navigate('Faq')} />
           <SettingMenuRow label={t('setting.helpSupport')} onPress={() => navigation.navigate('HelpSupport')} />
           <SettingMenuRow label={t('setting.termsOfService')} onPress={() => navigation.navigate('TermsOfService')} />
-          {/* TODO: no screen in Figma for this either — eventually a store
-              review deep link (Linking.openURL), not an in-app screen. */}
-          <SettingMenuRow label={t('setting.appReview')} />
+          <SettingMenuRow label={t('setting.appReview')} onPress={handleAppReview} />
           <SettingMenuRow label={t('setting.appVersion')} value={Constants.expoConfig?.version ?? '—'} chevron={false} />
         </SettingSection>
 
@@ -161,12 +189,16 @@ export default function SettingScreen() {
           {/* TODO: no screen/modal for this in Figma, and nothing to log out
               of without real auth. */}
           <SettingMenuRow label={t('setting.logOut')} />
-          {/* TODO: wire once Flow 7.6 Delete Account exists. */}
-          <SettingMenuRow label={t('setting.deleteAccount')} />
+          <SettingMenuRow label={t('setting.deleteAccount')} onPress={() => setDeleteAccountModalVisible(true)} />
         </SettingSection>
       </ScrollView>
 
       <LanguageModal visible={languageModalVisible} onClose={() => setLanguageModalVisible(false)} />
+      <DeleteAccountModal
+        visible={deleteAccountModalVisible}
+        onDelete={handleDeleteAccount}
+        onCancel={() => setDeleteAccountModalVisible(false)}
+      />
 
       {flash !== null ? (
         <View style={[styles.flash, { top: insets.top }]} pointerEvents="none">

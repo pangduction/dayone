@@ -97,6 +97,13 @@ const en = {
     delete: 'Delete',
     cancel: 'Cancel',
   },
+  deleteAccountModal: {
+    title: 'Delete Account?',
+    body1: 'This permanently deletes every entry, photo, recording, and exported PDF on this device.',
+    body2: 'This action cannot be undone.',
+    delete: 'Delete',
+    cancel: 'Cancel',
+  },
   report: {
     settings: 'Settings',
     changeMonth: 'Change month',
@@ -120,6 +127,7 @@ const en = {
     logIn: 'Log in',
     logOut: 'Log out',
     deleteAccount: 'Delete Account',
+    accountDeletedFlash: 'All your data has been deleted.',
     notSupportedYet: 'Not supported yet.',
   },
   languageModal: {
@@ -167,6 +175,39 @@ const en = {
     title: 'Terms of Service',
     termsOfUse: 'Terms of Use',
     privacyPolicy: 'Privacy Policy',
+    // Shown instead of opening a browser when the corresponding
+    // EXPO_PUBLIC_*_URL env var hasn't been set yet — see .env.example.
+    linkNotReadyTitle: 'Not published yet',
+    linkNotReadyBody: 'This page isn’t available yet. Please check back soon.',
+  },
+  faq: {
+    title: 'FAQ',
+    items: [
+      {
+        q: 'Where is my journal stored?',
+        a: 'Everything you write — text, photos, and voice recordings — stays on this device only. DayOne doesn’t upload your journal to a server.',
+      },
+      {
+        q: 'Can I write an entry for a past day?',
+        a: 'Yes — tap any past day on the calendar. You can’t write ahead for a day that hasn’t happened yet.',
+      },
+      {
+        q: 'Can I change an entry after I’ve saved it?',
+        a: 'Yes — open the entry and tap Edit. There’s no limit on how many times you can revise it.',
+      },
+      {
+        q: 'How do I get my entries out of the app?',
+        a: 'Use Setting → Export to PDF to turn a date range of entries into a PDF file you can share or save.',
+      },
+      {
+        q: 'Why did my exported PDF disappear?',
+        a: 'Generated files are kept on your device for 7 days, then deleted automatically to save space. Export again any time.',
+      },
+      {
+        q: 'What happens if I delete my account?',
+        a: 'Setting → Delete Account permanently erases every entry, photo, recording, and exported PDF on this device. It can’t be undone, so export anything you want to keep first.',
+      },
+    ],
   },
   exportToPdf: {
     title: 'Export to PDF',
@@ -323,6 +364,13 @@ const ko: typeof en = {
     delete: '삭제',
     cancel: '취소',
   },
+  deleteAccountModal: {
+    title: '계정을 삭제할까요?',
+    body1: '이 기기에 저장된 모든 기록, 사진, 녹음, 내보낸 PDF가 영구적으로 삭제돼요.',
+    body2: '이 작업은 되돌릴 수 없어요.',
+    delete: '삭제',
+    cancel: '취소',
+  },
   report: {
     settings: '설정',
     changeMonth: '월 변경',
@@ -346,6 +394,7 @@ const ko: typeof en = {
     logIn: '로그인',
     logOut: '로그아웃',
     deleteAccount: '계정 삭제',
+    accountDeletedFlash: '모든 데이터가 삭제되었어요.',
     notSupportedYet: '아직 지원하지 않아요.',
   },
   languageModal: {
@@ -393,6 +442,37 @@ const ko: typeof en = {
     title: '약관 정보',
     termsOfUse: '서비스 이용약관',
     privacyPolicy: '개인정보처리방침',
+    linkNotReadyTitle: '아직 게시되지 않았어요',
+    linkNotReadyBody: '아직 준비 중이에요. 곧 다시 확인해주세요.',
+  },
+  faq: {
+    title: '자주 묻는 질문',
+    items: [
+      {
+        q: '내 기록은 어디에 저장되나요?',
+        a: '작성한 글, 사진, 음성 녹음 모두 이 기기에만 저장돼요. DayOne은 여러분의 기록을 서버에 올리지 않아요.',
+      },
+      {
+        q: '지난 날짜에도 기록을 쓸 수 있나요?',
+        a: '네, 달력에서 지난 날짜를 눌러 작성할 수 있어요. 다만 아직 오지 않은 날짜에는 미리 쓸 수 없어요.',
+      },
+      {
+        q: '저장한 기록을 나중에 수정할 수 있나요?',
+        a: '네, 기록을 열고 수정 버튼을 누르면 언제든 고칠 수 있어요.',
+      },
+      {
+        q: '내 기록을 앱 밖으로 내보낼 수 있나요?',
+        a: '설정 → PDF로 내보내기에서 원하는 기간의 기록을 PDF 파일로 만들어 공유하거나 저장할 수 있어요.',
+      },
+      {
+        q: '내보낸 PDF 파일이 왜 사라졌나요?',
+        a: '생성된 파일은 저장 공간을 아끼기 위해 7일간만 보관되고 이후 자동 삭제돼요. 필요하면 다시 내보내주세요.',
+      },
+      {
+        q: '계정을 삭제하면 어떻게 되나요?',
+        a: '설정 → 계정 삭제를 누르면 이 기기에 저장된 모든 기록, 사진, 녹음, 내보낸 PDF가 영구적으로 삭제돼요. 되돌릴 수 없으니 남기고 싶은 내용은 먼저 내보내주세요.',
+      },
+    ],
   },
   exportToPdf: {
     title: 'PDF로 내보내기',

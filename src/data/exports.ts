@@ -183,3 +183,13 @@ export async function deleteExportFile(id: string): Promise<void> {
   target.pageUris.forEach(deleteFileBytes);
   await writeAll(files.filter((file) => file.id !== id));
 }
+
+/** Setting → Delete Account's local wipe (see `src/data/account.ts`): every generated PDF and its page images, gone, not just pruned-on-next-read. */
+export async function deleteAllExportFiles(): Promise<void> {
+  const files = await readAll();
+  for (const file of files) {
+    deleteFileBytes(file.uri);
+    file.pageUris.forEach(deleteFileBytes);
+  }
+  await writeAll([]);
+}

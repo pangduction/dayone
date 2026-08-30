@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { File } from 'expo-file-system';
 
 /**
  * Local, on-device post store (no backend yet). One row per calendar day —
@@ -164,6 +165,33 @@ export async function deletePost(date: string): Promise<void> {
   const remaining = posts.filter((post) => post.date !== date);
   if (remaining.length === posts.length) return;
   await writeAll(remaining);
+}
+
+/** Best-effort delete of a local file; a missing or already-gone file isn't an error. */
+function deleteFileBytes(uri: string): void {
+  try {
+    const file = new File(uri);
+    if (file.exists) file.delete();
+  } catch {
+    // Nothing left to clean up.
+  }
+}
+
+/**
+ * Setting → Delete Account's local wipe (see `src/data/account.ts`): removes
+ * every post *and* the photo/recording files each one points at, not just
+ * the AsyncStorage rows — `deletePost` itself only ever removed the row
+ * (fine for a single post, since nothing else re-reads a deleted post's old
+ * file), but a full account wipe should leave nothing named "dayone" worth
+ * finding on disk.
+ */
+export async function deleteAllPosts(): Promise<void> {
+  const posts = await readAll();
+  for (const post of posts) {
+    if (post.photoUri) deleteFileBytes(post.photoUri);
+    if (post.recording) deleteFileBytes(post.recording.uri);
+  }
+  await writeAll([]);
 }
 
 /**

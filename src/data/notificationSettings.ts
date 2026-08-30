@@ -23,7 +23,8 @@ export type NotificationSettings = {
 
 const STORAGE_KEY = 'dayone.notificationSettings.v1';
 
-const DEFAULT_SETTINGS: NotificationSettings = {
+/** Exported so `src/data/account.ts`'s Delete Account wipe can restore these defaults (and, via `saveNotificationSettings`, actually cancel any real scheduled notifications) rather than duplicating them. */
+export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   dailyReminderEnabled: false,
   // 9:00 PM — a reasonable "wrap up your day" default. Figma's own mock
   // shows "6:28 PM" as sample data on the Timer row, not a real default.
@@ -46,12 +47,12 @@ const MONTHLY_REPORT_ID = 'dayone.monthly-report';
 
 export async function getNotificationSettings(): Promise<NotificationSettings> {
   const raw = await AsyncStorage.getItem(STORAGE_KEY);
-  if (!raw) return DEFAULT_SETTINGS;
+  if (!raw) return DEFAULT_NOTIFICATION_SETTINGS;
   try {
     const parsed = JSON.parse(raw);
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    return { ...DEFAULT_NOTIFICATION_SETTINGS, ...parsed };
   } catch {
-    return DEFAULT_SETTINGS;
+    return DEFAULT_NOTIFICATION_SETTINGS;
   }
 }
 

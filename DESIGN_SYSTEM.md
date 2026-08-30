@@ -243,8 +243,14 @@ the wrong glyph.
   whose "Done" actually sends a real email; see the product rule below and
   `LabeledInput.tsx` for the "Email*"/"Contents*" fields it introduces.
   `TermsOfServiceScreen.tsx` is Flow 7.5 (section `3202:5287`) — a bare
-  "Terms of Use" / "Privacy Policy" list on `HeaderTitlePage`'s shell, both
-  rows inert since Figma has no frame anywhere for what either says.
+  "Terms of Use" / "Privacy Policy" list on `HeaderTitlePage`'s shell. Both
+  rows are real: each opens a published document's URL, read from
+  `EXPO_PUBLIC_TERMS_OF_USE_URL` / `EXPO_PUBLIC_PRIVACY_POLICY_URL` (see
+  `.env.example` and the `legal/` folder's drafted text) via `Linking`,
+  since Figma has no frame anywhere for what either document says — there's
+  no in-app text to port, only a real external page to link to.
+  `FaqScreen.tsx` (no Figma frame either) is the same `HeaderTitlePage`
+  shell holding a real, hand-written Q&A list from `strings.ts`'s `faq.items`.
   `ExportToPdfScreen.tsx` is the real Export to PDF list (Setting-Export to
   PDF-2, node `3201:5947`); `PdfPreviewScreen.tsx` shows a generated file
   (Setting-Export to PDF-6, node `3267:6006`) as a scroll of shadowed white
@@ -262,7 +268,7 @@ the wrong glyph.
   it isn't simply a screenshot of the live screen.
 - `src/navigation/RootNavigator.tsx` — the single React Navigation native
   stack
-  (Login/Home/HomeList/PostSearch/Report/Setting/Notification/HelpSupport/TermsOfService/ExportToPdf/PdfPreview/Add/PostDetail/Recording).
+  (Login/Home/HomeList/PostSearch/Report/Setting/Notification/HelpSupport/TermsOfService/Faq/ExportToPdf/PdfPreview/Add/PostDetail/Recording).
   `initialRouteName` is temporarily `"Home"` since sign-in has no real auth
   yet; flip it back to `"Login"` once that's wired up. Every route pushes as
   an ordinary page — Add is a full Figma frame with its own back button, not
@@ -281,7 +287,11 @@ the wrong glyph.
   trigger in one call — see the Notification product rule below. `contact.ts`
   is the one exception to "local" in this folder: it doesn't store anything
   on-device, it POSTs a Help & Support submission to a real server — see
-  `api/` below and the Help & Support product rule.
+  `api/` below and the Help & Support product rule. `account.ts` is not a
+  store of its own — it's the Delete Account orchestrator, calling each
+  other module's own bulk-delete (`deleteAllPosts`, `deleteAllExportFiles`,
+  resetting notification settings) so Setting → Delete Account has one real
+  place to wipe everything rather than reaching into three modules itself.
 - `api/` — the app's only server-side code: `contact.ts`, a Vercel Edge
   Function that relays a Help & Support submission to Resend so it arrives
   as a real email. See its own doc comment and the Help & Support product
@@ -614,6 +624,39 @@ Note them here so they don't get re-derived (or quietly dropped) later.
     function) shows a native `Alert` instead and stays on this screen,
     the same failure-reporting pattern `ExportToPdfScreen`'s "Generate PDF"
     uses, since nothing was actually sent.
+- **Delete Account (Flow 7.6) is a real, local wipe — there is no other
+  "account" to delete.** DayOne has no server-side user record (see
+  `src/data/`'s own note above), so Setting → Delete Account's confirm
+  (`DeleteAccountModal.tsx`, the same `Modal/Delete-Post` shell reused since
+  Figma has no frame for this flow either) permanently deletes every post,
+  photo, recording, and exported PDF's actual bytes — not just their
+  AsyncStorage rows — via `src/data/account.ts`'s `deleteAllAppData`, then
+  resets the navigation stack back to Home (Report and Setting both hold
+  state built from posts that no longer exist). It deliberately leaves the
+  Language preference alone — that's a device setting, not journal content.
+  This also satisfies Apple's App Store Review Guideline 5.1.1(v), which
+  requires that an app offering account deletion actually delete the data
+  behind it rather than just hiding the account.
+- **"App review" triggers the OS's native rate-this-app prompt directly**
+  (`expo-store-review`'s `requestReview()`), not a deep link to an App Store
+  listing — that API needs no listing to exist yet, unlike
+  `itms-apps://.../write-review` which needs a real numeric App Store ID.
+  Silently does nothing if the platform declines (`isAvailableAsync()`
+  false — most Android emulators, or a device that's already seen the
+  native prompt its OS-imposed number of times this year).
+- **Terms of Service's two rows open a real published document, not
+  in-app text.** Figma has no frame anywhere for what either document
+  says, so there was never in-app copy to port — `TermsOfServiceScreen.tsx`
+  instead opens `EXPO_PUBLIC_TERMS_OF_USE_URL` / `EXPO_PUBLIC_PRIVACY_POLICY_URL`
+  (see `.env.example`) via `Linking.openURL`, the same client-safe-env-var
+  pattern `contact.ts` already uses for the Help & Support endpoint. A
+  drafted Privacy Policy and Terms of Service — accurate to exactly what
+  this app does and does not collect — live in this repo's `legal/` folder,
+  meant to be published somewhere public (a Notion page is enough) and
+  their URLs pasted into `.env`. Until a URL is set, the row still responds
+  with a "not published yet" alert rather than silently doing nothing —
+  per this app's own convention (§4's Setting Menu row note) that a row
+  drawn with a chevron should never read as a dead button.
 
 ## 8. Internationalization (i18n)
 

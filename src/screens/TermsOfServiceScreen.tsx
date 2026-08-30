@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Alert, Linking, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,25 +15,43 @@ import { colors } from '../theme/tokens';
  * `HeaderTitlePage` shell Export to PDF's list screen already uses (its own
  * doc comment names this screen as its other intended reuse).
  *
- * Both rows are inert. Figma draws a chevron on each but the file has no
- * frame anywhere showing what either actually says — there's no real legal
- * text to port, only a destination that doesn't exist yet, the same gap
- * FAQ and App review are already left with a TODO for on Setting-Main.
+ * Figma has no frame anywhere for what either document actually says, since
+ * there's no in-app legal text to render — both rows instead open the real,
+ * publicly published document (a Notion page, in this app's case) in the
+ * device browser. The URLs are read from `EXPO_PUBLIC_TERMS_OF_USE_URL` /
+ * `EXPO_PUBLIC_PRIVACY_POLICY_URL` (see .env.example), the same
+ * client-safe-env-var pattern `src/data/contact.ts` already uses for the
+ * Help & Support endpoint — so publishing the real pages later is a config
+ * change, not a code change. Until a URL is set, the row still responds
+ * (nothing here should look like a dead button) with a plain "not published
+ * yet" alert instead of silently doing nothing.
  */
 export default function TermsOfServiceScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
 
+  const openOrExplain = (url: string | undefined) => {
+    if (url) {
+      Linking.openURL(url);
+      return;
+    }
+    Alert.alert(t('termsOfService.linkNotReadyTitle'), t('termsOfService.linkNotReadyBody'));
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <HeaderTitlePage title={t('termsOfService.title')} onBack={() => navigation.goBack()} />
 
       <View style={styles.menu}>
-        {/* TODO: no frame in Figma for the actual Terms of Use text. */}
-        <SettingMenuRow label={t('termsOfService.termsOfUse')} />
-        {/* TODO: no frame in Figma for the actual Privacy Policy text. */}
-        <SettingMenuRow label={t('termsOfService.privacyPolicy')} />
+        <SettingMenuRow
+          label={t('termsOfService.termsOfUse')}
+          onPress={() => openOrExplain(process.env.EXPO_PUBLIC_TERMS_OF_USE_URL)}
+        />
+        <SettingMenuRow
+          label={t('termsOfService.privacyPolicy')}
+          onPress={() => openOrExplain(process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL)}
+        />
       </View>
     </View>
   );
