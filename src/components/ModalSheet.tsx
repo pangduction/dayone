@@ -102,7 +102,15 @@ export default function ModalSheet({ visible, title, onClose, children, actions,
     <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose}>
       <View style={styles.root}>
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: progress }]} pointerEvents="none">
-          <BlurView intensity={BACKDROP_BLUR_INTENSITY} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView
+            intensity={BACKDROP_BLUR_INTENSITY}
+            tint="dark"
+            // expo-blur's default Android renderer doesn't produce a real
+            // blur — this opts into the native-blur-view implementation so
+            // the backdrop actually blurs on Android too, matching iOS.
+            experimentalBlurMethod="dimezisBlurView"
+            style={StyleSheet.absoluteFill}
+          />
           <View style={[StyleSheet.absoluteFill, styles.scrim]} />
         </Animated.View>
 

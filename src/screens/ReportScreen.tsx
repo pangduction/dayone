@@ -122,7 +122,14 @@ export default function ReportScreen() {
 
           {locked ? (
             <View style={styles.lock}>
-              <BlurView intensity={LOCK_BLUR_INTENSITY} tint="light" style={StyleSheet.absoluteFill} />
+              <BlurView
+                intensity={LOCK_BLUR_INTENSITY}
+                tint="light"
+                // See ModalSheet's own note: expo-blur's default Android
+                // renderer doesn't produce a real blur without this.
+                experimentalBlurMethod="dimezisBlurView"
+                style={StyleSheet.absoluteFill}
+              />
               <View style={[StyleSheet.absoluteFill, styles.lockVeil]} />
               <View style={styles.lockBody}>
                 <IcPresent size={40} color={colors.textPrimary} />

@@ -102,7 +102,14 @@ export default function TimerPickerModal({ visible, value, onClose, onApply }: P
     <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose}>
       <View style={styles.root}>
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: progress }]} pointerEvents="none">
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView
+            intensity={20}
+            tint="dark"
+            // See ModalSheet's own note: expo-blur's default Android
+            // renderer doesn't produce a real blur without this.
+            experimentalBlurMethod="dimezisBlurView"
+            style={StyleSheet.absoluteFill}
+          />
           <View style={[StyleSheet.absoluteFill, styles.scrim]} />
         </Animated.View>
 
